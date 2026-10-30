@@ -90,6 +90,7 @@ local function workingCopies()
 end
 
 local list = getAddressList()
+local owner = memrec
 
 local function add(parent, description, address, vartype, setup)
   local mr = list.createMemoryRecord()
@@ -167,7 +168,7 @@ local function addPlayer(parent, player, baseYear)
 end
 
 local function addClub(caption, club, squad, baseYear)
-  local g = add(memrec, string.format("%s: %s", caption, text(club.address + A.ClubName, 0x14)))
+  local g = add(owner, string.format("%s: %s", caption, text(club.address + A.ClubName, 0x14)))
   add(g, "Name", club.address + A.ClubName, vtString, function(mr) mr.String.Size = 0x14; mr.String.Codepage = true end)
   add(g, "Stadt", club.address + A.ClubCity, vtString, function(mr) mr.String.Size = 0x14; mr.String.Codepage = true end)
   for _, player in ipairs(squad) do
@@ -183,42 +184,92 @@ local function addClub(caption, club, squad, baseYear)
   for _, player in ipairs(squad) do addPlayer(g, player, baseYear) end
 end
 
-while memrec.Count &gt; 0 do memrec.Child[0].destroy() end
-
-local ownCountry, ownNumber = u16(A.ManagerClubCountry), u16(A.ManagerClubNumber)
-local ownAddress = clubAddress(ownCountry, ownNumber)
-if u32(A.PlayerArray) == 0 or not ownAddress then error("Kein Anstoss-3-Spielstand (v1.10) geladen.") end
-
-local copies = workingCopies()
-local baseYear = u16(A.BaseYear)
-local squads, cachedPerClub = {}, {}
-for index = 0, A.PlayerSlots - 1 do
-  local record = A.PlayerArray + index * A.PlayerSize
-  if u32(record + R.Used) ~= 0 then
-    local copy = copies[index]
-    local at, O = copy or record, copy and C or R
-    local key = u8(at + O.ClubCountry) * 256 + u8(at + O.ClubNumber)
-    squads[key] = squads[key] or {}
-    table.insert(squads[key], {
-      index = index, copy = copy,
-      position = u8(at + O.Position), strength = u8(at + O.Strength),
-    })
-    if copy then cachedPerClub[key] = (cachedPerClub[key] or 0) + 1 end
+-- Aufgeklappte Gruppen (nach Beschreibung), damit ein Neuaufbau sie offen lässt; gemerkt auch
+-- über einen Zwischenstand ohne Spielstand hinweg
+local expanded = {}
+local function rememberExpanded(mr)
+  for i = 0, mr.Count - 1 do
+    local child = mr.Child[i]
+    if child.IsGroupHeader then expanded[child.Description] = not child.Collapsed end
+    rememberExpanded(child)
   end
 end
 
-local ownKey = ownCountry * 256 + ownNumber
-addClub("Eigener Verein", { address = ownAddress }, squads[ownKey] or {}, baseYear)
-
--- Nächster Gegner: der Verein, von dem das Spiel außer dem eigenen die meisten Spieler geladen hat
-local opponentKey, most = nil, 0
-for key, count in pairs(cachedPerClub) do
-  if key ~= ownKey and count &gt; most then opponentKey, most = key, count end
+local function restoreExpanded(mr)
+  for i = 0, mr.Count - 1 do
+    local child = mr.Child[i]
+    if child.IsGroupHeader and expanded[child.Description] then child.Collapsed = false end
+    restoreExpanded(child)
+  end
 end
-local opponentAddress = opponentKey and clubAddress(opponentKey // 256, opponentKey % 256)
-if opponentAddress then addClub("Nächster Gegner", { address = opponentAddress }, squads[opponentKey], baseYear) end
+
+local function rebuild(ownCountry, ownNumber, ownAddress)
+  rememberExpanded(owner)
+  while owner.Count &gt; 0 do owner.Child[0].destroy() end
+  if not ownAddress then
+    add(owner, "Kein Spielstand geladen")
+    return
+  end
+
+  local copies = workingCopies()
+  local baseYear = u16(A.BaseYear)
+  local squads, cachedPerClub = {}, {}
+  for index = 0, A.PlayerSlots - 1 do
+    local record = A.PlayerArray + index * A.PlayerSize
+    if u32(record + R.Used) ~= 0 then
+      local copy = copies[index]
+      local at, O = copy or record, copy and C or R
+      local key = u8(at + O.ClubCountry) * 256 + u8(at + O.ClubNumber)
+      squads[key] = squads[key] or {}
+      table.insert(squads[key], {
+        index = index, copy = copy,
+        position = u8(at + O.Position), strength = u8(at + O.Strength),
+      })
+      if copy then cachedPerClub[key] = (cachedPerClub[key] or 0) + 1 end
+    end
+  end
+
+  local ownKey = ownCountry * 256 + ownNumber
+  addClub("Eigener Verein", { address = ownAddress }, squads[ownKey] or {}, baseYear)
+
+  -- Nächster Gegner: der Verein, von dem das Spiel außer dem eigenen die meisten Spieler geladen hat
+  local opponentKey, most = nil, 0
+  for key, count in pairs(cachedPerClub) do
+    if key ~= ownKey and count &gt; most then opponentKey, most = key, count end
+  end
+  local opponentAddress = opponentKey and clubAddress(opponentKey // 256, opponentKey % 256)
+  if opponentAddress then addClub("Nächster Gegner", { address = opponentAddress }, squads[opponentKey], baseYear) end
+
+  restoreExpanded(owner)
+end
+
+-- Neu aufbauen, sobald sich Prozess, eigener Verein oder die geladenen Spieler ändern
+-- (Spieltag, Transfer, anderer Spielstand); sonst nichts tun.
+local shown
+local function refresh()
+  local ownCountry, ownNumber = u16(A.ManagerClubCountry), u16(A.ManagerClubNumber)
+  local ownAddress = u32(A.PlayerArray) ~= 0 and clubAddress(ownCountry, ownNumber) or nil
+  local loaded = {}
+  if ownAddress then
+    for index in pairs(workingCopies()) do loaded[#loaded + 1] = index end
+    table.sort(loaded)
+  end
+  local state = string.format("%d/%d/%d/%s", getOpenedProcessID(), ownAddress and ownCountry or -1, ownNumber, table.concat(loaded, ","))
+  if state ~= shown then
+    shown = state
+    rebuild(ownCountry, ownNumber, ownAddress)
+  end
+end
+
+if A3KaderTimer then A3KaderTimer.destroy() end
+A3KaderTimer = createTimer(nil, false)
+A3KaderTimer.Interval = 2000
+A3KaderTimer.OnTimer = function() pcall(refresh) end
+refresh()
+A3KaderTimer.Enabled = true
 
 [DISABLE]
+if A3KaderTimer then A3KaderTimer.destroy(); A3KaderTimer = nil end
 while memrec.Count &gt; 0 do memrec.Child[0].destroy() end
 </AssemblerScript>
     </CheatEntry>

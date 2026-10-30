@@ -54,8 +54,10 @@ Saisonbeginn und Basisjahr als feste Einträge. Das Skript „Kader (eigener Ver
 Gegner)“ liest beim Aktivieren beide Kader ein und legt je Spieler die Felder des Trainers an
 (Positionen, Talent und Fuß als Auswahl, Fähigkeiten, Eigenschaften und Charakter als einzelne
 Bits). Bei geladenen Spielern zeigen die Einträge auf die Arbeitskopie, die das Spiel beim
-Speichern zurückschreibt. Nach einem Spieltag oder Spielstandwechsel das Skript aus- und wieder
-einschalten.
+Speichern zurückschreibt. Solange das Skript aktiv ist, prüft es alle zwei Sekunden, ob sich
+Spielstand, Kader oder Gegner geändert haben, und baut die Einträge dann neu auf; aufgeklappte
+Gruppen bleiben offen. Eine feste Kaderliste wie bei A2G (Einträge ohne Skript) ist für A3 noch
+nicht gefunden.
 
 ## Wie es funktioniert (kurz)
 
