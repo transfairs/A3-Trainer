@@ -1,10 +1,10 @@
 namespace A3_Trainer.Controller
 {
     /// <summary>
-    /// Fixed addresses and record layouts of Anstoss 3 v1.10 (unprotected anstoss3.exe, 4,980,803
-    /// bytes). Found with Ghidra and checked against a running game; the research notes are in the
-    /// local re/anstoss3/STRUKTUREN.md. The VOB-ProtectCD-protected exes (v1.0 and v1.10) lay out
-    /// their data differently and are not supported.
+    /// Fixed addresses and record layouts of Anstoss 3 v1.40 (the anstoss3.exe for Windows 8 and
+    /// later, 4,980,803 bytes, built July 2003). Found with Ghidra and checked against a running
+    /// game; the research notes are in the local re/anstoss3/STRUKTUREN.md. The CD exes (v1.0 and
+    /// the official patch 1.10) are separate builds with a different layout and are not supported.
     /// </summary>
     internal static class A3Addresses
     {
@@ -20,6 +20,10 @@ namespace A3_Trainer.Controller
         // --- Name table: char* per name; players store first/last name indices into it.
         internal const uint NameTable = 0x019D3B68;
         internal const int NameTableCount = 19866;
+
+        // --- Country names: char* per country number (nationalities and clubs); the next table starts at ClubIndexTable.
+        internal const uint CountryNames = 0x00AE5940;
+        internal const int CountrySlots = 364;
 
         // --- Working-copy cache ("CSpieler"): binary tree, the game edits players of the loaded
         // teams (own squad, next opponent) here and writes them back to the record on save.
@@ -87,9 +91,12 @@ namespace A3_Trainer.Controller
         internal const int SidePosition2 = 0x21F;
         internal const int Talent = 0x222;
         internal const int ShirtNumber = 0x223;
+        internal const int Appearance = 0x21A;    // bits 0-2: skin colour
         internal const int Nationality = 0x225;
+        internal const int SecondNationality = 0x226; // 0 = none
         internal const int InjuryType = 0x228;
         internal const int InjuryFlag = 0x270;
+        internal const int Flags = 0x1B0;         // dword: 0x400 hated, 0x10000 darling
         internal const int Morale = 0x296;
         internal const int FootAndReputation = 0x282; // bits 2-3: strong foot
     }
@@ -120,6 +127,8 @@ namespace A3_Trainer.Controller
         internal const int Salary = 0x88;
         internal const int MatchBonus = 0x8A;
         internal const int ContractEnd = 0x94;    // byte, year - BaseYear
+        internal const int Flags = 0x20;          // dword, see RecordOffset.Flags
         internal const int Morale = 0xCA;
+        internal const int BirthDate = 0xCC;      // dword: day, month, year (word); copy of record +0x168 (FUN_00636638)
     }
 }

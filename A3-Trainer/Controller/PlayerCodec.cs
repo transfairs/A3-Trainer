@@ -7,9 +7,12 @@ namespace A3_Trainer.Controller
     /// <summary>One write into game memory.</summary>
     internal struct MemoryWrite
     {
+        /// <summary>Absolute address to write to.</summary>
         internal uint Address { get; }
+        /// <summary>The bytes to write.</summary>
         internal byte[] Data { get; }
 
+        /// <summary>One write of <paramref name="data"/> at <paramref name="address"/>.</summary>
         internal MemoryWrite(uint address, byte[] data)
         {
             this.Address = address;
@@ -35,6 +38,8 @@ namespace A3_Trainer.Controller
         private static readonly Field[] MirroredFields =
         {
             new Field { Get = p => p.Strength,      Record = RecordOffset.Strength,      Compact = CompactOffset.Strength,      Size = 1 },
+            new Field { Get = p => p.Nationality,   Record = RecordOffset.Nationality,   Compact = CompactOffset.Nationality,   Size = 1 },
+            new Field { Get = p => p.SecondNationality, Record = RecordOffset.SecondNationality, Compact = -1,                  Size = 1 },
             new Field { Get = p => p.Position,      Record = RecordOffset.Position,      Compact = CompactOffset.Position,      Size = 1 },
             new Field { Get = p => p.SidePosition1, Record = RecordOffset.SidePosition1, Compact = CompactOffset.SidePosition1, Size = 1 },
             new Field { Get = p => p.SidePosition2, Record = RecordOffset.SidePosition2, Compact = CompactOffset.SidePosition2, Size = 1 },
@@ -67,6 +72,9 @@ namespace A3_Trainer.Controller
                 ClubNumber = Byte(RecordOffset.ClubNumber),
                 BirthDate = new GameDate(Word(RecordOffset.BirthYear), Byte(RecordOffset.BirthMonth), Byte(RecordOffset.BirthDay)),
                 Nationality = Byte(RecordOffset.Nationality),
+                SecondNationality = Byte(RecordOffset.SecondNationality),
+                SkinColor = Byte(RecordOffset.Appearance) & 7,
+                Flags = BitConverter.ToUInt32(data, offset + RecordOffset.Flags),
                 Strength = Byte(RecordOffset.Strength),
                 Position = Byte(RecordOffset.Position),
                 SidePosition1 = Byte(RecordOffset.SidePosition1),
@@ -105,6 +113,7 @@ namespace A3_Trainer.Controller
             player.Talent = Byte(CompactOffset.Talent);
             player.Skills = Word(CompactOffset.Skills);
             player.Skills2 = Word(CompactOffset.Skills2);
+            player.Flags = BitConverter.ToUInt32(compact, CompactOffset.Flags);
             player.Traits = Word(CompactOffset.Traits);
             player.Character = Word(CompactOffset.Character);
             player.Condition = Word(CompactOffset.Condition);
@@ -125,9 +134,9 @@ namespace A3_Trainer.Controller
         /// changed field goes to the record and, if the game has a working copy, to that copy too
         /// (which is what the game shows and what it writes back on save).
         /// <paramref name="footByte"/> is the record's current foot/reputation byte, of which only
-        /// the foot bits are replaced.
+        /// the foot bits are replaced; likewise <paramref name="appearanceByte"/> for the skin colour.
         /// </summary>
-        internal static List<MemoryWrite> Changes(Player original, Player edited, int baseYear, int footByte)
+        internal static List<MemoryWrite> Changes(Player original, Player edited, int baseYear, int footByte, int appearanceByte = 0)
         {
             var writes = new List<MemoryWrite>();
             uint record = A3Addresses.PlayerArray + (uint)(edited.Index * A3Addresses.PlayerSize);
@@ -155,9 +164,26 @@ namespace A3_Trainer.Controller
                     writes.Add(new MemoryWrite(compact + CompactOffset.ContractEnd, new[] { (byte)(edited.ContractEndYear - baseYear) }));
             }
 
+            // The game shows a loaded player's birth date from the working copy (a dword copy of
+            // the record's day, month, year); the copy isn't written back, so both are set.
+            if (!edited.BirthDate.Equals(original.BirthDate))
+            {
+                byte[] date = new byte[4];
+                date[0] = (byte)edited.BirthDate.Day;
+                date[1] = (byte)edited.BirthDate.Month;
+                BitConverter.GetBytes((ushort)edited.BirthDate.Year).CopyTo(date, 2);
+                writes.Add(new MemoryWrite(record + RecordOffset.BirthDay, date));
+                if (compact != 0)
+                    writes.Add(new MemoryWrite(compact + CompactOffset.BirthDate, (byte[])date.Clone()));
+            }
+
             // The foot only exists in the record (bits 2-3); the other bits of that byte stay.
             if (edited.Foot != original.Foot)
                 writes.Add(new MemoryWrite(record + RecordOffset.FootAndReputation, new[] { (byte)((footByte & ~0x0C) | ((edited.Foot & 3) << 2)) }));
+
+            // The skin colour only exists in the record (bits 0-2 of the appearance byte).
+            if (edited.SkinColor != original.SkinColor)
+                writes.Add(new MemoryWrite(record + RecordOffset.Appearance, new[] { (byte)((appearanceByte & ~7) | (edited.SkinColor & 7)) }));
 
             if (original.IsInjured && !edited.IsInjured || original.Groggy && !edited.Groggy)
                 writes.AddRange(HealWrites(record, compact));

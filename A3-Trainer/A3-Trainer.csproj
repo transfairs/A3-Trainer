@@ -77,7 +77,13 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Properties\VersionInfo.cs" />
     <Compile Include="View\A3Theme.cs" />
+    <Compile Include="View\AboutView.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
     <Compile Include="View\ClubView.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="View\ManagerView.cs">
       <SubType>UserControl</SubType>
     </Compile>
     <Compile Include="View\PlayerView.cs">
@@ -86,7 +92,7 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="Resources\A3-Trainer-Logo.ico" />
-    <None Include="Resources\A3-Trainer-Logo.png" />
+    <EmbeddedResource Include="Resources\A3-Trainer-Logo.png" LogicalName="A3_Trainer.Resources.A3-Trainer-Logo.png" />
   </ItemGroup>
   <Import Project="..\Shared\AnstossTrainer.Shared.projitems" Label="Shared" />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

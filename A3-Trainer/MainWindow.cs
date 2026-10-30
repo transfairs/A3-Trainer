@@ -5,7 +5,6 @@ using AnstossTrainer.Shared;
 using System;
 using System.Diagnostics;
 using System.Drawing;
-using System.Reflection;
 using System.Windows.Forms;
 
 namespace A3_Trainer
@@ -21,11 +20,14 @@ namespace A3_Trainer
         private readonly A3Game game;
         private readonly PlayerView playerView;
         private readonly ClubView clubView;
+        private readonly ManagerView managerView;
+        private readonly AboutView aboutView = new AboutView();
         private readonly Label waiting;
 
-        private enum Page { Squad, Opponent, Club }
+        private enum Page { Squad, Opponent, Club, Manager }
         private Page page = Page.Squad;
 
+        /// <summary>Builds the menu, the views and the waiting screen and starts watching for the game.</summary>
         internal MainWindow()
         {
             this.Text = "A3-Trainer";
@@ -41,11 +43,13 @@ namespace A3_Trainer
             this.opponentItem = new ToolStripMenuItem("Nächster Gegner", null, (s, e) => this.Show(Page.Opponent));
             players.DropDownItems.Add(this.opponentItem);
             var club = new ToolStripMenuItem("Verein");
-            club.DropDownItems.Add("Verein und Manager", null, (s, e) => this.Show(Page.Club));
+            club.DropDownItems.Add("Eigener Verein", null, (s, e) => this.Show(Page.Club));
+            var manager = new ToolStripMenuItem("Trainer");
+            manager.DropDownItems.Add("Manager (Spieler 1)", null, (s, e) => this.Show(Page.Manager));
             var help = new ToolStripMenuItem("?");
             help.DropDownItems.Add("Onlinehilfe", null, (s, e) => this.OpenHelp());
             help.DropDownItems.Add("Über", null, (s, e) => this.ShowAbout());
-            this.menu.Items.AddRange(new ToolStripItem[] { players, club, help });
+            this.menu.Items.AddRange(new ToolStripItem[] { club, players, manager, help });
             A3Theme.ApplyMenu(this.menu);
 
             this.Controls.Add(this.content);
@@ -55,9 +59,10 @@ namespace A3_Trainer
             this.game = new A3Game(new LiveGameMemory(this.memory));
             this.playerView = new PlayerView(this.memory, this.game);
             this.clubView = new ClubView(this.memory, this.game);
+            this.managerView = new ManagerView(this.memory, this.game);
             this.waiting = new Label
             {
-                Text = "Warte auf Anstoss 3 …\n\nBitte das Spiel starten und einen Spielstand laden.\nUnterstützt wird Version 1.10 (ungeschützte EXE).",
+                Text = "Warte auf Anstoss 3 …\n\nBitte das Spiel starten und einen Spielstand laden.\nUnterstützt wird Version 1.40.",
                 TextAlign = ContentAlignment.MiddleCenter,
                 Dock = DockStyle.Fill,
                 BackColor = A3Theme.Panel,
@@ -100,8 +105,12 @@ namespace A3_Trainer
             switch (target)
             {
                 case Page.Club:
-                    this.ShowScreen(this.clubView, "Verein und Manager");
+                    this.ShowScreen(this.clubView, "Verein: " + this.game.ClubName(own.Value));
                     this.clubView.RefreshValues();
+                    break;
+                case Page.Manager:
+                    this.ShowScreen(this.managerView, "Manager (Spieler 1)");
+                    this.managerView.RefreshValues();
                     break;
                 case Page.Opponent:
                     ClubKey? opponent = this.game.NextOpponent(own.Value);
@@ -120,11 +129,14 @@ namespace A3_Trainer
         /// <summary>The A3 page of the project's online help (deployed from help/ by pages.yml).</summary>
         internal const string HelpUrl = "https://transfairs.github.io/A3-Trainer/";
 
+        /// <summary>Opens the URL in the browser; tests replace it to avoid launching one.</summary>
+        internal Action<string> StartProcess = url => Process.Start(url);
+
         private void OpenHelp()
         {
             try
             {
-                Process.Start(HelpUrl);
+                this.StartProcess(HelpUrl);
             }
             catch (Exception ex)
             {
@@ -134,15 +146,7 @@ namespace A3_Trainer
             }
         }
 
-        private void ShowAbout()
-        {
-            var info = (AssemblyInformationalVersionAttribute)Attribute.GetCustomAttribute(
-                Assembly.GetExecutingAssembly(), typeof(AssemblyInformationalVersionAttribute));
-            string version = info?.InformationalVersion ?? "";
-            MessageBox.Show(this,
-                $"A3-Trainer {version}\n\nProof of Concept für Anstoss 3 v1.10 (ungeschützte EXE).\n" +
-                "Teilt sich das Grundgerüst mit dem A2G-Trainer.",
-                "Über", MessageBoxButtons.OK, MessageBoxIcon.Information);
-        }
+        // Needs no running game, so it bypasses Show(Page) and leaves the remembered page alone.
+        private void ShowAbout() => this.ShowScreen(this.aboutView, "Über");
     }
 }

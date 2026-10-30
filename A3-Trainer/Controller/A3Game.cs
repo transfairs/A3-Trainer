@@ -16,6 +16,7 @@ namespace A3_Trainer.Controller
 
         private readonly IGameMemory memory;
 
+        /// <summary>Creates the game access on top of <paramref name="memory"/>.</summary>
         internal A3Game(IGameMemory memory)
         {
             this.memory = memory;
@@ -181,12 +182,32 @@ namespace A3_Trainer.Controller
             return pointer == 0 ? "" : this.ReadString(pointer, 32);
         }
 
+        /// <summary>The country names by country number (the nationality values), up to the first unreadable one.</summary>
+        internal List<string> ReadCountryNames()
+        {
+            var names = new List<string>();
+            byte[] pointers = this.memory.Read(A3Addresses.CountryNames, A3Addresses.CountrySlots * 4);
+            if (pointers == null)
+                return names;
+
+            for (int i = 0; i < A3Addresses.CountrySlots; i++)
+            {
+                uint pointer = BitConverter.ToUInt32(pointers, i * 4);
+                string name = pointer == 0 ? "" : this.ReadString(pointer, 32);
+                if (name.Length == 0 && i > 0)
+                    break;
+                names.Add(name);
+            }
+            return names;
+        }
+
         /// <summary>Writes every change between the two states of a player (see PlayerCodec.Changes).</summary>
         internal void SavePlayer(Player original, Player edited)
         {
             uint record = A3Addresses.PlayerArray + (uint)(edited.Index * A3Addresses.PlayerSize);
             byte[] foot = this.memory.Read(record + RecordOffset.FootAndReputation, 1);
-            foreach (MemoryWrite write in PlayerCodec.Changes(original, edited, this.BaseYear(), foot != null ? foot[0] : 0))
+            byte[] appearance = this.memory.Read(record + RecordOffset.Appearance, 1);
+            foreach (MemoryWrite write in PlayerCodec.Changes(original, edited, this.BaseYear(), foot != null ? foot[0] : 0, appearance != null ? appearance[0] : 0))
                 this.memory.Write(write.Address, write.Data);
         }
 

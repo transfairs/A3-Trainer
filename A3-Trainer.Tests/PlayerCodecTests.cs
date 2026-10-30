@@ -119,6 +119,51 @@ namespace A3_Trainer.Tests
         }
 
         [Fact]
+        public void Changes_BirthDate_IsWrittenToRecordAndWorkingCopy()
+        {
+            Player original = PlayerCodec.FromRecord(HuhnRecord(), 0, 1039);
+            original.CacheEntry = 0x065C11C8;
+            Player edited = original.Clone();
+            edited.BirthDate = new GameDate(1970, 7, 16);
+
+            var writes = PlayerCodec.Changes(original, edited, BaseYear, 0x87);
+
+            byte[] date = { 16, 7, 0xB2, 0x07 }; // 16.7.1970
+            Assert.Equal(2, writes.Count);
+            Assert.Contains(writes, w => w.Address == Record(1039) + RecordOffset.BirthDay && w.Data.SequenceEqual(date));
+            Assert.Contains(writes, w => w.Address == 0x065C11C8 + 8 + CompactOffset.BirthDate && w.Data.SequenceEqual(date));
+        }
+
+        [Fact]
+        public void Changes_NationalityAndSkin_GoToTheRightPlaces()
+        {
+            Player original = PlayerCodec.FromRecord(HuhnRecord(), 0, 1039);
+            original.CacheEntry = 0x065C11C8;
+            Player edited = original.Clone();
+            edited.Nationality = 58;
+            edited.SecondNationality = 8;
+            edited.SkinColor = 3;
+
+            var writes = PlayerCodec.Changes(original, edited, BaseYear, 0x87, 0xA8);
+
+            Assert.Contains(writes, w => w.Address == Record(1039) + RecordOffset.Nationality && w.Data.SequenceEqual(new byte[] { 58 }));
+            Assert.Contains(writes, w => w.Address == 0x065C11C8 + 8 + CompactOffset.Nationality && w.Data.SequenceEqual(new byte[] { 58 }));
+            Assert.Contains(writes, w => w.Address == Record(1039) + RecordOffset.SecondNationality && w.Data.SequenceEqual(new byte[] { 8 }));
+            Assert.Contains(writes, w => w.Address == Record(1039) + RecordOffset.Appearance && w.Data.SequenceEqual(new byte[] { 0xAB })); // other bits stay
+            Assert.Equal(4, writes.Count);
+        }
+
+        [Theory]
+        [InlineData(2000, 2, 29, true)]
+        [InlineData(1999, 2, 29, false)]
+        [InlineData(1969, 6, 31, false)]
+        [InlineData(0, 0, 0, false)]
+        public void GameDate_Exists_ChecksTheCalendar(int year, int month, int day, bool exists)
+        {
+            Assert.Equal(exists, new GameDate(year, month, day).Exists);
+        }
+
+        [Fact]
         public void Changes_WithWorkingCopy_WritesRecordAndCopy()
         {
             Player original = PlayerCodec.FromRecord(HuhnRecord(), 0, 1039);
@@ -177,6 +222,34 @@ namespace A3_Trainer.Tests
             Assert.Contains(writes, w => w.Address == Record(1039) + RecordOffset.Groggy && w.Data.All(b => b == 0));
             Assert.Contains(writes, w => w.Address == 0x2000 + 8 + CompactOffset.InjuryDays && w.Data.All(b => b == 0));
             Assert.Contains(writes, w => w.Address == 0x2000 + 8 + CompactOffset.Groggy && w.Data.All(b => b == 0));
+        }
+
+        [Fact]
+        public void Changes_ToAPlayerWhoStaysInjured_DoesNotHeal()
+        {
+            Player original = PlayerCodec.FromRecord(HuhnRecord(), 0, 1039);
+            original.CacheEntry = 0x2000;
+            original.InjuryDays = 14;
+            Player edited = original.Clone();
+            edited.ShirtNumber = 7;
+
+            var writes = PlayerCodec.Changes(original, edited, BaseYear, 0x87);
+
+            Assert.DoesNotContain(writes, w => w.Address == Record(1039) + RecordOffset.InjuryTo);
+        }
+
+        [Fact]
+        public void Changes_HealingAGroggyPlayerWithoutWorkingCopy_ClearsOnlyTheRecord()
+        {
+            Player original = PlayerCodec.FromRecord(HuhnRecord(), 0, 1039);
+            original.Groggy = true;
+            Player edited = original.Clone();
+            edited.Groggy = false;
+
+            var writes = PlayerCodec.Changes(original, edited, BaseYear, 0x87);
+
+            Assert.Equal(5, writes.Count);
+            Assert.All(writes, w => Assert.InRange(w.Address, Record(1039), Record(1040) - 1));
         }
 
         private static uint Record(int index) => A3Addresses.PlayerArray + (uint)(index * A3Addresses.PlayerSize);

@@ -2,27 +2,25 @@
 
 <img src="help/img/logo.png" width="96" height="96" alt="A3-Trainer logo">
 
-# A3-Trainer (Proof of Concept)
+# A3-Trainer
 
-[![⬇️ Download](https://img.shields.io/badge/⬇️_Download-neueste_Version-73CB39?style=for-the-badge)](https://github.com/transfairs/A3-Trainer/releases/latest/download/A3-Trainer-Latest.zip)
-[![📖 Onlinehilfe](https://img.shields.io/badge/📖_Onlinehilfe-A3--Trainer-4A9A21?style=for-the-badge)](https://transfairs.github.io/A3-Trainer/)
+[![⬇️ Download](https://img.shields.io/badge/⬇️_Download-latest_version-73CB39?style=for-the-badge)](https://github.com/transfairs/A3-Trainer/releases/latest/download/A3-Trainer-Latest.zip)
+[![📖 Online help](https://img.shields.io/badge/📖_Online_help-A3--Trainer-4A9A21?style=for-the-badge)](https://transfairs.github.io/A3-Trainer/)
 
 </div>
 
-Trainer für **Anstoss 3**, gebaut auf demselben Grundgerüst wie der
-[A2G-Trainer](https://github.com/transfairs/A2G-Trainer). Stand: erster PoC – Spieler, Verein und Manager.
+Trainer for **Anstoss 3**. Edits players, club and manager.
 
-## Voraussetzungen
+## Requirements
 
-- **Anstoss 3 Version 1.10 mit ungeschützter `anstoss3.exe`** (4.980.803 Bytes). Nur in dieser
-  EXE liegen alle Spieldaten an festen Adressen. Die mit VOB ProtectCD geschützten EXEs (1.0 und
-  die geschützte 1.10) erkennt der Trainer und meldet sie als nicht unterstützt.
-- Ein geladener Spielstand (Karriere). Im Hauptmenü wartet der Trainer.
+- **Anstoss 3 version 1.40**. The exes on the CD (1.0 and the official patch 1.10) are separate
+  builds with a different memory layout; the trainer reports them as unsupported.
+- A loaded save game (career). In the game's main menu the trainer waits.
 
-Damit das Spiel unter Windows 10/11 überhaupt startet:
+To get the game running on Windows 10/11 at all:
 
-- `gl.cfg` im Spielordner (wird sonst vom 3D-Setup `SGLSetup.exe` angelegt; ohne sie beendet sich
-  das Spiel kommentarlos), z. B. Direct3D im Fenster:
+- `gl.cfg` in the game folder (normally written by the 3D setup `SGLSetup.exe`; without it the
+  game quits silently), e.g. Direct3D in a window:
   ```
   DLL = d3d_dll.dll
   ColorDepth = 16
@@ -36,86 +34,86 @@ Damit das Spiel unter Windows 10/11 überhaupt startet:
   TexelCenter = 0
   END
   ```
-- Kompatibilitätsmodus **„Mit 16-Bit-Farbe ausführen“** für `anstoss3.exe` (sonst bleibt das
-  Fenster weiß).
+- Compatibility mode **"Reduced color mode: 16-bit"** („Mit 16-Bit-Farbe ausführen“) for
+  `anstoss3.exe` (otherwise the window stays white).
 
-## Was geht
+## Features
 
-**Spieler** (eigener Kader und nächster Gegner):
-Hauptposition, Nebenpositionen, Stärke (1–13), Talent, Kondition, Frische, starker Fuß,
-Rückennummer, Fähigkeiten (Feldspieler und Torhüter getrennt), Eigenschaften, Charakter,
-Festgehalt, Auflaufprämie, Vertragsende, Verletzung heilen. Alter und Motivation werden angezeigt.
+**Players** (own squad and next opponent), laid out in the tabs of the game's data editor:
+date of birth, strength, talent, strong foot, shirt number, nationality and second nationality,
+skin colour, main and secondary positions, skills ("+" and "−", outfield players and goalkeepers
+separately), traits, character, fitness, freshness, heal injury, salary, appearance bonus,
+contract end. Age, motivation and crowd standing (favourite/hate figure) are shown read-only.
 
-**Verein und Manager** (Spieler 1): Vermögen am Saisonbeginn (bestimmt das Bankguthaben),
-privates Vermögen des Managers.
+**Club** (player 1): wealth at the start of the season (determines the bank balance).
+**Manager** (player 1): private wealth.
 
-**Cheat-Engine-Tabelle** `A3-Trainer.ct` (liegt jedem Release bei): Manager, Vermögen am
-Saisonbeginn und Basisjahr als feste Einträge. Das Skript „Kader (eigener Verein und nächster
-Gegner)“ liest beim Aktivieren beide Kader ein und legt je Spieler die Felder des Trainers an
-(Positionen, Talent und Fuß als Auswahl, Fähigkeiten, Eigenschaften und Charakter als einzelne
-Bits). Bei geladenen Spielern zeigen die Einträge auf die Arbeitskopie, die das Spiel beim
-Speichern zurückschreibt. Solange das Skript aktiv ist, prüft es alle zwei Sekunden, ob sich
-Spielstand, Kader oder Gegner geändert haben, und baut die Einträge dann neu auf; aufgeklappte
-Gruppen bleiben offen. Eine feste Kaderliste wie bei A2G (Einträge ohne Skript) ist für A3 noch
-nicht gefunden.
+**Cheat Engine table** `A3-Trainer.ct` (included in every release): manager, wealth at the start
+of the season and base year as fixed entries. The script „Kader (eigener Verein und nächster
+Gegner)“ reads both squads when activated and creates the trainer's fields for every player
+(positions, talent, foot, nationalities and skin colour as drop-downs, skills "+"/"−", traits and
+character as single bits). For loaded players the entries point to the working copy the game
+writes back when saving. While the script is active it checks every two seconds whether the save
+game, squad or opponent has changed and rebuilds the entries; expanded groups stay open. A fixed
+squad list as in A2G (entries without a script) hasn't been found for A3 yet.
 
-## Wie es funktioniert (kurz)
+## How it works (short)
 
-- Spielerdatensätze `CDatenSpieler` liegen fest ab `0x00C02550` (0x354 Byte je Spieler).
-- Für die Spieler der geladenen Mannschaften (eigener Kader, nächster Gegner) arbeitet das Spiel
-  auf **Arbeitskopien** („CSpieler“-Cache, Baum ab `0x00A3D3C4`) und schreibt sie beim Speichern
-  in die Datensätze zurück. Der Trainer schreibt deshalb in Kopie **und** Datensatz.
-- Alle Adressen und Feldbedeutungen stehen in `Controller/A3Addresses.cs`.
+- Player records `CDatenSpieler` are at a fixed address from `0x00C02550` (0x354 bytes per player).
+- For the players of the loaded teams (own squad, next opponent) the game works on **working
+  copies** („CSpieler“ cache, tree at `0x00A3D3C4`) and writes them back to the records when
+  saving. The trainer therefore writes to the copy **and** the record.
+- All addresses and field meanings are in `Controller/A3Addresses.cs`.
 
-## Projektaufbau
+## Project layout
 
-- `A3-Trainer/` (Trainer), `A3-Trainer.Tests/` (xUnit), `help/` (Onlinehilfe).
-- `Shared/` ist ein **Git-Submodule** auf
-  [Anstoss-Trainer-Shared](https://github.com/transfairs/Anstoss-Trainer-Shared): Speicherzugriff,
-  Logger, Fenster- und Ansichtsbasis, Spielbeobachter, Skalierung, Manifest, Hilfe-CSS/-JS und die
-  Changelog-Skripte, gemeinsam mit dem A2G-Trainer. Klonen mit
+- `A3-Trainer/` (trainer), `A3-Trainer.Tests/` (xUnit), `help/` (online help, German).
+- `Shared/` is a **git submodule** pointing to
+  [Anstoss-Trainer-Shared](https://github.com/transfairs/Anstoss-Trainer-Shared): memory access,
+  logger, window and view base, game observer, scaling, manifest, help CSS/JS and the changelog
+  scripts, shared with the A2G-Trainer. Clone with
   `git clone --recursive https://github.com/transfairs/A3-Trainer.git`.
-- Änderungen an Shared kommen automatisch an: Die CI des Shared-Repos testet sie mit beiden
-  Trainern, danach zieht `.github/workflows/shared-update.yml` den neuen Stand nach (bei grünen
-  Tests direkt auf master, sonst als Pull Request). Ohne Anstoß läuft das Update täglich.
+- Changes to Shared arrive automatically: the Shared repo's CI tests them with both trainers, then
+  `.github/workflows/shared-update.yml` pulls in the new state (straight to master when the tests
+  pass, otherwise as a pull request). Without a trigger the update runs daily.
 
-## Bauen und testen
+## Build and test
 
-Wie beim A2G-Trainer mit der vollen Visual-Studio-MSBuild (kein reines `dotnet build`):
+As with the A2G-Trainer, use the full Visual Studio MSBuild (plain `dotnet build` doesn't work):
 ```bash
 msbuild A3-Trainer.Tests/A3-Trainer.Tests.csproj /t:Restore,Build /p:Configuration=Debug
 dotnet test A3-Trainer.Tests/A3-Trainer.Tests.csproj --no-build --no-restore
 ```
 
-## Hilfe, Release
+## Help, release
 
-- Onlinehilfe: [help/](help/index.html), veröffentlicht unter
-  <https://transfairs.github.io/A3-Trainer/> (im Trainer: `? → Onlinehilfe`).
-  `pages.yml` kopiert beim Deploy `style.css` und `script.js` aus `Shared/help/` daneben.
-- Release: Tag `vX.Y.Z` pushen, `.github/workflows/release.yml` baut, testet und veröffentlicht
-  `A3-Trainer-<tag>.exe`, `A3-Trainer-<tag>.ct` und `A3-Trainer-Latest.zip` (Trainer, Tabelle,
-  Changelog). Vorher den Pre-Release-Check laufen lassen.
-- Die Adressen in `A3-Trainer.ct` (Lua-Tabellen `A`, `R`, `C`, Namenslisten, feste Einträge)
-  prüft `A3-Trainer.Tests/CheatTableTests.cs` gegen `A3Addresses.cs` und `Tables.cs`. Die Datei
-  ohne BOM speichern, sonst lädt Cheat Engine sie nicht.
-- Fester Download der neuesten Version:
+- Online help: [help/](help/index.html), published at
+  <https://transfairs.github.io/A3-Trainer/> (in the trainer: `? → Onlinehilfe`).
+  On deploy, `pages.yml` copies `style.css` and `script.js` from `Shared/help/` next to it.
+- Release: push a `vX.Y.Z` tag; `.github/workflows/release.yml` builds, tests and publishes
+  `A3-Trainer-<tag>.exe`, `A3-Trainer-<tag>.ct` and `A3-Trainer-Latest.zip` (trainer, table,
+  changelog). Run the pre-release check first.
+- `A3-Trainer.Tests/CheatTableTests.cs` checks the addresses in `A3-Trainer.ct` (Lua tables `A`,
+  `R`, `C`, name lists, fixed entries) against `A3Addresses.cs` and `Tables.cs`. Save the file
+  without a BOM, otherwise Cheat Engine won't load it.
+- Permanent download link for the latest version:
   <https://github.com/transfairs/A3-Trainer/releases/latest/download/A3-Trainer-Latest.zip>
-- Analysematerial (Ghidra-Projekt, Dumps, Strukturnotizen `re/anstoss3/STRUKTUREN.md`) liegt lokal
-  in `re/` und wird nicht versioniert (abgeleitet aus dem Spielcode).
+- Analysis material (Ghidra project, dumps, structure notes `re/anstoss3/STRUKTUREN.md`) is kept
+  locally in `re/` and not versioned (derived from the game code).
 
-## Haftungsausschluss
+## Disclaimer
 
-Dieses Tool greift direkt auf den Arbeitsspeicher des Spiels zu. Nutzung auf eigene Gefahr. Das
-Projekt steht in keiner Verbindung zu Ascaron oder den Entwicklern von *Anstoss 3*.
+This tool accesses the game's memory directly. Use at your own risk. The project is not affiliated
+with Ascaron or the developers of *Anstoss 3*.
 
-## Bekannte Grenzen
+## Known limitations
 
-- **Motivation** errechnet das Spiel bei jeder Anzeige aus sieben Faktoren neu
-  (`FUN_0070147E`); ein geschriebener Wert hält nicht. Deshalb nur Anzeige.
-- Eine im Spiel **geöffnete Spielerinfo** schreibt beim Schließen ihre eigene Kopie zurück.
-  Vor dem Speichern im Trainer die Spielerinfo des Spielers im Spiel schließen.
-- Kondition: Das Spiel zeigt beim Torwart einen niedrigeren Wert als gespeichert (Anzeigeformel
-  noch nicht entschlüsselt).
-- Manager und Finanzen: nur Spieler 1 (Einzelspieler-Karriere).
-- Sperren, Fähigkeitswerte im Detail, Vereine anderer Länder als Deutschland: noch nicht geprüft.
-- Die Oberfläche ist im Code aufgebaut (kein Designer).
+- **Motivation** is recalculated by the game from seven factors every time it is shown
+  (`FUN_0070147E`); a written value doesn't stick. Hence read-only.
+- A **player info window open in the game** writes its own copy back when it is closed. Close the
+  player's info window in the game before saving in the trainer.
+- Fitness: for goalkeepers the game shows a lower value than the stored one (display formula not
+  decoded yet).
+- Manager and finances: player 1 only (single-player career).
+- Suspensions, detailed skill values, clubs from countries other than Germany: not checked yet.
+- The UI is built in code (no designer).

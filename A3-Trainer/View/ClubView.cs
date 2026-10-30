@@ -7,23 +7,21 @@ using System.Windows.Forms;
 
 namespace A3_Trainer.View
 {
-    /// <summary>Own club and human manager 1: names, money.</summary>
+    /// <summary>Own club: name, city, money.</summary>
     internal sealed class ClubView : TrainerView
     {
         private readonly A3Game game;
 
-        private readonly TextBox clubName = ReadOnly();
-        private readonly TextBox clubCity = ReadOnly();
+        private readonly TextBox clubName = new TextBox { ReadOnly = true };
+        private readonly TextBox clubCity = new TextBox { ReadOnly = true };
         private readonly NumericUpDown seasonStartMoney = Money();
-        private readonly TextBox managerName = ReadOnly();
-        private readonly TextBox managerSalary = ReadOnly();
-        private readonly NumericUpDown privateMoney = Money();
         private readonly Button save = new Button { Text = "Speichern" };
         private readonly Button reload = new Button { Text = "Neu laden" };
         private readonly Label status = new Label();
 
         private ClubInfo shown;
 
+        /// <summary>Creates the club page, reading through <paramref name="game"/>.</summary>
         internal ClubView(ProcessMemory memory, A3Game game) : base(memory)
         {
             this.game = game;
@@ -51,25 +49,11 @@ namespace A3_Trainer.View
             ClubRow("Vermögen Saisonbeginn (DM)", this.seasonStartMoney);
             this.Controls.Add(club);
 
-            var manager = new GroupBox { Text = "Manager (Spieler 1)", Bounds = new Rectangle(8, 148, 614, 110) };
-            y = 22;
-            void ManagerRow(string caption, Control input)
-            {
-                manager.Controls.Add(new Label { Text = caption, Bounds = new Rectangle(12, y + 3, 170, 18) });
-                input.SetBounds(190, y, 160, 21);
-                manager.Controls.Add(input);
-                y += 28;
-            }
-            ManagerRow("Name", this.managerName);
-            ManagerRow("Festgehalt (DM pro Jahr)", this.managerSalary);
-            ManagerRow("Privates Vermögen (DM)", this.privateMoney);
-            this.Controls.Add(manager);
-
-            this.save.SetBounds(8, 266, 110, 25);
+            this.save.SetBounds(8, 148, 110, 25);
             this.save.Click += (s, e) => this.Save();
-            this.reload.SetBounds(124, 266, 110, 25);
+            this.reload.SetBounds(124, 148, 110, 25);
             this.reload.Click += (s, e) => this.RefreshValues();
-            this.status.SetBounds(240, 270, 380, 20);
+            this.status.SetBounds(240, 152, 380, 20);
             this.Controls.AddRange(new Control[] { this.save, this.reload, this.status });
         }
 
@@ -87,10 +71,7 @@ namespace A3_Trainer.View
 
             this.clubName.Text = this.shown.Name;
             this.clubCity.Text = this.shown.City;
-            SetMoney(this.seasonStartMoney, this.shown.SeasonStartMoney);
-            this.managerName.Text = (this.shown.ManagerFirstName + " " + this.shown.ManagerLastName).Trim();
-            this.managerSalary.Text = this.shown.ManagerSalary.ToString("N0");
-            SetMoney(this.privateMoney, this.shown.ManagerPrivateMoney);
+            this.seasonStartMoney.Value = this.shown.SeasonStartMoney;
             this.status.Text = "";
         }
 
@@ -99,35 +80,29 @@ namespace A3_Trainer.View
             if (this.shown == null || !this.IsGameRunning())
                 return;
 
-            var edited = new ClubInfo
-            {
-                SeasonStartMoney = (int)this.seasonStartMoney.Value,
-                ManagerPrivateMoney = (int)this.privateMoney.Value,
-            };
+            ClubInfo edited = this.shown.Clone();
+            edited.SeasonStartMoney = (int)this.seasonStartMoney.Value;
             try
             {
                 this.game.SaveClubInfo(this.shown, edited);
-                Logger.Debug("Verein/Manager gespeichert");
+                Logger.Debug("Verein gespeichert");
                 this.RefreshValues();
                 this.status.Text = "Gespeichert";
             }
             catch (Exception ex)
             {
-                Logger.Error("Verein/Manager konnte nicht gespeichert werden", ex);
+                Logger.Error("Verein konnte nicht gespeichert werden", ex);
                 this.status.Text = "Fehler beim Speichern";
             }
         }
 
-        private static TextBox ReadOnly() => new TextBox { ReadOnly = true };
-
-        private static NumericUpDown Money() => new NumericUpDown
+        /// <summary>A money input: whole DM, thousands separators, steps of 100,000.</summary>
+        internal static NumericUpDown Money() => new NumericUpDown
         {
             Minimum = int.MinValue,
             Maximum = int.MaxValue,
             ThousandsSeparator = true,
             Increment = 100000,
         };
-
-        private static void SetMoney(NumericUpDown number, int value) => number.Value = value;
     }
 }

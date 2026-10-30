@@ -21,7 +21,6 @@
 
   <div class="menustrip">
     <button data-target="start">Start</button>
-    <button data-target="einrichtung">Spiel einrichten</button>
     <button data-target="spieler">Spieler</button>
     <button data-target="verein">Verein &amp; Manager</button>
     <button data-target="faq">Fehlerbehebung</button>
@@ -36,7 +35,6 @@
         <h2>Inhalt</h2>
         <ul>
           <li><a href="#start" data-target="start">Erste Schritte</a></li>
-          <li><a href="#einrichtung" data-target="einrichtung">Anstoss 3 unter Windows 10/11</a></li>
           <li><a href="#spieler" data-target="spieler">Spieler</a></li>
           <li><a href="#verein" data-target="verein">Verein &amp; Manager</a></li>
           <li><a href="#faq" data-target="faq">Fehlerbehebung / FAQ</a></li>
@@ -49,7 +47,7 @@
       <section class="panel" id="panel-start">
         <div class="panel-header">
           <h1>Willkommen zum A3-Trainer</h1>
-          <p class="lead">Ein Trainer (Editor) für <strong>Anstoss 3</strong> in der Version 1.10, gebaut auf demselben Grundgerüst wie der <a href="https://transfairs.github.io/A2G-Trainer/">A2G-Trainer</a>. Noch ein <strong>Proof of Concept</strong>: Spieler, Verein und Manager.</p>
+          <p class="lead">Ein Trainer (Editor) für <strong>Anstoss 3</strong> in der Version 1.40, gebaut auf demselben Grundgerüst wie der <a href="https://transfairs.github.io/A2G-Trainer/">A2G-Trainer</a>. Bearbeitet Spieler, Verein und Manager.</p>
         </div>
         <div class="subpanel active" data-sub="only">
 
@@ -68,7 +66,6 @@
           <fieldset class="groupbox">
             <legend>So geht's los</legend>
             <ol>
-              <li>Richten Sie Anstoss 3 einmalig so ein, dass es unter Windows 10/11 läuft, siehe <a href="#einrichtung" data-jump="einrichtung">Spiel einrichten</a>.</li>
               <li>Starten Sie <strong>Anstoss 3</strong> und laden Sie einen Spielstand (Karriere).</li>
               <li>Starten Sie den <strong>A3-Trainer</strong>. Die Reihenfolge spielt keine Rolle, der Trainer erkennt das laufende Spiel automatisch und zeigt Ihren Kader.</li>
               <li>Wählen Sie links einen Spieler, ändern Sie die Werte und klicken Sie auf <span class="btn-tag">Speichern</span>.</li>
@@ -96,47 +93,10 @@
           </fieldset>
 
           <div class="toc-grid">
-            <a class="toc-card" href="#einrichtung" data-jump="einrichtung"><h3>Spiel einrichten</h3><p>Welche Version nötig ist und wie Anstoss 3 unter Windows 10/11 startet.</p></a>
-            <a class="toc-card" href="#spieler" data-jump="spieler"><h3>Spieler</h3><p>Kader und nächsten Gegner bearbeiten: Positionen, Stärke, Fähigkeiten, Vertrag.</p></a>
+            <a class="toc-card" href="#spieler" data-jump="spieler"><h3>Spieler</h3><p>Kader und nächsten Gegner bearbeiten: Daten, Positionen, Fähigkeiten, Eigenschaften, Vertrag.</p></a>
             <a class="toc-card" href="#verein" data-jump="verein"><h3>Verein &amp; Manager</h3><p>Vereinsvermögen und privates Vermögen des Managers.</p></a>
             <a class="toc-card" href="#faq" data-jump="faq"><h3>Fehlerbehebung</h3><p>Häufige Fragen, bekannte Grenzen und die Logdatei.</p></a>
           </div>
-        </div>
-      </section>
-
-      <!-- ===================== EINRICHTUNG ===================== -->
-      <section class="panel" id="panel-einrichtung">
-        <div class="panel-header">
-          <h1>Anstoss 3 unter Windows 10/11</h1>
-          <p class="lead">Was der Trainer voraussetzt und wie das Spiel auf aktuellen Windows-Versionen startet.</p>
-        </div>
-        <div class="subpanel active" data-sub="only">
-
-          <fieldset class="groupbox">
-            <legend>Benötigte Version</legend>
-            <p>Der Trainer unterstützt <strong>Anstoss 3 Version 1.10 mit der ungeschützten <code>anstoss3.exe</code></strong> (4.980.803 Bytes). Nur in dieser EXE liegen alle Spieldaten an festen Adressen. Die mit einem Kopierschutz versehenen EXEs (1.0 und die geschützte 1.10) erkennt der Trainer und meldet sie als nicht unterstützt.</p>
-          </fieldset>
-
-          <fieldset class="groupbox">
-            <legend>3D-Einstellungen: <code>gl.cfg</code></legend>
-            <p>Ohne die Datei <code>gl.cfg</code> im Spielordner beendet sich Anstoss 3 direkt nach dem Start ohne Meldung. Normalerweise legt sie das 3D-Setup <code>SGLSetup.exe</code> an. Läuft das nicht, legen Sie sie selbst an, zum Beispiel für Direct3D im Fenster:</p>
-            <pre><code>DLL = d3d_dll.dll
-ColorDepth = 16
-FullScreen = FALSE
-
-BEGIN D3D
-forcewindow = TRUE
-TextureCacheSize = 8000000
-Driver = ""
-MipMapMode = 1
-TexelCenter = 0
-END</code></pre>
-          </fieldset>
-
-          <fieldset class="groupbox">
-            <legend>Kompatibilitätsmodus</legend>
-            <p>Bleibt das Spielfenster weiß, stellen Sie für <code>anstoss3.exe</code> unter <span class="menu-path">Eigenschaften → Kompatibilität</span> die Option <strong>„Mit 16-Bit-Farbe ausführen“</strong> ein.</p>
-          </fieldset>
         </div>
       </section>
 
@@ -144,14 +104,14 @@ END</code></pre>
       <section class="panel" id="panel-spieler">
         <div class="panel-header">
           <h1>Spieler</h1>
-          <p class="lead">Erreichbar über das Menü <span class="menu-path">Spieler</span>. Links steht die Spielerliste (verletzte Spieler in Rot), rechts die Details des gewählten Spielers in vier Registerkarten.</p>
+          <p class="lead">Erreichbar über das Menü <span class="menu-path">Spieler</span>. Links steht die Spielerliste (verletzte Spieler in Rot), rechts der gewählte Spieler in acht Registerkarten, angeordnet wie im Spieleditor von Anstoss 3.</p>
         </div>
         <div class="subtabs">
           <button data-sub="uebersicht" class="active">Übersicht</button>
-          <button data-sub="spieler">Spieler</button>
-          <button data-sub="faehigkeiten">Fähigkeiten</button>
+          <button data-sub="daten">Daten</button>
+          <button data-sub="faehigkeiten">Positionen &amp; Fähigkeiten</button>
           <button data-sub="eigenschaften">Eigenschaften</button>
-          <button data-sub="vertrag">Vertrag</button>
+          <button data-sub="vertrag">Verfassung &amp; Vertrag</button>
         </div>
 
         <div class="subpanel active" data-sub="uebersicht">
@@ -166,6 +126,7 @@ END</code></pre>
           <fieldset class="groupbox">
             <legend>Speichern</legend>
             <p><span class="btn-tag">Speichern</span> schreibt nur die Werte, die Sie geändert haben. <span class="btn-tag">Neu laden</span> liest den Kader neu aus dem Spiel, zum Beispiel nach einem Spieltag. Damit die Änderungen im Spielstand landen, speichern Sie anschließend im Spiel.</p>
+            <p>Hat das Spiel von einem Spieler gerade keine Arbeitskopie geladen (das betrifft nur Spieler außerhalb von eigenem Kader und nächstem Gegner), steht unter den Daten „Spieler nicht geladen“; die Werte kommen dann aus seinem Datensatz.</p>
           </fieldset>
 
           <div class="callout warn">
@@ -174,30 +135,44 @@ END</code></pre>
           </div>
         </div>
 
-        <div class="subpanel" data-sub="spieler">
+        <div class="subpanel" data-sub="daten">
           <fieldset class="groupbox">
-            <legend>Registerkarte „Spieler“</legend>
+            <legend>Registerkarte „Daten 1“</legend>
             <dl class="field-list">
-              <dt>Name, Geboren (Alter)</dt><dd>Nur Anzeige. Das Alter rechnet der Trainer mit dem aktuellen Spieldatum.</dd>
-              <dt>Hauptposition / Nebenpositionen</dt><dd>TO, LI, IV, LV, RV, RM, LM, DM, OM, ST. Torhüter haben eigene Fähigkeiten (siehe nächste Registerkarte).</dd>
-              <dt>Stärke (1–13)</dt><dd>Mehr als 13 verträgt das Spiel nicht: Darüber berechnet es den Marktwert falsch.</dd>
+              <dt>Name, Vorname</dt><dd>Nur Anzeige: Das Spiel führt die Namen in einer gemeinsamen Namenstabelle.</dd>
+              <dt>Künstlername</dt><dd>Noch nicht unterstützt (ausgegraut).</dd>
+              <dt>Geburtsdatum</dt><dd>Tag, Monat, Jahr. Das Alter daneben rechnet der Trainer mit dem aktuellen Spieldatum. Ein Datum, das es nicht gibt (etwa der 31.2.), speichert der Trainer nicht.</dd>
+              <dt>Stärke</dt><dd>1 bis 255 (ein Byte). Das Spiel selbst kennt nur bis 13; darüber rechnet es den Marktwert falsch.</dd>
               <dt>Talent</dt><dd>riesig, groß, mittel, klein, keins.</dd>
-              <dt>Kondition / Frische</dt><dd>0 bis 100.</dd>
-              <dt>Motivation</dt><dd>Nur Anzeige: Das Spiel berechnet sie bei jeder Anzeige neu, ein geänderter Wert würde nicht halten.</dd>
-              <dt>Starker Fuß, Rückennummer</dt><dd>Wie im Spiel.</dd>
-              <dt>Verletzung</dt><dd>Zeigt den Zustand. <span class="btn-tag">Heilen</span> macht den Spieler beim nächsten Speichern gesund.</dd>
+              <dt>Starker Fuß</dt><dd>rechts, links, beidfüßig.</dd>
+              <dt>Rückennummer</dt><dd>0 bis 99.</dd>
             </dl>
-            <img class="screenshot" src="img/squad.png" alt="Registerkarte Spieler">
+            <img class="screenshot" src="img/squad.png" alt="Spielerliste und Registerkarte Daten 1">
+          </fieldset>
+          <fieldset class="groupbox">
+            <legend>Registerkarte „Daten 2“</legend>
+            <dl class="field-list">
+              <dt>Nationalität, Zweite Nationalität</dt><dd>Die Länderliste des Spiels; bei der zweiten Nationalität steht „Keine“ für keine.</dd>
+              <dt>Hautfarbe</dt><dd>hell, dunkel, schwarz, asiatisch.</dd>
+              <dt>Haartyp, Bart, Haarfarbe, Fußballinländer, Nationalspieler, Rücktritte</dt><dd>Wie im Spieleditor angeordnet, aber noch nicht unterstützt (ausgegraut).</dd>
+            </dl>
           </fieldset>
         </div>
 
         <div class="subpanel" data-sub="faehigkeiten">
           <fieldset class="groupbox">
-            <legend>Registerkarte „Fähigkeiten“</legend>
-            <p>Feldspieler und Torhüter haben unterschiedliche Fähigkeiten. Welche Liste der Trainer zeigt, hängt von der eingestellten Hauptposition ab. Das Spiel selbst zeigt in der Spielerinfo höchstens drei Fähigkeiten an.</p>
+            <legend>Registerkarte „Positionen“</legend>
             <dl class="field-list">
-              <dt>Feldspieler</dt><dd>Kopfball, Zweikampf, Schnelligkeit, Schußkraft, Elfmeter, Freistoß, Flanken, Torinstinkt, Laufstärke, Technik, Ballzauber, Spielmacher, Viererkette, Spielübersicht, Ballhalten, Dribbling.</dd>
-              <dt>Torhüter</dt><dd>Elfmetertöter, Reflexe, Herauslaufen, Fangsicherheit, Fausten, Ballsicherheit, Schnelligkeit, Abschläge, Abwürfe.</dd>
+              <dt>Hauptposition</dt><dd>Torwart, Libero, Innenverteidiger, linker und rechter Verteidiger, defensiver, linker, rechter und offensiver Mittelfeldspieler, Stürmer.</dd>
+              <dt>Nebenposition</dt><dd>Höchstens zwei, wie im Spiel; Torhüter haben keine.</dd>
+            </dl>
+          </fieldset>
+          <fieldset class="groupbox">
+            <legend>Registerkarte „Fähigkeiten“</legend>
+            <p>Je Fähigkeit eine Spalte „+“ und eine Spalte „−“, wie im Spieleditor. Feldspieler und Torhüter haben eigene Fähigkeiten; aktiv ist die Tabelle, die zur eingestellten Hauptposition passt.</p>
+            <dl class="field-list">
+              <dt>Feldspieler</dt><dd>Kopfball, Zweikampf, Schnelligkeit, Schußkraft, Elfmeter, Freistöße, Flanken, Torinstinkt, Laufstärke, Technik, Ballzauberer, Spielmacher, Viererkette, Spielübersicht, Ballhalten, Dribbling.</dd>
+              <dt>Torwart</dt><dd>Elfmetertöter, starke Reflexe, Herauslaufen, Fangsicherheit, Fausten, Ballsicherheit, Schnelligkeit, weite Abschläge, weite Abwürfe.</dd>
             </dl>
             <img class="screenshot" src="img/skills.png" alt="Registerkarte Fähigkeiten eines Torhüters">
           </fieldset>
@@ -205,15 +180,30 @@ END</code></pre>
 
         <div class="subpanel" data-sub="eigenschaften">
           <fieldset class="groupbox">
-            <legend>Registerkarte „Eigenschaften“</legend>
+            <legend>Registerkarte „Eig. 1“</legend>
             <dl class="field-list">
-              <dt>Eigenschaften</dt><dd>Kämpfernatur, Trainingsweltmeister, Trainingsfaul, Treter, fairer Spieler, Mimose, Schlitzohr, Spezialist, Allrounder, flexibler Spieler, Schiriliebling, Heimspieler, Schönwetterspieler, Joker, Egoist, Leichtfuss.</dd>
-              <dt>Charakter</dt><dd>Führungsperson, Hitzkopf, Frohnatur, Mann ohne Nerven, Nervenbündel, Phlegma, Geldgeier, Vereinsanhänger, Musterprofi, Skandalnudel, Sensibelchen, Starallüren, Teeniestar, Unruhestifter, Leberwurst, Integrationsfigur.</dd>
+              <dt>Eigenschaften</dt><dd>Kämpfernatur, Trainingsweltmeister, trainingsfauler Spieler, Treter, fairer Spieler, Mimose, Schlitzohr, Spezialist, Allrounder, flexibler Spieler, Schiriliebling, Heimspieler, Schönwetterfußballer, Joker, Egoist, Bruder Leichtfuß.</dd>
+              <dt>Charakter</dt><dd>Führungsperson, Hitzkopf, Frohnatur, Mann ohne Nerven, Nervenbündel, Phlegmatiker, Geldgeier, Vereinsanhänger, Musterprofi, Skandalnudel, Sensibelchen, Starallüren, Teenie-Star, Unruhestifter, Leberwurst, Integrationsfigur.</dd>
+            </dl>
+          </fieldset>
+          <fieldset class="groupbox">
+            <legend>Registerkarte „Eig. 2“</legend>
+            <dl class="field-list">
+              <dt>Publikum</dt><dd>normal, Liebling oder Haßfigur. Nur Anzeige.</dd>
+              <dt>Gesundheitszustand</dt><dd>Noch nicht unterstützt (ausgegraut).</dd>
             </dl>
           </fieldset>
         </div>
 
         <div class="subpanel" data-sub="vertrag">
+          <fieldset class="groupbox">
+            <legend>Registerkarte „Verfassung“</legend>
+            <dl class="field-list">
+              <dt>Kondition / Frische</dt><dd>0 bis 100.</dd>
+              <dt>Motivation</dt><dd>Nur Anzeige: Das Spiel berechnet sie bei jeder Anzeige neu, ein geänderter Wert würde nicht halten.</dd>
+              <dt>Verletzung</dt><dd>Zeigt den Zustand. <span class="btn-tag">Heilen</span> macht den Spieler beim nächsten Speichern gesund.</dd>
+            </dl>
+          </fieldset>
           <fieldset class="groupbox">
             <legend>Registerkarte „Vertrag“</legend>
             <dl class="field-list">
@@ -229,23 +219,23 @@ END</code></pre>
       <section class="panel" id="panel-verein">
         <div class="panel-header">
           <h1>Verein &amp; Manager</h1>
-          <p class="lead">Erreichbar über <span class="menu-path">Verein → Verein und Manager</span>. Gilt für den Verein von Spieler 1.</p>
+          <p class="lead">Zwei Seiten für den Verein und den Manager von Spieler 1.</p>
         </div>
         <div class="subpanel active" data-sub="only">
           <fieldset class="groupbox">
-            <legend>Verein</legend>
+            <legend>Verein (<span class="menu-path">Verein → Eigener Verein</span>)</legend>
             <dl class="field-list">
               <dt>Name, Stadt</dt><dd>Nur Anzeige.</dd>
               <dt>Vermögen Saisonbeginn (DM)</dt><dd>Das Vermögen des Vereins zu Beginn der Saison. Das Bankguthaben im Spiel ist dieser Wert plus der Gewinn der laufenden Saison. Wer mehr Geld haben möchte, erhöht diesen Wert.</dd>
             </dl>
+            <img class="screenshot" src="img/club.png" alt="Verein">
           </fieldset>
           <fieldset class="groupbox">
-            <legend>Manager (Spieler 1)</legend>
+            <legend>Manager (<span class="menu-path">Trainer → Manager (Spieler 1)</span>)</legend>
             <dl class="field-list">
               <dt>Name, Festgehalt</dt><dd>Nur Anzeige.</dd>
               <dt>Privates Vermögen (DM)</dt><dd>Das Privatvermögen des Managers.</dd>
             </dl>
-            <img class="screenshot" src="img/club.png" alt="Verein und Manager">
           </fieldset>
         </div>
       </section>
@@ -260,7 +250,7 @@ END</code></pre>
 
           <fieldset class="groupbox">
             <legend>Der Trainer findet Anstoss 3 nicht</legend>
-            <p>Das Spiel muss laufen und eine Karriere geladen sein; im Hauptmenü wartet der Trainer. Meldet er „nicht unterstützt“, läuft eine andere EXE als die ungeschützte Version 1.10, siehe <a href="#einrichtung" data-jump="einrichtung">Spiel einrichten</a>.</p>
+            <p>Das Spiel muss laufen und eine Karriere geladen sein; im Hauptmenü wartet der Trainer. Meldet er „nicht unterstützt“, läuft eine Version von Anstoss 3, die der Trainer nicht kennt.</p>
           </fieldset>
 
           <fieldset class="groupbox">
@@ -275,7 +265,7 @@ END</code></pre>
           </fieldset>
 
           <fieldset class="groupbox">
-            <legend>Bekannte Grenzen (Proof of Concept)</legend>
+            <legend>Bekannte Grenzen</legend>
             <ul>
               <li><strong>Motivation</strong> berechnet das Spiel selbst, der Trainer zeigt sie nur an.</li>
               <li>Bei <strong>Torhütern</strong> zeigt das Spiel eine niedrigere Kondition an als gespeichert.</li>

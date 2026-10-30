@@ -23,6 +23,7 @@ namespace A3_Trainer.Controller
         private ClubKey? shownClub;
         private bool reportedUnsupported;
 
+        /// <summary>Creates the observer for <paramref name="window"/>, attaching <paramref name="memory"/> and reading through <paramref name="game"/>.</summary>
         internal A3Observer(MainWindow window, ProcessMemory memory, A3Game game)
         {
             this.window = window;
@@ -45,9 +46,9 @@ namespace A3_Trainer.Controller
             {
                 if (!this.reportedUnsupported)
                 {
-                    Logger.Warn($"Prozess {candidate.Id} ist kein unterstütztes Anstoss 3 (benötigt v1.10, ungeschützte EXE)");
+                    Logger.Warn($"Prozess {candidate.Id} ist kein unterstütztes Anstoss 3 (benötigt Version 1.40)");
                     this.reportedUnsupported = true;
-                    this.Post(() => this.window.ShowStatus("Nicht unterstützte Anstoss-3-Version (benötigt v1.10, ungeschützte EXE)."));
+                    this.Post(() => this.window.ShowStatus("Nicht unterstützte Anstoss-3-Version (benötigt Version 1.40)."));
                 }
                 return false;
             }

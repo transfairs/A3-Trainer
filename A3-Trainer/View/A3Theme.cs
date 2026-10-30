@@ -9,13 +9,20 @@ namespace A3_Trainer.View
     /// </summary>
     internal static class A3Theme
     {
-        internal static readonly Color Panel = Color.FromArgb(0xC6, 0xBA, 0xC6);      // screen background
-        internal static readonly Color List = Color.FromArgb(0xE7, 0xDF, 0xE7);       // list background
-        internal static readonly Color Field = Color.FromArgb(0xAD, 0xAA, 0xB5);      // info fields
-        internal static readonly Color Green = Color.FromArgb(0x73, 0xCB, 0x39);      // headers
-        internal static readonly Color GreenLight = Color.FromArgb(0x8C, 0xDF, 0x29); // highlights
-        internal static readonly Color GreenDark = Color.FromArgb(0x4A, 0x9A, 0x21);  // pressed/borders
-        internal static readonly Color Text = Color.FromArgb(0x39, 0x34, 0x39);       // dark text
+        /// <summary>Screen background.</summary>
+        internal static readonly Color Panel = Color.FromArgb(0xC6, 0xBA, 0xC6);
+        /// <summary>List and input background.</summary>
+        internal static readonly Color List = Color.FromArgb(0xE7, 0xDF, 0xE7);
+        /// <summary>Read-only info fields.</summary>
+        internal static readonly Color Field = Color.FromArgb(0xAD, 0xAA, 0xB5);
+        /// <summary>Headers, buttons and the menu bar.</summary>
+        internal static readonly Color Green = Color.FromArgb(0x73, 0xCB, 0x39);
+        /// <summary>Highlights.</summary>
+        internal static readonly Color GreenLight = Color.FromArgb(0x8C, 0xDF, 0x29);
+        /// <summary>Pressed buttons and borders.</summary>
+        internal static readonly Color GreenDark = Color.FromArgb(0x4A, 0x9A, 0x21);
+        /// <summary>Dark text.</summary>
+        internal static readonly Color Text = Color.FromArgb(0x39, 0x34, 0x39);
 
         /// <summary>Applies the look to a control tree (call after the controls are created).</summary>
         internal static void Apply(Control root)

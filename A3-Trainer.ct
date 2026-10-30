@@ -8,7 +8,7 @@
       <AssemblerScript>{$lua}
 if syntaxcheck then return end
 [ENABLE]
--- Anstoss 3 v1.10 (ungeschützte anstoss3.exe). Dieselben Werte wie A3-Trainer/Controller/A3Addresses.cs
+-- Anstoss 3 Version 1.40 (anstoss3.exe für Windows 8 und neuer). Dieselben Werte wie A3-Trainer/Controller/A3Addresses.cs
 -- und A3-Trainer/Model/Tables.cs; A3-Trainer.Tests/CheatTableTests.cs vergleicht sie.
 local A = {
   PlayerArray = 0x00C02550, PlayerSize = 0x354, PlayerSlots = 17006,
@@ -18,31 +18,34 @@ local A = {
   ClubArray = 0x01A72FF8, ClubSize = 0x990, ClubCount = 492, ClubIndexTable = 0x00AE5EF0,
   ClubName = 0x20, ClubCity = 0x38,
   ManagerClubCountry = 0x01B99606, ManagerClubNumber = 0x01B99608, BaseYear = 0x00B5CBCA,
+  CountryNames = 0x00AE5940, CountrySlots = 364,
 }
 -- Spielerdatensatz (CDatenSpieler)
 local R = {
   Used = 0x20, ClubCountry = 0x30, ClubNumber = 0x31, Salary = 0x150, MatchBonus = 0x152,
-  ContractEnd = 0x15C, BirthYear = 0x16A, FirstName = 0x1BE, LastName = 0x1C0,
-  Skills = 0x1C4, Traits = 0x1C8, Character = 0x1CA, Condition = 0x1CE, Freshness = 0x1D0,
+  ContractEnd = 0x15C, BirthDay = 0x168, FirstName = 0x1BE, LastName = 0x1C0,
+  Skills = 0x1C4, Skills2 = 0x1C6, Traits = 0x1C8, Character = 0x1CA, Condition = 0x1CE, Freshness = 0x1D0,
   Strength = 0x21C, Position = 0x21D, SidePosition1 = 0x21E, SidePosition2 = 0x21F,
-  Talent = 0x222, ShirtNumber = 0x223, FootAndReputation = 0x282, Morale = 0x296,
+  Appearance = 0x21A, Talent = 0x222, ShirtNumber = 0x223, Nationality = 0x225, SecondNationality = 0x226,
+  FootAndReputation = 0x282, Morale = 0x296,
 }
 -- Arbeitskopie der geladenen Spieler; das Spiel schreibt sie beim Speichern in den Datensatz zurück
 local C = {
   Strength = 0x02, Position = 0x03, SidePosition1 = 0x04, SidePosition2 = 0x05,
-  ClubCountry = 0x06, ClubNumber = 0x07, Talent = 0x08, Skills = 0x0C, Traits = 0x10,
-  Character = 0x12, Condition = 0x16, Freshness = 0x18, ShirtNumber = 0x26,
+  ClubCountry = 0x06, ClubNumber = 0x07, Talent = 0x08, Skills = 0x0C, Skills2 = 0x0E, Traits = 0x10,
+  Character = 0x12, Condition = 0x16, Freshness = 0x18, Nationality = 0x24, ShirtNumber = 0x26,
   InjuryDays = 0x2C, Groggy = 0x2F, Salary = 0x88, MatchBonus = 0x8A, ContractEnd = 0x94,
-  Morale = 0xCA,
+  Morale = 0xCA, BirthDate = 0xCC,
 }
 local T = {
   Positions = { "–", "TO", "LI", "IV", "LV", "RV", "RM", "LM", "DM", "OM", "ST" },
   Talents = { "riesig", "groß", "mittel", "klein", "keins" },
   Feet = { "–", "rechts", "links", "beidfüßig" },
-  FieldSkills = { "Kopfball", "Zweikampf", "Schnelligkeit", "Schußkraft", "Elfmeter", "Freistoß", "Flanken", "Torinstinkt", "Laufstärke", "Technik", "Ballzauber", "Spielmacher", "Viererkette", "Spielübersicht", "Ballhalten", "Dribbling" },
-  GoalkeeperSkills = { "Elfmetertöter", "Reflexe", "Herauslaufen", "Fangsicherheit", "Fausten", "Ballsicherheit", "Schnelligkeit", "Abschläge", "Abwürfe" },
-  Traits = { "Kämpfernatur", "Trainingsweltmeister", "Trainingsfaul", "Treter", "fairer Spieler", "Mimose", "Schlitzohr", "Spezialist", "Allrounder", "flexibler Spieler", "Schiriliebling", "Heimspieler", "Schönwetterspieler", "Joker", "Egoist", "Leichtfuss" },
-  Character = { "Führungsperson", "Hitzkopf", "Frohnatur", "Mann ohne Nerven", "Nervenbündel", "Phlegma", "Geldgeier", "Vereinsanhänger", "Musterprofi", "Skandalnudel", "Sensibelchen", "Starallüren", "Teeniestar", "Unruhestifter", "Leberwurst", "Integrationsfigur" },
+  SkinColors = { "hell", "dunkel", "schwarz", "asiatisch" },
+  FieldSkills = { "Kopfball", "Zweikampf", "Schnelligkeit", "Schußkraft", "Elfmeter", "Freistöße", "Flanken", "Torinstinkt", "Laufstärke", "Technik", "Ballzauberer", "Spielmacher", "Viererkette", "Spielübersicht", "Ballhalten", "Dribbling" },
+  GoalkeeperSkills = { "Elfmetertöter", "starke Reflexe", "Herauslaufen", "Fangsicherheit", "Fausten", "Ballsicherheit", "Schnelligkeit", "weite Abschläge", "weite Abwürfe" },
+  Traits = { "Kämpfernatur", "Trainingsweltmeister", "trainingsfauler Spieler", "Treter", "fairer Spieler", "Mimose", "Schlitzohr", "Spezialist", "Allrounder", "flexibler Spieler", "Schiriliebling", "Heimspieler", "Schönwetterfußballer", "Joker", "Egoist", "Bruder Leichtfuß" },
+  Character = { "Führungsperson", "Hitzkopf", "Frohnatur", "Mann ohne Nerven", "Nervenbündel", "Phlegmatiker", "Geldgeier", "Vereinsanhänger", "Musterprofi", "Skandalnudel", "Sensibelchen", "Starallüren", "Teenie-Star", "Unruhestifter", "Leberwurst", "Integrationsfigur" },
 }
 local Goalkeeper = 1
 
@@ -87,6 +90,19 @@ local function workingCopies()
     end
   end
   return copies
+end
+
+-- Ländernamen nach Ländernummer (Nationalitäten), bis zum ersten leeren Eintrag; beim Neuaufbau gelesen
+local countries, secondCountries = {}, {}
+local function readCountries()
+  countries = {}
+  for i = 0, A.CountrySlots - 1 do
+    local pointer = u32(A.CountryNames + i * 4)
+    local name = pointer == 0 and "" or text(pointer, 32)
+    if name == "" and i ~= 0 then break end
+    countries[#countries + 1] = name
+  end
+  secondCountries = { "Keine", table.unpack(countries, 2) }
 end
 
 local list = getAddressList()
@@ -149,7 +165,17 @@ local function addPlayer(parent, player, baseYear)
     dropdown(mr, T.Feet, 1)
   end)
   add(g, "Rückennummer", at + O.ShirtNumber, vtByte)
-  add(g, "Geburtsjahr", record + R.BirthYear, vtWord)
+  local birth = player.copy and at + C.BirthDate or record + R.BirthDay
+  add(g, "Geburtstag", birth, vtByte)
+  add(g, "Geburtsmonat", birth + 1, vtByte)
+  add(g, "Geburtsjahr", birth + 2, vtWord)
+  add(g, "Nationalität", at + O.Nationality, vtByte, function(mr) dropdown(mr, countries, 0) end)
+  add(g, "Zweite Nationalität", record + R.SecondNationality, vtByte, function(mr) dropdown(mr, secondCountries, 0) end)
+  add(g, "Hautfarbe", record + R.Appearance, vtBinary, function(mr)
+    mr.Binary.Startbit = 0
+    mr.Binary.Size = 3
+    dropdown(mr, T.SkinColors, 0)
+  end)
   if player.copy then
     add(g, "Verletzt (Tage)", at + C.InjuryDays, vtWord, function(mr) mr.ShowAsSigned = true end)
     add(g, "Angeschlagen", at + C.Groggy, vtByte, function(mr) dropdown(mr, { "nein", "ja" }, 0) end)
@@ -161,7 +187,9 @@ local function addPlayer(parent, player, baseYear)
   else
     add(g, "Vertrag bis", record + R.ContractEnd, vtWord)
   end
-  bits(g, "Fähigkeiten", at + O.Skills, player.position == Goalkeeper and T.GoalkeeperSkills or T.FieldSkills)
+  local skills = player.position == Goalkeeper and T.GoalkeeperSkills or T.FieldSkills
+  bits(g, "Fähigkeiten (+)", at + O.Skills, skills)
+  bits(g, "Fähigkeiten (−)", at + O.Skills2, skills)
   bits(g, "Eigenschaften", at + O.Traits, T.Traits)
   bits(g, "Charakter", at + O.Character, T.Character)
   g.Collapsed = true
@@ -211,6 +239,7 @@ local function rebuild(ownCountry, ownNumber, ownAddress)
     return
   end
 
+  readCountries()
   local copies = workingCopies()
   local baseYear = u16(A.BaseYear)
   local squads, cachedPerClub = {}, {}

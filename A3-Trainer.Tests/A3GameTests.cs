@@ -220,6 +220,20 @@ namespace A3_Trainer.Tests
         }
 
         [Fact]
+        public void ReadCountryNames_StopsAtTheFirstEmptyEntry()
+        {
+            FakeGameMemory m = Career();
+            m.Map(A3Addresses.CountryNames, A3Addresses.CountrySlots * 4);
+            m.Put(0x01000000, Encoding.GetEncoding(1252).GetBytes("Albanien\0"));
+            m.Put(0x01000100, Encoding.GetEncoding(1252).GetBytes("Deutschland\0"));
+            m.PutUInt32(A3Addresses.CountryNames, 0x01000000);
+            m.PutUInt32(A3Addresses.CountryNames + 4, 0x01000100);
+
+            Assert.Equal(new[] { "Albanien", "Deutschland" }, new A3Game(m).ReadCountryNames());
+            Assert.Empty(new A3Game(Career()).ReadCountryNames());
+        }
+
+        [Fact]
         public void ReadName_RejectsIndicesOutsideTheTable()
         {
             var game = new A3Game(Career());

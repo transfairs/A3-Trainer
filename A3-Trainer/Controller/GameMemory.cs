@@ -3,7 +3,7 @@ using AnstossTrainer.Shared;
 namespace A3_Trainer.Controller
 {
     /// <summary>
-    /// Absolute-address access to the game. Anstoss 3 v1.10 keeps all of its data at fixed
+    /// Absolute-address access to the game. Anstoss 3 v1.40 keeps all of its data at fixed
     /// addresses inside its own image, so there are no pointer chains to resolve. The interface
     /// keeps decoding and write routing testable without a running game.
     /// </summary>
@@ -21,13 +21,16 @@ namespace A3_Trainer.Controller
     {
         private readonly ProcessMemory memory;
 
+        /// <summary>Wraps the shared process memory.</summary>
         internal LiveGameMemory(ProcessMemory memory)
         {
             this.memory = memory;
         }
 
+        /// <inheritdoc/>
         public byte[] Read(uint address, int length) => this.memory.ReadBytesAtAddress(address, length);
 
+        /// <inheritdoc/>
         public void Write(uint address, byte[] data) => this.memory.WriteBytesAtAddress(address, data);
     }
 }
