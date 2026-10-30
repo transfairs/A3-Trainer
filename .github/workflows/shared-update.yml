@@ -1,10 +1,10 @@
 name: Update Shared
 
 # Moves the Shared/ submodule to the newest commit of Anstoss-Trainer-Shared and keeps it if this
-# trainer's tests pass. Started by the Shared repository's CI after every green push to its master
+# trainer's tests pass. Started by the Shared repository's CI after every green push to its main
 # (repository_dispatch), daily as a fallback, or by hand.
-#   - tests pass: the update is committed to master and the online help is redeployed
-#   - tests fail: the update goes to a branch with a pull request, master stays untouched
+#   - tests pass: the update is committed to main and the online help is redeployed
+#   - tests fail: the update goes to a branch with a pull request, main stays untouched
 on:
   repository_dispatch:
     types: [shared-updated]
@@ -74,7 +74,7 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           dotnet test ${{ env.TESTS }} --configuration Release --no-build --no-restore
 
-      - name: Commit to master
+      - name: Commit to main
         if: steps.pull.outputs.changed == 'true' && steps.test.outcome == 'success'
         shell: pwsh
         run: |
@@ -83,10 +83,10 @@ jobs:
           git add Shared
           $body = Get-Content "$env:RUNNER_TEMP/shared-log.md" -Raw
           git commit -m "Update Shared to ${{ steps.pull.outputs.new }}" -m $body
-          git push origin HEAD:master
+          git push origin HEAD:main
           # Pushes made with the workflow token don't start other workflows; start the help deploy
           # explicitly, since Shared also carries the help pages' stylesheet and script.
-          gh workflow run pages.yml --ref master
+          gh workflow run pages.yml --ref main
 
       - name: Open pull request for the failing update
         if: steps.pull.outputs.changed == 'true' && steps.test.outcome != 'success'
@@ -100,6 +100,6 @@ jobs:
           $log = Get-Content "$env:RUNNER_TEMP/shared-log.md" -Raw
           git commit -m "Update Shared to ${{ steps.pull.outputs.new }}" -m $log
           git push origin $branch
-          $body = "Das automatische Update von Shared (${{ steps.pull.outputs.old }} -> ${{ steps.pull.outputs.new }}) bricht die Tests dieses Trainers, master bleibt deshalb auf dem alten Stand.`n`nTestlauf: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}`n`nÄnderungen in Shared:`n$log"
-          gh pr create --base master --head $branch --title "Shared-Update ${{ steps.pull.outputs.new }} bricht die Tests" --body $body
+          $body = "Das automatische Update von Shared (${{ steps.pull.outputs.old }} -> ${{ steps.pull.outputs.new }}) bricht die Tests dieses Trainers, main bleibt deshalb auf dem alten Stand.`n`nTestlauf: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}`n`nÄnderungen in Shared:`n$log"
+          gh pr create --base main --head $branch --title "Shared-Update ${{ steps.pull.outputs.new }} bricht die Tests" --body $body
           exit 1

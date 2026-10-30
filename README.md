@@ -74,7 +74,7 @@ squad list as in A2G (entries without a script) hasn't been found for A3 yet.
   scripts, shared with the A2G-Trainer. Clone with
   `git clone --recursive https://github.com/transfairs/A3-Trainer.git`.
 - Changes to Shared arrive automatically: the Shared repo's CI tests them with both trainers, then
-  `.github/workflows/shared-update.yml` pulls in the new state (straight to master when the tests
+  `.github/workflows/shared-update.yml` pulls in the new state (straight to main when the tests
   pass, otherwise as a pull request). Without a trigger the update runs daily.
 
 ## Build and test

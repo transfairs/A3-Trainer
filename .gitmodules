@@ -1,4 +1,4 @@
 [submodule "Shared"]
 	path = Shared
 	url = ../Anstoss-Trainer-Shared.git
-	branch = master
+	branch = main
