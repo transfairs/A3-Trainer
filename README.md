@@ -57,6 +57,23 @@ writes back when saving. While the script is active it checks every two seconds 
 game, squad or opponent has changed and rebuilds the entries; expanded groups stay open. A fixed
 squad list as in A2G (entries without a script) hasn't been found for A3 yet.
 
+The squad entry is empty at first; it is filled by the script. Step by step:
+
+1. Start Anstoss 3 and load a save game (the main menu has no squads yet).
+2. Start [Cheat Engine](https://www.cheatengine.org/) and open the table: `File → Open` (or drag
+   `A3-Trainer.ct` onto the window). If Cheat Engine asks whether to run the Lua script contained
+   in the table, confirm.
+3. Click the flashing computer icon at the top left („Select a process to open“). Pick
+   `anstoss3.exe` in the list and click `Open`. The game's name now shows above the address list.
+4. In the address list, click the empty box at the left of the entry „Kader (eigener Verein und
+   nächster Gegner)“ so that an `X` appears (the box is in the „Active“ column). If Cheat Engine
+   asks about the script, confirm.
+5. After a moment the entry gets an arrow. Double-click the entry's name or click the arrow to
+   expand it: it contains the players of your squad and of the next opponent, each with the
+   trainer's fields. Edit a value by double-clicking it.
+
+Leave the `X` in place: removing it deletes the player entries again.
+
 ## How it works (short)
 
 - Player records `CDatenSpieler` are at a fixed address from `0x00C02550` (0x354 bytes per player).

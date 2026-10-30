@@ -261,6 +261,15 @@
           <fieldset class="groupbox">
             <legend>Cheat-Engine-Tabelle</legend>
             <p>Dem Download liegt <code>A3-Trainer.ct</code> für <a href="https://www.cheatengine.org/" target="_blank" rel="noopener">Cheat Engine</a> bei. Sie enthält den Manager, das Vermögen am Saisonbeginn und das Basisjahr als feste Einträge. Das Skript <em>Kader (eigener Verein und nächster Gegner)</em> liest beim Aktivieren beide Kader ein und legt für jeden Spieler dieselben Felder an wie der Trainer: Positionen, Talent und starker Fuß als Auswahl, Fähigkeiten, Eigenschaften und Charakter als einzelne Schalter.</p>
+            <p>Der Eintrag <em>Kader</em> ist ein Skript und zeigt zunächst keine Spieler. Sie müssen ihn einschalten, dann füllt er sich:</p>
+            <ol>
+              <li>Starten Sie Anstoss 3 und laden Sie einen Spielstand. Im Hauptmenü gibt es noch keine Kader.</li>
+              <li>Starten Sie Cheat Engine und öffnen Sie die Tabelle: <span class="menu-path">Datei → Öffnen</span> (oder ziehen Sie <code>A3-Trainer.ct</code> auf das Fenster). Fragt Cheat Engine, ob das in der Tabelle enthaltene Lua-Skript ausgeführt werden soll, bestätigen Sie mit „Ja“.</li>
+              <li>Klicken Sie links oben auf das blinkende Computer-Symbol („Prozess auswählen“). Wählen Sie in der Liste <code>anstoss3.exe</code> und klicken Sie auf <em>Öffnen</em>. Der Name des Spiels steht nun über der Adressliste.</li>
+              <li>Klicken Sie in der Adressliste in das leere Kästchen links neben dem Eintrag <em>Kader (eigener Verein und nächster Gegner)</em>, sodass ein <strong>X</strong> erscheint (Spalte „Aktiv“). Fragt Cheat Engine nach dem Skript, bestätigen Sie.</li>
+              <li>Nach einem Moment hat der Eintrag einen Pfeil. Klappen Sie ihn per Klick auf den Pfeil oder Doppelklick auf den Namen auf: Er enthält die Spieler Ihres Kaders und des nächsten Gegners, jeweils mit den Feldern des Trainers. Einen Wert ändern Sie per Doppelklick darauf.</li>
+            </ol>
+            <p>Das X muss stehen bleiben: Nehmen Sie es weg, verschwinden die Spielereinträge wieder.</p>
             <p>Es genügt, das Skript einmal pro Sitzung einzuschalten: Solange es aktiv ist, merkt es selbst, wenn sich Spielstand, Kader oder nächster Gegner ändern, und aktualisiert die Liste. Aufgeklappte Spieler bleiben dabei offen.</p>
           </fieldset>
 
