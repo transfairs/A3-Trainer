@@ -1,0 +1,315 @@
+<?xml version="1.0" encoding="utf-8"?>
+<CheatTable CheatEngineTableVersion="46">
+  <CheatEntries>
+    <CheatEntry>
+      <ID>0</ID>
+      <Description>"Kader (eigener Verein und nächster Gegner)"</Description>
+      <VariableType>Auto Assembler Script</VariableType>
+      <AssemblerScript>{$lua}
+if syntaxcheck then return end
+[ENABLE]
+-- Anstoss 3 v1.10 (ungeschützte anstoss3.exe). Dieselben Werte wie A3-Trainer/Controller/A3Addresses.cs
+-- und A3-Trainer/Model/Tables.cs; A3-Trainer.Tests/CheatTableTests.cs vergleicht sie.
+local A = {
+  PlayerArray = 0x00C02550, PlayerSize = 0x354, PlayerSlots = 17006,
+  NameTable = 0x019D3B68, NameTableCount = 19866,
+  PlayerCacheRoot = 0x00A3D3C4, CacheNodeLeft = 0x0, CacheNodeRight = 0x4, CacheNodeEntry = 0xC,
+  CacheEntryIndex = 0x0, CacheEntryCompact = 0x8,
+  ClubArray = 0x01A72FF8, ClubSize = 0x990, ClubCount = 492, ClubIndexTable = 0x00AE5EF0,
+  ClubName = 0x20, ClubCity = 0x38,
+  ManagerClubCountry = 0x01B99606, ManagerClubNumber = 0x01B99608, BaseYear = 0x00B5CBCA,
+}
+-- Spielerdatensatz (CDatenSpieler)
+local R = {
+  Used = 0x20, ClubCountry = 0x30, ClubNumber = 0x31, Salary = 0x150, MatchBonus = 0x152,
+  ContractEnd = 0x15C, BirthYear = 0x16A, FirstName = 0x1BE, LastName = 0x1C0,
+  Skills = 0x1C4, Traits = 0x1C8, Character = 0x1CA, Condition = 0x1CE, Freshness = 0x1D0,
+  Strength = 0x21C, Position = 0x21D, SidePosition1 = 0x21E, SidePosition2 = 0x21F,
+  Talent = 0x222, ShirtNumber = 0x223, FootAndReputation = 0x282, Morale = 0x296,
+}
+-- Arbeitskopie der geladenen Spieler; das Spiel schreibt sie beim Speichern in den Datensatz zurück
+local C = {
+  Strength = 0x02, Position = 0x03, SidePosition1 = 0x04, SidePosition2 = 0x05,
+  ClubCountry = 0x06, ClubNumber = 0x07, Talent = 0x08, Skills = 0x0C, Traits = 0x10,
+  Character = 0x12, Condition = 0x16, Freshness = 0x18, ShirtNumber = 0x26,
+  InjuryDays = 0x2C, Groggy = 0x2F, Salary = 0x88, MatchBonus = 0x8A, ContractEnd = 0x94,
+  Morale = 0xCA,
+}
+local T = {
+  Positions = { "–", "TO", "LI", "IV", "LV", "RV", "RM", "LM", "DM", "OM", "ST" },
+  Talents = { "riesig", "groß", "mittel", "klein", "keins" },
+  Feet = { "–", "rechts", "links", "beidfüßig" },
+  FieldSkills = { "Kopfball", "Zweikampf", "Schnelligkeit", "Schußkraft", "Elfmeter", "Freistoß", "Flanken", "Torinstinkt", "Laufstärke", "Technik", "Ballzauber", "Spielmacher", "Viererkette", "Spielübersicht", "Ballhalten", "Dribbling" },
+  GoalkeeperSkills = { "Elfmetertöter", "Reflexe", "Herauslaufen", "Fangsicherheit", "Fausten", "Ballsicherheit", "Schnelligkeit", "Abschläge", "Abwürfe" },
+  Traits = { "Kämpfernatur", "Trainingsweltmeister", "Trainingsfaul", "Treter", "fairer Spieler", "Mimose", "Schlitzohr", "Spezialist", "Allrounder", "flexibler Spieler", "Schiriliebling", "Heimspieler", "Schönwetterspieler", "Joker", "Egoist", "Leichtfuss" },
+  Character = { "Führungsperson", "Hitzkopf", "Frohnatur", "Mann ohne Nerven", "Nervenbündel", "Phlegma", "Geldgeier", "Vereinsanhänger", "Musterprofi", "Skandalnudel", "Sensibelchen", "Starallüren", "Teeniestar", "Unruhestifter", "Leberwurst", "Integrationsfigur" },
+}
+local Goalkeeper = 1
+
+local function u8(a) return readBytes(a, 1) or 0 end
+local function u16(a) return (readSmallInteger(a) or 0) &amp; 0xFFFF end
+local function u32(a) return (readInteger(a) or 0) &amp; 0xFFFFFFFF end
+local function text(a, n) return ansiToUTF8(readString(a, n) or "") end
+
+local function clubAddress(country, number)
+  if country &gt; 255 or number &gt; 255 then return nil end
+  local index = u16(A.ClubIndexTable + country * 2) + number
+  if index &gt;= A.ClubCount then return nil end
+  local address = A.ClubArray + index * A.ClubSize
+  if text(address + A.ClubName, 0x14) == "" then return nil end
+  return address
+end
+
+local function playerName(index)
+  if index &lt;= 0 or index &gt;= A.NameTableCount then return "" end
+  local pointer = u32(A.NameTable + index * 4)
+  return pointer == 0 and "" or text(pointer, 32)
+end
+
+-- Spielernummer -&gt; Adresse der Arbeitskopie (Binärbaum ab PlayerCacheRoot)
+local function workingCopies()
+  local copies, seen, pending, visited = {}, {}, {}, 0
+  local root = u32(A.PlayerCacheRoot)
+  if root ~= 0 then pending[1] = root end
+  while #pending &gt; 0 and visited &lt; 5000 do
+    local node = table.remove(pending)
+    if not seen[node] then
+      seen[node] = true
+      visited = visited + 1
+      local left, right = u32(node + A.CacheNodeLeft), u32(node + A.CacheNodeRight)
+      local entry = u32(node + A.CacheNodeEntry)
+      if left ~= 0 then pending[#pending + 1] = left end
+      if right ~= 0 then pending[#pending + 1] = right end
+      if entry ~= 0 then
+        local index = u16(entry + A.CacheEntryIndex)
+        if index &lt; A.PlayerSlots then copies[index] = entry + A.CacheEntryCompact end
+      end
+    end
+  end
+  return copies
+end
+
+local list = getAddressList()
+
+local function add(parent, description, address, vartype, setup)
+  local mr = list.createMemoryRecord()
+  mr.Description = description
+  if vartype then
+    mr.Address = string.format("%08X", address)
+    mr.Type = vartype
+    if setup then setup(mr) end
+  else
+    mr.IsGroupHeader = true
+    mr.Options = "[moAllowManualCollapseAndExpand]"
+  end
+  mr.appendToEntry(parent)
+  return mr
+end
+
+local function dropdown(mr, names, from)
+  local lines = {}
+  for i, name in ipairs(names) do
+    if i - 1 &gt;= from then lines[#lines + 1] = (i - 1) .. ":" .. name end
+  end
+  mr.DropDownList.Text = table.concat(lines, "\n")
+  mr.DropDownReadOnly = true
+  mr.DropDownDescriptionOnly = true
+  mr.DisplayAsDropDownListItem = true
+end
+
+local function bits(parent, description, address, names)
+  local g = add(parent, description)
+  for i, name in ipairs(names) do
+    local bit = i - 1
+    add(g, name, address + bit // 8, vtBinary, function(mr)
+      mr.Binary.Startbit = bit % 8
+      mr.Binary.Size = 1
+    end)
+  end
+  g.Collapsed = true
+end
+
+local function addPlayer(parent, player, baseYear)
+  local record = A.PlayerArray + player.index * A.PlayerSize
+  local at = player.copy or record
+  local O = player.copy and C or R
+  local g = add(parent, string.format("%s %s (%s)", player.firstName, player.lastName, T.Positions[player.position + 1] or "?"))
+  add(g, "Stärke", at + O.Strength, vtByte)
+  add(g, "Hauptposition", at + O.Position, vtByte, function(mr) dropdown(mr, T.Positions, 1) end)
+  add(g, "Nebenposition 1", at + O.SidePosition1, vtByte, function(mr) dropdown(mr, T.Positions, 0) end)
+  add(g, "Nebenposition 2", at + O.SidePosition2, vtByte, function(mr) dropdown(mr, T.Positions, 0) end)
+  add(g, "Talent", at + O.Talent, vtByte, function(mr) dropdown(mr, T.Talents, 0) end)
+  add(g, "Kondition (× 100)", at + O.Condition, vtWord)
+  add(g, "Frische (× 100)", at + O.Freshness, vtWord)
+  add(g, "Motivation", at + O.Morale, vtByte)
+  add(g, "Starker Fuß", record + R.FootAndReputation, vtBinary, function(mr)
+    mr.Binary.Startbit = 2
+    mr.Binary.Size = 2
+    dropdown(mr, T.Feet, 1)
+  end)
+  add(g, "Rückennummer", at + O.ShirtNumber, vtByte)
+  add(g, "Geburtsjahr", record + R.BirthYear, vtWord)
+  if player.copy then
+    add(g, "Verletzt (Tage)", at + C.InjuryDays, vtWord, function(mr) mr.ShowAsSigned = true end)
+    add(g, "Angeschlagen", at + C.Groggy, vtByte, function(mr) dropdown(mr, { "nein", "ja" }, 0) end)
+  end
+  add(g, "Festgehalt (× 1.000 DM pro Jahr)", at + O.Salary, vtWord)
+  add(g, "Auflaufprämie (× 100 DM)", at + O.MatchBonus, vtWord)
+  if player.copy then
+    add(g, string.format("Vertrag bis (Jahr − %d)", baseYear), at + C.ContractEnd, vtByte, function(mr) mr.ShowAsSigned = true end)
+  else
+    add(g, "Vertrag bis", record + R.ContractEnd, vtWord)
+  end
+  bits(g, "Fähigkeiten", at + O.Skills, player.position == Goalkeeper and T.GoalkeeperSkills or T.FieldSkills)
+  bits(g, "Eigenschaften", at + O.Traits, T.Traits)
+  bits(g, "Charakter", at + O.Character, T.Character)
+  g.Collapsed = true
+end
+
+local function addClub(caption, club, squad, baseYear)
+  local g = add(memrec, string.format("%s: %s", caption, text(club.address + A.ClubName, 0x14)))
+  add(g, "Name", club.address + A.ClubName, vtString, function(mr) mr.String.Size = 0x14; mr.String.Codepage = true end)
+  add(g, "Stadt", club.address + A.ClubCity, vtString, function(mr) mr.String.Size = 0x14; mr.String.Codepage = true end)
+  for _, player in ipairs(squad) do
+    local record = A.PlayerArray + player.index * A.PlayerSize
+    player.firstName = playerName(u16(record + R.FirstName))
+    player.lastName = playerName(u16(record + R.LastName))
+  end
+  table.sort(squad, function(a, b)
+    if a.position ~= b.position then return a.position &lt; b.position end
+    if a.strength ~= b.strength then return a.strength &gt; b.strength end
+    return a.lastName &lt; b.lastName
+  end)
+  for _, player in ipairs(squad) do addPlayer(g, player, baseYear) end
+end
+
+while memrec.Count &gt; 0 do memrec.Child[0].destroy() end
+
+local ownCountry, ownNumber = u16(A.ManagerClubCountry), u16(A.ManagerClubNumber)
+local ownAddress = clubAddress(ownCountry, ownNumber)
+if u32(A.PlayerArray) == 0 or not ownAddress then error("Kein Anstoss-3-Spielstand (v1.10) geladen.") end
+
+local copies = workingCopies()
+local baseYear = u16(A.BaseYear)
+local squads, cachedPerClub = {}, {}
+for index = 0, A.PlayerSlots - 1 do
+  local record = A.PlayerArray + index * A.PlayerSize
+  if u32(record + R.Used) ~= 0 then
+    local copy = copies[index]
+    local at, O = copy or record, copy and C or R
+    local key = u8(at + O.ClubCountry) * 256 + u8(at + O.ClubNumber)
+    squads[key] = squads[key] or {}
+    table.insert(squads[key], {
+      index = index, copy = copy,
+      position = u8(at + O.Position), strength = u8(at + O.Strength),
+    })
+    if copy then cachedPerClub[key] = (cachedPerClub[key] or 0) + 1 end
+  end
+end
+
+local ownKey = ownCountry * 256 + ownNumber
+addClub("Eigener Verein", { address = ownAddress }, squads[ownKey] or {}, baseYear)
+
+-- Nächster Gegner: der Verein, von dem das Spiel außer dem eigenen die meisten Spieler geladen hat
+local opponentKey, most = nil, 0
+for key, count in pairs(cachedPerClub) do
+  if key ~= ownKey and count &gt; most then opponentKey, most = key, count end
+end
+local opponentAddress = opponentKey and clubAddress(opponentKey // 256, opponentKey % 256)
+if opponentAddress then addClub("Nächster Gegner", { address = opponentAddress }, squads[opponentKey], baseYear) end
+
+[DISABLE]
+while memrec.Count &gt; 0 do memrec.Child[0].destroy() end
+</AssemblerScript>
+    </CheatEntry>
+    <CheatEntry>
+      <ID>1</ID>
+      <Description>"Manager (Spieler 1)"</Description>
+      <Options>moAllowManualCollapseAndExpand</Options>
+      <GroupHeader>1</GroupHeader>
+      <CheatEntries>
+        <CheatEntry>
+          <ID>2</ID>
+          <Description>"Vorname"</Description>
+          <ShowAsSigned>0</ShowAsSigned>
+          <VariableType>String</VariableType>
+          <Length>10</Length>
+          <Unicode>0</Unicode>
+          <CodePage>1</CodePage>
+          <ZeroTerminate>1</ZeroTerminate>
+          <Address>anstoss3.exe+17995E8</Address>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>3</ID>
+          <Description>"Nachname"</Description>
+          <ShowAsSigned>0</ShowAsSigned>
+          <VariableType>String</VariableType>
+          <Length>16</Length>
+          <Unicode>0</Unicode>
+          <CodePage>1</CodePage>
+          <ZeroTerminate>1</ZeroTerminate>
+          <Address>anstoss3.exe+17995F2</Address>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>4</ID>
+          <Description>"Festgehalt (DM pro Jahr)"</Description>
+          <ShowAsSigned>0</ShowAsSigned>
+          <VariableType>4 Bytes</VariableType>
+          <Address>anstoss3.exe+1799638</Address>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>5</ID>
+          <Description>"Privates Vermögen (DM)"</Description>
+          <ShowAsSigned>1</ShowAsSigned>
+          <VariableType>4 Bytes</VariableType>
+          <Address>anstoss3.exe+1799680</Address>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>6</ID>
+          <Description>"Land des Vereins"</Description>
+          <ShowAsSigned>0</ShowAsSigned>
+          <VariableType>2 Bytes</VariableType>
+          <Address>anstoss3.exe+1799606</Address>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>7</ID>
+          <Description>"Verein (Nummer im Land)"</Description>
+          <ShowAsSigned>0</ShowAsSigned>
+          <VariableType>2 Bytes</VariableType>
+          <Address>anstoss3.exe+1799608</Address>
+        </CheatEntry>
+      </CheatEntries>
+    </CheatEntry>
+    <CheatEntry>
+      <ID>8</ID>
+      <Description>"Verein"</Description>
+      <Options>moAllowManualCollapseAndExpand</Options>
+      <GroupHeader>1</GroupHeader>
+      <CheatEntries>
+        <CheatEntry>
+          <ID>9</ID>
+          <Description>"Vermögen am Saisonbeginn (DM)"</Description>
+          <ShowAsSigned>1</ShowAsSigned>
+          <VariableType>4 Bytes</VariableType>
+          <Address>anstoss3.exe+66C1C8</Address>
+        </CheatEntry>
+      </CheatEntries>
+    </CheatEntry>
+    <CheatEntry>
+      <ID>10</ID>
+      <Description>"Spielstand"</Description>
+      <Options>moAllowManualCollapseAndExpand</Options>
+      <GroupHeader>1</GroupHeader>
+      <CheatEntries>
+        <CheatEntry>
+          <ID>11</ID>
+          <Description>"Basisjahr"</Description>
+          <ShowAsSigned>0</ShowAsSigned>
+          <VariableType>2 Bytes</VariableType>
+          <Address>anstoss3.exe+75CBCA</Address>
+        </CheatEntry>
+      </CheatEntries>
+    </CheatEntry>
+  </CheatEntries>
+  <UserdefinedSymbols />
+</CheatTable>

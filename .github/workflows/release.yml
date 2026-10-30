@@ -1,0 +1,100 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    # Pinned to windows-2022 and VS2022's MSBuild like the A2G trainer (newer runner images carry a
+    # VS whose MSBuild can't resolve Microsoft.NET.Sdk for these projects).
+    runs-on: windows-2022
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: true
+
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v2
+        with:
+          vs-version: "[17.0,18.0)"
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Build test project
+        run: msbuild A3-Trainer.Tests/A3-Trainer.Tests.csproj /t:Restore,Build /p:Configuration=Release
+
+      - name: Run tests
+        run: dotnet test A3-Trainer.Tests/A3-Trainer.Tests.csproj --configuration Release --no-build --no-restore
+
+      - name: Inject version from tag
+        shell: pwsh
+        run: |
+          $tag = "${{ github.ref_name }}"
+          $versionPart = $tag -replace '^v', ''
+          $numericPart = ($versionPart -split '-')[0]
+          $segments = @($numericPart -split '\.')
+          while ($segments.Count -lt 4) { $segments += '0' }
+          $assemblyVersion = ($segments[0..3] -join '.')
+
+          $content = @"
+          using System.Reflection;
+
+          [assembly: AssemblyVersion("$assemblyVersion")]
+          [assembly: AssemblyFileVersion("$assemblyVersion")]
+          [assembly: AssemblyInformationalVersion("$versionPart")]
+          "@
+          Set-Content -Path A3-Trainer/Properties/VersionInfo.cs -Value $content -Encoding utf8
+
+      - name: Build Trainer
+        run: msbuild A3-Trainer/A3-Trainer.csproj /restore /t:Rebuild /p:Configuration=Release /p:Platform=x86
+
+      # Changelog scripts come from the Shared submodule (the same ones the A2G trainer uses).
+      - name: Generate changelog
+        shell: pwsh
+        run: ./Shared/scripts/Generate-Changelog.ps1 -Tag "${{ github.ref_name }}"
+
+      - name: Render changelog HTML
+        shell: pwsh
+        run: ./Shared/scripts/New-ChangelogHtml.ps1 -LogoPath "A3-Trainer/Resources/A3-Trainer-Logo.png" -Title "A3-Trainer - Changelog"
+
+      - name: Package binaries
+        shell: pwsh
+        run: |
+          $tag = "${{ github.ref_name }}"
+          New-Item -ItemType Directory -Force -Path dist | Out-Null
+          Copy-Item "A3-Trainer\bin\x86\Release\A3-Trainer.exe" "dist\A3-Trainer-$tag.exe"
+          Copy-Item "A3-Trainer.ct" "dist\A3-Trainer-$tag.ct"
+
+          $bundleDir = "dist/bundle"
+          New-Item -ItemType Directory -Force -Path $bundleDir | Out-Null
+          Copy-Item "dist\A3-Trainer-$tag.exe" "$bundleDir\A3-Trainer.exe"
+          Copy-Item "dist\A3-Trainer-$tag.ct" "$bundleDir\A3-Trainer.ct"
+          Copy-Item "dist\Changelog.html" "$bundleDir\Changelog.html"
+
+          $zipPath = "dist/A3-Trainer-Latest.zip"
+          Compress-Archive -Path "$bundleDir\*" -DestinationPath $zipPath -Force
+          $hash = (Get-FileHash -Algorithm SHA256 -Path $zipPath).Hash.ToLower()
+          "$hash  A3-Trainer-Latest.zip" | Set-Content "$zipPath.sha256" -Encoding utf8
+
+      # A regular release (not a pre-release), so releases/latest/download/A3-Trainer-Latest.zip
+      # always serves the newest version.
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/*.exe
+            dist/*.ct
+            dist/A3-Trainer-Latest.zip
+            dist/A3-Trainer-Latest.zip.sha256
+          body_path: dist/current-version-notes.md

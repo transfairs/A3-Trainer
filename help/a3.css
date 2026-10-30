@@ -1,0 +1,56 @@
+/* A3-Trainer :: Onlinehilfe
+   Baut auf style.css aus dem Shared-Repo auf (beim Deploy daneben kopiert) und tauscht nur die Farben gegen die von Anstoss 3:
+   lila-graue Flächen und das grelle Grün der Spiel-Oberfläche (wie View/A3Theme.cs im Trainer). */
+
+:root {
+  --accent: #4a9a21;
+  --accent-dark: #2f6a12;
+  --accent-soft: #e4f4d6;
+  --panel-bg: #e7dfe7;
+  --panel-border: #b9adb9;
+  --text: #393439;
+  --text-muted: #625a62;
+  --titlebar-bg: #e7dfe7;
+  --a3-panel: #c6bac6;
+  --a3-list: #e7dfe7;
+  --a3-green: #73cb39;
+  --a3-green-light: #8cdf29;
+  --a3-green-dark: #4a9a21;
+}
+
+body {
+  background: linear-gradient(135deg, #b5a9b5 0%, var(--a3-panel) 50%, #a89ca8 100%);
+  background-attachment: fixed;
+}
+
+.app-window { box-shadow: 0 18px 40px rgba(40, 30, 40, 0.35); }
+
+.titlebar .version-badge { color: var(--accent-dark); }
+
+.menustrip {
+  background: linear-gradient(180deg, var(--a3-green-light) 0%, var(--a3-green) 100%);
+  border-bottom: 1px solid var(--a3-green-dark);
+}
+.menustrip button { color: #1f2a17; }
+.menustrip button:hover { background: rgba(255, 255, 255, 0.25); }
+.menustrip button.active { border-bottom-color: #1f2a17; color: #1f2a17; }
+
+.content-area { background: var(--a3-panel); }
+
+.side-list, .panel { background: var(--a3-list); }
+.side-list h2 { background: var(--a3-green); color: #1f2a17; }
+
+.subtabs { background: var(--a3-panel); }
+.subtabs button { background: #d6ccd6; color: var(--text); }
+.subtabs button:hover { background: var(--accent-soft); }
+.subtabs button.active { background: var(--a3-list); }
+
+fieldset.groupbox { background: #f1ecf1; }
+
+pre {
+  background: #f8f5f8;
+  border: 1px solid var(--panel-border);
+  border-radius: 4px;
+  padding: 8px 12px;
+  overflow-x: auto;
+}

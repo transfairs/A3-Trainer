@@ -1,0 +1,41 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net472</TargetFramework>
+    <Nullable>disable</Nullable>
+    <IsPackable>false</IsPackable>
+    <RootNamespace>A3_Trainer.Tests</RootNamespace>
+    <AssemblyName>A3-Trainer.Tests</AssemblyName>
+    <LangVersion>7.3</LangVersion>
+    <UseWindowsForms>true</UseWindowsForms>
+    <PlatformTarget>x86</PlatformTarget>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="coverlet.collector" Version="3.2.0">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.9.0" />
+    <PackageReference Include="xunit" Version="2.7.0" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.5.7">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\A3-Trainer\A3-Trainer.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- STA helper from the Shared repository, linked instead of copied. -->
+    <Compile Include="..\Shared\TestSupport\StaThread.cs" Link="StaThread.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- The Cheat Engine table, checked against the trainer's addresses by CheatTableTests. -->
+    <None Include="..\A3-Trainer.ct" Link="A3-Trainer.ct" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>

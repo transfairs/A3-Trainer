@@ -1,0 +1,148 @@
+using A3_Trainer.Controller;
+using A3_Trainer.Model;
+using A3_Trainer.View;
+using AnstossTrainer.Shared;
+using System;
+using System.Diagnostics;
+using System.Drawing;
+using System.Reflection;
+using System.Windows.Forms;
+
+namespace A3_Trainer
+{
+    /// <summary>Main window of the Anstoss 3 trainer, on the shared TrainerShell.</summary>
+    internal sealed class MainWindow : TrainerShell
+    {
+        private readonly MenuStrip menu = new MenuStrip();
+        private readonly Panel content = new Panel { Dock = DockStyle.Fill };
+        private readonly ToolStripMenuItem opponentItem;
+
+        private readonly ProcessMemory memory = new ProcessMemory();
+        private readonly A3Game game;
+        private readonly PlayerView playerView;
+        private readonly ClubView clubView;
+        private readonly Label waiting;
+
+        private enum Page { Squad, Opponent, Club }
+        private Page page = Page.Squad;
+
+        internal MainWindow()
+        {
+            this.Text = "A3-Trainer";
+            this.Font = new Font("Microsoft Sans Serif", 8.25f);
+            this.AutoScaleMode = AutoScaleMode.Font;
+            this.AutoScaleDimensions = new SizeF(6F, 13F);
+            this.ClientSize = new Size(630, 447);
+            this.BackColor = A3Theme.Panel;
+            this.Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath);
+
+            var players = new ToolStripMenuItem("Spieler");
+            players.DropDownItems.Add("Eigener Kader", null, (s, e) => this.Show(Page.Squad));
+            this.opponentItem = new ToolStripMenuItem("Nächster Gegner", null, (s, e) => this.Show(Page.Opponent));
+            players.DropDownItems.Add(this.opponentItem);
+            var club = new ToolStripMenuItem("Verein");
+            club.DropDownItems.Add("Verein und Manager", null, (s, e) => this.Show(Page.Club));
+            var help = new ToolStripMenuItem("?");
+            help.DropDownItems.Add("Onlinehilfe", null, (s, e) => this.OpenHelp());
+            help.DropDownItems.Add("Über", null, (s, e) => this.ShowAbout());
+            this.menu.Items.AddRange(new ToolStripItem[] { players, club, help });
+            A3Theme.ApplyMenu(this.menu);
+
+            this.Controls.Add(this.content);
+            this.Controls.Add(this.menu);
+            this.MainMenuStrip = this.menu;
+
+            this.game = new A3Game(new LiveGameMemory(this.memory));
+            this.playerView = new PlayerView(this.memory, this.game);
+            this.clubView = new ClubView(this.memory, this.game);
+            this.waiting = new Label
+            {
+                Text = "Warte auf Anstoss 3 …\n\nBitte das Spiel starten und einen Spielstand laden.\nUnterstützt wird Version 1.10 (ungeschützte EXE).",
+                TextAlign = ContentAlignment.MiddleCenter,
+                Dock = DockStyle.Fill,
+                BackColor = A3Theme.Panel,
+                ForeColor = A3Theme.Text,
+            };
+
+            var observer = new A3Observer(this, this.memory, this.game);
+            this.InitShell(this.content, observer.Observe);
+            this.ShowWaiting();
+        }
+
+        /// <summary>Called by the observer once a career is loaded (also after loading another one).</summary>
+        internal void OnGameAttached()
+        {
+            this.Show(this.page);
+        }
+
+        /// <summary>Called by the observer when the game is gone.</summary>
+        internal void OnGameLost()
+        {
+            this.ShowWaiting();
+        }
+
+        /// <summary>Shows a message on the waiting screen (e.g. unsupported game version).</summary>
+        internal void ShowStatus(string message)
+        {
+            this.waiting.Text = message;
+        }
+
+        private void Show(Page target)
+        {
+            this.page = target;
+            ClubKey? own = this.memory.mProc.Process != null ? this.game.OwnClub() : null;
+            if (!own.HasValue)
+            {
+                this.ShowWaiting();
+                return;
+            }
+
+            switch (target)
+            {
+                case Page.Club:
+                    this.ShowScreen(this.clubView, "Verein und Manager");
+                    this.clubView.RefreshValues();
+                    break;
+                case Page.Opponent:
+                    ClubKey? opponent = this.game.NextOpponent(own.Value);
+                    this.ShowScreen(this.playerView, opponent.HasValue ? "Nächster Gegner: " + this.game.ClubName(opponent.Value) : "Nächster Gegner (keiner geladen)");
+                    this.playerView.ShowClub(opponent);
+                    break;
+                default:
+                    this.ShowScreen(this.playerView, "Eigener Kader: " + this.game.ClubName(own.Value));
+                    this.playerView.ShowClub(own);
+                    break;
+            }
+        }
+
+        private void ShowWaiting() => this.ShowPlaceholder(this.waiting);
+
+        /// <summary>The A3 page of the project's online help (deployed from help/ by pages.yml).</summary>
+        internal const string HelpUrl = "https://transfairs.github.io/A3-Trainer/";
+
+        private void OpenHelp()
+        {
+            try
+            {
+                Process.Start(HelpUrl);
+            }
+            catch (Exception ex)
+            {
+                Logger.Error("Onlinehilfe konnte nicht geöffnet werden", ex);
+                MessageBox.Show(this, "Die Onlinehilfe konnte nicht geöffnet werden:\n" + HelpUrl, "Hilfe",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+        }
+
+        private void ShowAbout()
+        {
+            var info = (AssemblyInformationalVersionAttribute)Attribute.GetCustomAttribute(
+                Assembly.GetExecutingAssembly(), typeof(AssemblyInformationalVersionAttribute));
+            string version = info?.InformationalVersion ?? "";
+            MessageBox.Show(this,
+                $"A3-Trainer {version}\n\nProof of Concept für Anstoss 3 v1.10 (ungeschützte EXE).\n" +
+                "Teilt sich das Grundgerüst mit dem A2G-Trainer.",
+                "Über", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
+    }
+}

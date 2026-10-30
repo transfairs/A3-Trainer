@@ -1,0 +1,40 @@
+using System;
+
+namespace A3_Trainer.Model
+{
+    /// <summary>A calendar date of the game world (no time of day).</summary>
+    internal struct GameDate
+    {
+        internal int Year { get; }
+        internal int Month { get; }
+        internal int Day { get; }
+
+        internal GameDate(int year, int month, int day)
+        {
+            this.Year = year;
+            this.Month = month;
+            this.Day = day;
+        }
+
+        /// <summary>From the game calendar's (year, zero-based day of year) pair.</summary>
+        internal static GameDate FromDayOfYear(int year, int dayOfYear)
+        {
+            DateTime date = new DateTime(year, 1, 1).AddDays(dayOfYear);
+            return new GameDate(date.Year, date.Month, date.Day);
+        }
+
+        /// <summary>Whether the date is a real calendar date (records of empty slots hold zeros).</summary>
+        internal bool IsValid => this.Year > 1800 && this.Month >= 1 && this.Month <= 12 && this.Day >= 1 && this.Day <= 31;
+
+        /// <summary>Completed years between this (birth) date and <paramref name="today"/>.</summary>
+        internal int AgeOn(GameDate today)
+        {
+            int age = today.Year - this.Year;
+            if (today.Month < this.Month || (today.Month == this.Month && today.Day < this.Day))
+                age--;
+            return age;
+        }
+
+        public override string ToString() => $"{this.Day}.{this.Month}.{this.Year}";
+    }
+}
