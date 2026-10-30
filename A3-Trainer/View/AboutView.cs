@@ -88,11 +88,12 @@ namespace A3_Trainer.View
             return label;
         }
 
+        // The logo is embedded at build time, so the resource is always there.
         private static Image Logo()
         {
             using (var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("A3_Trainer.Resources.A3-Trainer-Logo.png"))
-            using (Image image = stream != null ? Image.FromStream(stream) : null)
-                return image != null ? new Bitmap(image) : null; // copy: GDI+ keeps reading the stream otherwise
+            using (Image image = Image.FromStream(stream))
+                return new Bitmap(image); // copy: GDI+ keeps reading the stream otherwise
         }
 
         private void Open(string url)
