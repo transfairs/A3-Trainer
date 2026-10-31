@@ -93,7 +93,7 @@
           </fieldset>
 
           <div class="toc-grid">
-            <a class="toc-card" href="#spieler" data-jump="spieler"><h3>Spieler</h3><p>Kader und nächsten Gegner bearbeiten: Daten, Positionen, Fähigkeiten, Eigenschaften, Vertrag.</p></a>
+            <a class="toc-card" href="#spieler" data-jump="spieler"><h3>Spieler</h3><p>Kader und nächsten Gegner bearbeiten: Daten, Positionen, Fähigkeiten, Eigenschaften, Vertrag, Privatleben.</p></a>
             <a class="toc-card" href="#verein" data-jump="verein"><h3>Verein &amp; Manager</h3><p>Vereinsvermögen und privates Vermögen des Managers.</p></a>
             <a class="toc-card" href="#faq" data-jump="faq"><h3>Fehlerbehebung</h3><p>Häufige Fragen, bekannte Grenzen und die Logdatei.</p></a>
           </div>
@@ -104,14 +104,14 @@
       <section class="panel" id="panel-spieler">
         <div class="panel-header">
           <h1>Spieler</h1>
-          <p class="lead">Erreichbar über das Menü <span class="menu-path">Spieler</span>. Links steht die Spielerliste (verletzte Spieler in Rot), rechts der gewählte Spieler in acht Registerkarten, angeordnet wie im Spieleditor von Anstoss 3.</p>
+          <p class="lead">Erreichbar über das Menü <span class="menu-path">Spieler</span>. Links steht die Spielerliste (verletzte Spieler in Rot), rechts der gewählte Spieler in neun Registerkarten: acht angeordnet wie im Spieleditor von Anstoss 3, dazu „Privat“ wie in der Spielerinfo.</p>
         </div>
         <div class="subtabs">
           <button data-sub="uebersicht" class="active">Übersicht</button>
           <button data-sub="daten">Daten</button>
           <button data-sub="faehigkeiten">Positionen &amp; Fähigkeiten</button>
           <button data-sub="eigenschaften">Eigenschaften</button>
-          <button data-sub="vertrag">Verfassung &amp; Vertrag</button>
+          <button data-sub="vertrag">Verfassung, Vertrag &amp; Privat</button>
         </div>
 
         <div class="subpanel active" data-sub="uebersicht">
@@ -139,8 +139,8 @@
           <fieldset class="groupbox">
             <legend>Registerkarte „Daten 1“</legend>
             <dl class="field-list">
-              <dt>Name, Vorname</dt><dd>Nur Anzeige: Das Spiel führt die Namen in einer gemeinsamen Namenstabelle.</dd>
-              <dt>Künstlername</dt><dd>Noch nicht unterstützt (ausgegraut).</dd>
+              <dt>Name, Vorname</dt><dd>Höchstens 20 Zeichen; leer bleibt der alte Name. Das Spiel führt alle Namen in einer gemeinsamen Namenstabelle. Gibt es den neuen Namen dort schon, verwendet der Trainer diesen Eintrag, sonst legt er einen neuen an, so wie das Spiel es beim Einlesen der Datenbank tut. Andere Spieler mit dem alten Namen behalten ihn. Der neue Name wird mit dem Spielstand gespeichert.</dd>
+              <dt>Künstlername</dt><dd>Wie die Namen. Ist er gesetzt, zeigt das Spiel ihn statt Vor- und Nachname; leer entfernt ihn wieder.</dd>
               <dt>Geburtsdatum</dt><dd>Tag, Monat, Jahr. Das Alter daneben rechnet der Trainer mit dem aktuellen Spieldatum. Ein Datum, das es nicht gibt (etwa der 31.2.), speichert der Trainer nicht.</dd>
               <dt>Stärke</dt><dd>1 bis 255 (ein Byte). Das Spiel selbst kennt nur bis 13; darüber rechnet es den Marktwert falsch.</dd>
               <dt>Talent</dt><dd>riesig, groß, mittel, klein, keins.</dd>
@@ -153,8 +153,11 @@
             <legend>Registerkarte „Daten 2“</legend>
             <dl class="field-list">
               <dt>Nationalität, Zweite Nationalität</dt><dd>Die Länderliste des Spiels; bei der zweiten Nationalität steht „Keine“ für keine.</dd>
-              <dt>Hautfarbe</dt><dd>hell, dunkel, schwarz, asiatisch.</dd>
-              <dt>Haartyp, Bart, Haarfarbe, Fußballinländer, Nationalspieler, Rücktritte</dt><dd>Wie im Spieleditor angeordnet, aber noch nicht unterstützt (ausgegraut).</dd>
+              <dt>Fußballinländer</dt><dd>Ein Ausländer, der in seinem Land als Inländer zählt (z. B. Fußballdeutscher).</dd>
+              <dt>Nationalspieler</dt><dd>Hat schon für sein Land gespielt und kann deshalb nicht mehr eingebürgert werden.</dd>
+              <dt>Aus Nationalmannschaft zurückgetreten</dt><dd>Wird nicht mehr in eine Nationalmannschaft berufen und nicht eingebürgert.</dd>
+              <dt>Als Kapitän zurückgetreten</dt><dd>Will das Kapitänsamt nicht mehr übernehmen.</dd>
+              <dt>Hautfarbe, Haartyp, Bart, Haarfarbe</dt><dd>Das Aussehen für das Porträt in der Spielerinfo und die Spielfigur in der 3D-Spielszene. „Sonderfrisur“ ist ein Haartyp, den der Datenbank-Editor nicht anbietet und den das Spiel nur selbst an erzeugte Spieler vergibt. Nur mit ihm bekommt ein Spieler die vierte Frisur der 3D-Szene („extrem kurz“ und „kurz“ sehen dort gleich aus). Das Porträt in der Spielerinfo zeigt dafür ein falsches Gesicht (die nächste Hautfarbe mit extrem kurzen Haaren); bei der Hautfarbe „asiatisch“ ist die Sonderfrisur deshalb gesperrt. Beim Bart sind mehrere Häkchen möglich. Er wird gespeichert, ist in Version 1.40 aber nicht zu sehen: Das Spiel gibt an seiner Stelle die Hautfarbe an die 3D-Szene weiter.</dd>
             </dl>
           </fieldset>
         </div>
@@ -189,8 +192,8 @@
           <fieldset class="groupbox">
             <legend>Registerkarte „Eig. 2“</legend>
             <dl class="field-list">
-              <dt>Publikum</dt><dd>normal, Liebling oder Haßfigur. Nur Anzeige.</dd>
-              <dt>Gesundheitszustand</dt><dd>Noch nicht unterstützt (ausgegraut).</dd>
+              <dt>Publikum</dt><dd>normal, Liebling oder Haßfigur, so wie die Spielerinfo es zeigt. Das Spiel führt dafür einen dauerhaften Ruf und einen aktuellen Stand, den es nach jedem Spiel aus der Leistung neu bewertet. Der Trainer setzt beides. Spielt ein Liebling dauerhaft schlecht, kann das Spiel ihn trotzdem wieder herabstufen; der Ruf bleibt dabei meist erhalten und gilt, sobald der aktuelle Stand wegfällt.</dd>
+              <dt>Gesundheitszustand</dt><dd>normal, robust (seltener verletzt), anfällig (häufiger verletzt), Knieprobleme, schnell wieder fit, dauert bis wieder fit oder wehleidig (will nach Fouls ausgewechselt werden).</dd>
             </dl>
           </fieldset>
         </div>
@@ -201,6 +204,7 @@
             <dl class="field-list">
               <dt>Kondition / Frische</dt><dd>0 bis 100.</dd>
               <dt>Motivation</dt><dd>Nur Anzeige: Das Spiel berechnet sie bei jeder Anzeige neu, ein geänderter Wert würde nicht halten.</dd>
+              <dt>Form</dt><dd>0 bis 20, zu Spielbeginn 10. Die im Spiel angezeigte Form ergibt sich zur Hälfte aus diesem Wert, zur anderen Hälfte aus Kondition und Frische.</dd>
               <dt>Verletzung</dt><dd>Zeigt den Zustand. <span class="btn-tag">Heilen</span> macht den Spieler beim nächsten Speichern gesund.</dd>
             </dl>
           </fieldset>
@@ -209,7 +213,20 @@
             <dl class="field-list">
               <dt>Festgehalt</dt><dd>In 1.000 DM pro Jahr.</dd>
               <dt>Auflaufprämie</dt><dd>In 100 DM pro Spiel.</dd>
+              <dt>Torprämie</dt><dd>In 100 DM pro Tor.</dd>
+              <dt>Ausstiegsklausel</dt><dd>Feste Ablöse in 10.000 DM, für die der Spieler wechseln darf; 0 = keine.</dd>
               <dt>Vertrag bis</dt><dd>Jahr, in dem der Vertrag am 30.6. endet.</dd>
+              <dt>Vertrag gilt</dt><dd>alle Ligen, nur erste Liga, mind. 2. Liga oder mind. 3. Liga.</dd>
+              <dt>Optionen</dt><dd>Option Verein bzw. Option Spieler auf Verlängerung und Stammplatzgarantie.</dd>
+            </dl>
+          </fieldset>
+          <fieldset class="groupbox">
+            <legend>Registerkarte „Privat“</legend>
+            <dl class="field-list">
+              <dt>Beziehung</dt><dd>keine, Freundin, verlobt oder verheiratet. Davon hängen Ereignisse wie Heirat oder Kinder ab.</dd>
+              <dt>Stand</dt><dd>zusammen, getrennt, geschieden, auseinander oder Scheidung; die Spielerinfo zeigt ihn neben der Partnerin.</dd>
+              <dt>Partnerin, Kinder</dt><dd>Nur Anzeige: Die Namen kommen aus den Vornamenlisten des Spiels, zu den Kindern führt es außerdem die Geburtstage.</dd>
+              <dt>Hobby</dt><dd>Eines der 39 Hobbys des Spiels oder keins. Manche Hobbys lösen eigene Ereignisse aus.</dd>
             </dl>
           </fieldset>
         </div>
@@ -219,7 +236,7 @@
       <section class="panel" id="panel-verein">
         <div class="panel-header">
           <h1>Verein &amp; Manager</h1>
-          <p class="lead">Zwei Seiten für den Verein und den Manager von Spieler 1.</p>
+          <p class="lead">Zwei Seiten für den Verein und den Manager von Spieler 1. Werte, die das Spiel für den geladenen Verein in einer Arbeitskopie führt, schreibt der Trainer in beide.</p>
         </div>
         <div class="subpanel active" data-sub="only">
           <fieldset class="groupbox">
@@ -227,14 +244,19 @@
             <dl class="field-list">
               <dt>Name, Stadt</dt><dd>Nur Anzeige.</dd>
               <dt>Vermögen Saisonbeginn (DM)</dt><dd>Das Vermögen des Vereins zu Beginn der Saison. Das Bankguthaben im Spiel ist dieser Wert plus der Gewinn der laufenden Saison. Wer mehr Geld haben möchte, erhöht diesen Wert.</dd>
+              <dt>Vereinsimage</dt><dd>Wie der Rest der Liga den Verein sieht, 10 bis 50: über 44 sehr beliebt, über 34 recht angesehen, über 24 neutral, über 14 wenig angesehen, darunter vollkommen verhaßt. Kurzfristige Rufe wie „Treterpack“ zeigt das Spiel unabhängig davon.</dd>
+              <dt>Ärger mit dem Verband</dt><dd>0 bis 31 Punkte; daraus ergibt sich das Ansehen beim Verband: unter 2 ausgezeichnet, unter 5 angesehen, unter 9 normal, unter 23 bescheiden, sonst verzockt. Gutes Ansehen hilft bei Sperren und im Lizenzverfahren. Das Spiel halbiert die Punkte zum Saisonende.</dd>
             </dl>
             <img class="screenshot" src="img/club.png" alt="Verein">
           </fieldset>
           <fieldset class="groupbox">
             <legend>Manager (<span class="menu-path">Trainer → Manager (Spieler 1)</span>)</legend>
             <dl class="field-list">
-              <dt>Name, Festgehalt</dt><dd>Nur Anzeige.</dd>
+              <dt>Name</dt><dd>Nur Anzeige.</dd>
+              <dt>Festgehalt (DM pro Jahr)</dt><dd>Das Gehalt des Managers. Das Spiel ändert es selbst nur bei Vertragsverhandlungen.</dd>
               <dt>Privates Vermögen (DM)</dt><dd>Das Privatvermögen des Managers.</dd>
+              <dt>Vorstandsvertrauen (%)</dt><dd>Der Wert, den das Spiel unter „Persönliche Erfolge“ zeigt. Es rechnet eigene Zu- und Abschläge hinzu; der Trainer setzt den Grundwert so, dass die Summe stimmt. Daneben steht das Urteil des Vorstands wie im Spiel, vom „König“ bei 100 % bis „ein Wunder, noch da zu sein“ unter 55 %. Mit eigenen Vereinsanteilen zeigt das Spiel stets 100 %.</dd>
+              <dt>Beliebtheit</dt><dd>Bei den Medien und in der Öffentlichkeit 0 bis 100, mit der Stufe des Spiels daneben (Gottstatus über 95 bis Feindbild unter 20). Bei den Fans stellen Sie den Grundwert ein; das Spiel gewichtet ihn mit dem Image des Managers (80 bis 140 %). Die Stufe daneben ist die, die das Spiel anzeigt. Die Beliebtheit bei der Mannschaft ergibt sich aus den Spielern und ist hier nicht einstellbar.</dd>
             </dl>
           </fieldset>
         </div>

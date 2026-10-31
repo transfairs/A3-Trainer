@@ -30,13 +30,39 @@ namespace A3_Trainer.Model
         internal int SecondNationality { get; set; }
         /// <summary>0 hell, 1 dunkel, 2 schwarz, 3 asiatisch.</summary>
         internal int SkinColor { get; set; }
+        /// <summary>Beard bits (Tables.Beards), 0 = clean-shaven.</summary>
+        internal int Beard { get; set; }
+        /// <summary>Hair colour (Tables.HairColors).</summary>
+        internal int HairColor { get; set; }
+        /// <summary>Hair type (Tables.HairTypes).</summary>
+        internal int HairType { get; set; }
+        /// <summary>Artist name from the game's name table, "" if none; shown only like the other names.</summary>
+        internal string ArtistName { get; set; } = "";
 
-        /// <summary>Record flags (+0x1B0): 0x400 = hated by the crowd, 0x10000 = darling.</summary>
+        /// <summary>Fußballinländer: a foreigner who counts as domestic in the club's country.</summary>
+        internal bool HomegrownForeigner { get; set; }
+        /// <summary>Has played for the national team, so can't be naturalised any more.</summary>
+        internal bool NationalPlayer { get; set; }
+        /// <summary>No longer wants to be captain.</summary>
+        internal bool CaptainRetired { get; set; }
+        /// <summary>National team byte (Controller.StatusFlag.NationalTeamRetired; the other bits are game state).</summary>
+        internal int NationalTeam { get; set; }
+
+        /// <summary>Relationship byte: bits 0-1 Tables.Relationships, bits 2-4 Tables.RelationshipStates, higher bits game state.</summary>
+        internal int Relationship { get; set; }
+        /// <summary>Partner's first name, "" if the player has none.</summary>
+        internal string PartnerName { get; set; } = "";
+        /// <summary>The children's first names (shown only: the game keeps their birth dates too).</summary>
+        internal string[] ChildNames { get; set; } = new string[0];
+        /// <summary>Hobby (Tables.Hobbies), 0 = none.</summary>
+        internal int Hobby { get; set; }
+
+        /// <summary>Record flags (+0x1B0), see Controller.CrowdFlag.</summary>
         internal uint Flags { get; set; }
         /// <summary>Whether the crowd loves the player.</summary>
-        internal bool Darling => (this.Flags & 0x10000) != 0;
+        internal bool Darling => (this.Flags & Controller.CrowdFlag.Darling) != 0;
         /// <summary>Whether the crowd hates the player.</summary>
-        internal bool Hated => (this.Flags & 0x400) != 0;
+        internal bool Hated => (this.Flags & Controller.CrowdFlag.Hated) != 0;
 
         /// <summary>Strength, 1 to 13.</summary>
         internal int Strength { get; set; }
@@ -50,6 +76,8 @@ namespace A3_Trainer.Model
         internal int Talent { get; set; }
         /// <summary>Shirt number.</summary>
         internal int ShirtNumber { get; set; }
+        /// <summary>Lasting crowd reputation: 1 normal, 2 darling, 3 hated (0 = none, from the database).</summary>
+        internal int Reputation { get; set; }
         /// <summary>Strong foot: 1 right, 2 left, 3 both.</summary>
         internal int Foot { get; set; }
 
@@ -68,6 +96,10 @@ namespace A3_Trainer.Model
         internal int Freshness { get; set; }
         /// <summary>Motivation as the game last computed it (shown only).</summary>
         internal int Morale { get; set; }
+        /// <summary>The record's form value, 0 to 20 (10 at the start); the shown form is its mean with a condition share.</summary>
+        internal int FormBase { get; set; }
+        /// <summary>Health word: bits 0-6 hold one health type (Tables.HealthTypes), the higher bits are game state.</summary>
+        internal int Health { get; set; }
 
         /// <summary>Days until fit; only known for players with a working copy.</summary>
         internal int InjuryDays { get; set; }
@@ -82,8 +114,14 @@ namespace A3_Trainer.Model
         internal int Salary { get; set; }
         /// <summary>100 DM per match.</summary>
         internal int MatchBonus { get; set; }
+        /// <summary>100 DM per goal.</summary>
+        internal int GoalBonus { get; set; }
+        /// <summary>Release clause (Ausstiegsklausel) in 10,000 DM, 0 = none.</summary>
+        internal int ReleaseClause { get; set; }
         /// <summary>Year the contract ends (on 30 June).</summary>
         internal int ContractEndYear { get; set; }
+        /// <summary>Contract flag bits (Controller.ContractFlag).</summary>
+        internal int ContractFlags { get; set; }
 
         /// <summary>Address of the working copy's cache entry, or 0 if the game has none.</summary>
         internal uint CacheEntry { get; set; }

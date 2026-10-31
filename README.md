@@ -41,12 +41,18 @@ To get the game running on Windows 10/11 at all:
 
 **Players** (own squad and next opponent), laid out in the tabs of the game's data editor:
 date of birth, strength, talent, strong foot, shirt number, nationality and second nationality,
-skin colour, main and secondary positions, skills ("+" and "−", outfield players and goalkeepers
-separately), traits, character, fitness, freshness, heal injury, salary, appearance bonus,
-contract end. Age, motivation and crowd standing (favourite/hate figure) are shown read-only.
+homegrown status (Fußballinländer), national player, retired from the national team or as captain,
+skin colour, hair colour and type (including the fifth type only the game assigns), beard, main and secondary positions, skills ("+" and "−", outfield players and goalkeepers
+separately), traits, character, health type (robust, injury-prone, knee problems, …), fitness,
+freshness, form, heal injury, salary, appearance bonus, goal bonus, release clause, contract end,
+leagues the contract is valid in, club and player extension options, guaranteed place in the
+starting line-up, relationship and hobby, crowd standing (favourite/hate figure: lasting reputation and current
+flag), first and last name and artist name (a new name is added to the game's name table the way the
+game itself adds one, so it is kept in the save game). Partner and children, age and motivation are shown read-only.
 
-**Club** (player 1): wealth at the start of the season (determines the bank balance).
-**Manager** (player 1): private wealth.
+**Club** (player 1): wealth at the start of the season (determines the bank balance), club image,
+trouble with the association (standing from "ausgezeichnet" to "verzockt").
+**Manager** (player 1): salary, private wealth, board trust, popularity with the media, the public and the fans.
 
 **Cheat Engine table** `A3-Trainer.ct` (included in every release): manager, wealth at the start
 of the season and base year as fixed entries. The script „Kader (eigener Verein und nächster
@@ -80,6 +86,8 @@ Leave the `X` in place: removing it deletes the player entries again.
 - For the players of the loaded teams (own squad, next opponent) the game works on **working
   copies** („CSpieler“ cache, tree at `0x00A3D3C4`) and writes them back to the records when
   saving. The trainer therefore writes to the copy **and** the record.
+- Loaded clubs (own club, next opponent) have working copies too (6 slots from `0x00A6AB10`); club
+  values are written to both as well.
 - All addresses and field meanings are in `Controller/A3Addresses.cs`.
 
 ## Project layout
@@ -131,6 +139,8 @@ with Ascaron or the developers of *Anstoss 3*.
   player's info window in the game before saving in the trainer.
 - Fitness: for goalkeepers the game shows a lower value than the stored one (display formula not
   decoded yet).
+- **Beard** is stored but not shown: version 1.40 passes the skin colour to the 3D match in its place
+  (the beard getter `FUN_007077AB` is a copy of the skin colour getter).
 - Manager and finances: player 1 only (single-player career).
 - Suspensions, detailed skill values, clubs from countries other than Germany: not checked yet.
 - The UI is built in code (no designer).

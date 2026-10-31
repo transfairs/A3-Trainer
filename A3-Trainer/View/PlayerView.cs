@@ -16,10 +16,10 @@ namespace A3_Trainer.View
 
         private readonly ListView list = new ListView();
         private readonly TabControl tabs = new TabControl();
-        // The game keeps names in a shared table, so they are shown only.
-        private readonly TextBox lastNameValue = new TextBox { ReadOnly = true };
-        private readonly TextBox firstNameValue = new TextBox { ReadOnly = true };
-        private readonly TextBox artistNameValue = new TextBox { ReadOnly = true, Enabled = false };
+        // Names are entries of the game's shared name table; a changed name gets its own (A3Game.NameIndex).
+        private readonly TextBox lastNameValue = NameBox();
+        private readonly TextBox firstNameValue = NameBox();
+        private readonly TextBox artistNameValue = NameBox();
         private readonly NumericUpDown birthDay = Number(0, 31);
         private readonly NumericUpDown birthMonth = Number(0, 12);
         private readonly NumericUpDown birthYear = Number(0, 3000);
@@ -28,7 +28,15 @@ namespace A3_Trainer.View
         private readonly ComboBox nationality = Combo();
         private readonly ComboBox secondNationality = Combo();
         private RadioButton[] skinRadios;
+        private RadioButton[] hairColorRadios;
+        private RadioButton[] hairTypeRadios;
+        private CheckBox[] beardChecks;
+        private readonly CheckBox homegrownForeigner = new CheckBox { Text = "Fußballinländer" };
+        private readonly CheckBox nationalPlayer = new CheckBox { Text = "Nationalspieler" };
+        private readonly CheckBox nationalTeamRetired = new CheckBox { Text = "Aus Nationalmannschaft zurückgetreten" };
+        private readonly CheckBox captainRetired = new CheckBox { Text = "Als Kapitän zurückgetreten" };
         private RadioButton[] audienceRadios;
+        private RadioButton[] healthRadios;
         private readonly RadioButton[] positionRadios = new RadioButton[Tables.EditorPositions.Length];
         private readonly CheckBox[] sideChecks = new CheckBox[Tables.EditorPositions.Length - 1];
         private readonly NumericUpDown strength = Number(1, Tables.MaxStrength);
@@ -38,6 +46,7 @@ namespace A3_Trainer.View
         // Motivation is recomputed by the game from seven factors whenever it shows a player
         // (FUN_0070147E), so a written value wouldn't stick - shown only.
         private readonly Label morale = new Label();
+        private readonly NumericUpDown formBase = Number(0, Tables.MaxFormBase);
         private readonly ComboBox foot = DropDown(Tables.Feet.Skip(1));
         private readonly NumericUpDown shirt = Number(0, 99);
         private readonly Label injuryValue = new Label();
@@ -53,7 +62,19 @@ namespace A3_Trainer.View
         private readonly CheckedListBox character = new CheckedListBox { CheckOnClick = true };
         private readonly NumericUpDown salary = Number(0, 65535);
         private readonly NumericUpDown matchBonus = Number(0, 65535);
+        private readonly NumericUpDown goalBonus = Number(0, 65535);
+        private readonly NumericUpDown releaseClause = Number(0, 65535);
         private readonly NumericUpDown contractEnd = Number(1990, 2100);
+        private readonly ComboBox validity = DropDown(Tables.ContractValidity);
+        private readonly CheckBox clubOption = new CheckBox { Text = "Option Verein auf Verlängerung" };
+        private readonly CheckBox playerOption = new CheckBox { Text = "Option Spieler auf Verlängerung" };
+        private readonly CheckBox regularPlace = new CheckBox { Text = "Stammplatzgarantie" };
+        private readonly ComboBox relationship = DropDown(Tables.Relationships);
+        private readonly ComboBox relationshipState = DropDown(Tables.RelationshipStates);
+        // Partner and children come from first-name lists the game draws from; shown only.
+        private readonly TextBox partnerValue = new TextBox { ReadOnly = true };
+        private readonly TextBox childrenValue = new TextBox { ReadOnly = true };
+        private readonly ComboBox hobby = DropDown(Tables.Hobbies);
         private readonly Button save = new Button { Text = "Speichern" };
         private readonly Button reload = new Button { Text = "Neu laden" };
         private readonly Label status = new Label();
@@ -109,6 +130,7 @@ namespace A3_Trainer.View
             this.tabs.TabPages.Add(this.HealthPage());
             this.tabs.TabPages.Add(this.ConditionPage());
             this.tabs.TabPages.Add(this.ContractPage());
+            this.tabs.TabPages.Add(this.PrivatePage());
             this.Controls.Add(this.tabs);
 
             this.save.SetBounds(246, 394, 110, 25);
@@ -180,8 +202,6 @@ namespace A3_Trainer.View
             return page;
         }
 
-        // Nationality, looks and national team status aren't read from the game yet; the page is
-        // laid out as in the game's editor and stays disabled until they are.
         private TabPage Data2Page()
         {
             var page = new TabPage("Daten 2");
@@ -194,27 +214,25 @@ namespace A3_Trainer.View
             this.secondNationality.SetBounds(10, 75, 336, 21);
             group.Controls.Add(this.secondNationality);
 
-            // Only nationality and skin colour are read from the game so far; the rest of the page
-            // is laid out as in the game's editor and stays disabled until it is.
-            var notRead = new List<Control>
-            {
-                new CheckBox { Text = "Fußballinländer", Bounds = new Rectangle(14, 104, 150, 18) },
-                new CheckBox { Text = "Nationalspieler", Bounds = new Rectangle(190, 104, 150, 18) },
-                new CheckBox { Text = "Aus Nationalmannschaft zurückgetreten", Bounds = new Rectangle(14, 126, 330, 18) },
-                new CheckBox { Text = "Als Kapitän zurückgetreten", Bounds = new Rectangle(14, 148, 330, 18) },
-                Options(group, "Haartyp", new Rectangle(116, 174, 120, 90), false, 1, "extrem kurz", "kurz", "Wuschelkopf", "lang"),
-                Options(group, "Bart", new Rectangle(242, 174, 104, 90), true, 1, "unrasiert", "Bart", "Schnurrbart", "Ziegenbart"),
-                Options(group, "Haarfarbe", new Rectangle(10, 268, 336, 70), false, 3, "hellblond", "blond", "braun", "rot", "schwarz", "Glatze", "grau"),
-            };
-            foreach (Control control in notRead)
-            {
-                control.Enabled = false;
-                if (control is CheckBox)
-                    group.Controls.Add(control);
-            }
+            this.homegrownForeigner.Bounds = new Rectangle(14, 104, 150, 18);
+            this.nationalPlayer.Bounds = new Rectangle(190, 104, 150, 18);
+            this.nationalTeamRetired.Bounds = new Rectangle(14, 126, 330, 18);
+            this.captainRetired.Bounds = new Rectangle(14, 148, 330, 18);
+            group.Controls.AddRange(new Control[] { this.homegrownForeigner, this.nationalPlayer, this.nationalTeamRetired, this.captainRetired });
 
-            GroupBox skin = Options(group, "Hautfarbe", new Rectangle(10, 174, 100, 90), false, 1, "hell", "dunkel", "schwarz", "asiatisch");
-            this.skinRadios = skin.Controls.Cast<RadioButton>().ToArray();
+            this.skinRadios = Options(group, "Hautfarbe", new Rectangle(10, 174, 100, 108), false, 1, Tables.SkinColors).Controls.Cast<RadioButton>().ToArray();
+            this.hairTypeRadios = Options(group, "Haartyp", new Rectangle(116, 174, 120, 108), false, 1, Tables.HairTypes).Controls.Cast<RadioButton>().ToArray();
+            this.beardChecks = Options(group, "Bart", new Rectangle(242, 174, 104, 108), true, 1, Tables.Beards).Controls.Cast<CheckBox>().ToArray();
+            this.hairColorRadios = Options(group, "Haarfarbe", new Rectangle(10, 286, 336, 56), false, 4, Tables.HairColors).Controls.Cast<RadioButton>().ToArray();
+
+            // The player info picks its portrait from a table without a row after "asiatisch", so hair type 4 would read past it.
+            RadioButton asian = this.skinRadios[Tables.SkinColors.Length - 1], special = this.hairTypeRadios[Tables.HairTypes.Length - 1];
+            asian.CheckedChanged += (s, e) =>
+            {
+                special.Enabled = !asian.Checked;
+                if (asian.Checked)
+                    special.Checked = false;
+            };
             return page;
         }
 
@@ -320,15 +338,13 @@ namespace A3_Trainer.View
             return page;
         }
 
-        // The audience's view is shown from the record's flags but can't be edited yet (the reputation
-        // level in +0x282 belongs to it); the health type isn't read from the game yet.
+        // The audience shows what the player info shows: the current crowd flag, else the lasting reputation.
         private TabPage HealthPage()
         {
             var page = new TabPage("Eig. 2");
-            GroupBox health = Options(page, "Gesundheitszustand", new Rectangle(6, 6, 177, 186), false, 1,
-                "normal", "robust", "anfällig", "Knieprobleme", "schnell wieder fit", "dauert bis wieder fit", "wehleidig");
+            GroupBox health = Options(page, "Gesundheitszustand", new Rectangle(6, 6, 177, 186), false, 1, Tables.HealthTypes);
             GroupBox audience = Options(page, "Publikum", new Rectangle(187, 6, 177, 90), false, 1, "normal", "Liebling", "Haßfigur");
-            health.Enabled = audience.Enabled = false;
+            this.healthRadios = health.Controls.Cast<RadioButton>().ToArray();
             this.audienceRadios = audience.Controls.Cast<RadioButton>().ToArray();
             return page;
         }
@@ -336,11 +352,13 @@ namespace A3_Trainer.View
         private TabPage ConditionPage()
         {
             var page = new TabPage("Verfassung");
-            GroupBox group = Group(page, "Verfassung", 6, 150);
+            GroupBox group = Group(page, "Verfassung", 6, 176);
             int y = 20;
             y = Row(group, y, "Kondition", this.condition, 70);
             y = Row(group, y, "Frische", this.freshness, 70);
             y = Row(group, y, "Motivation", this.morale, 70);
+            group.Controls.Add(new Label { Text = "0 bis 20, Start 10", Bounds = new Rectangle(200, y + 3, 150, 18) });
+            y = Row(group, y, "Form", this.formBase, 70);
             Row(group, y, "Verletzung", this.injuryValue, 140);
             this.heal.SetBounds(270, y, 75, 23);
             group.Controls.Add(this.heal);
@@ -350,7 +368,7 @@ namespace A3_Trainer.View
         private TabPage ContractPage()
         {
             var page = new TabPage("Vertrag");
-            GroupBox group = Group(page, "Vertrag", 6, 104);
+            GroupBox group = Group(page, "Vertrag", 6, 248);
             int y = 20;
             void Contract(string caption, Control input, string unit)
             {
@@ -360,7 +378,29 @@ namespace A3_Trainer.View
 
             Contract("Festgehalt", this.salary, "× 1.000 DM pro Jahr");
             Contract("Auflaufprämie", this.matchBonus, "× 100 DM pro Spiel");
+            Contract("Torprämie", this.goalBonus, "× 100 DM pro Tor");
+            Contract("Ausstiegsklausel", this.releaseClause, "× 10.000 DM, 0 = keine");
             Contract("Vertrag bis", this.contractEnd, "30.6. des Jahres");
+            y = Row(group, y, "Vertrag gilt", this.validity, 120);
+            foreach (CheckBox check in new[] { this.clubOption, this.playerOption, this.regularPlace })
+            {
+                check.SetBounds(14, y, 330, 18);
+                group.Controls.Add(check);
+                y += 22;
+            }
+            return page;
+        }
+
+        private TabPage PrivatePage()
+        {
+            var page = new TabPage("Privat");
+            GroupBox group = Group(page, "Privat", 6, 152);
+            int y = 20;
+            y = Row(group, y, "Beziehung", this.relationship, 120);
+            y = Row(group, y, "Stand", this.relationshipState, 120);
+            y = Row(group, y, "Partnerin", this.partnerValue, 230);
+            y = Row(group, y, "Kinder", this.childrenValue, 230);
+            Row(group, y, "Hobby", this.hobby, 230);
             return page;
         }
 
@@ -453,9 +493,19 @@ namespace A3_Trainer.View
             this.ageValue.Text = this.AgeText(player);
             this.nationality.SelectedIndex = Clamp(player.Nationality, this.nationality.Items.Count);
             this.secondNationality.SelectedIndex = Clamp(player.SecondNationality, this.secondNationality.Items.Count);
+            this.artistNameValue.Text = player.ArtistName;
             for (int i = 0; i < this.skinRadios.Length; i++)
                 this.skinRadios[i].Checked = i == player.SkinColor;
-            int audience = player.Darling ? 1 : player.Hated ? 2 : 0; // normal, Liebling, Haßfigur
+            for (int i = 0; i < this.hairColorRadios.Length; i++)
+                this.hairColorRadios[i].Checked = i == player.HairColor;
+            for (int i = 0; i < this.hairTypeRadios.Length; i++)
+                this.hairTypeRadios[i].Checked = i == player.HairType;
+            SetBits(this.beardChecks, player.Beard);
+            this.homegrownForeigner.Checked = player.HomegrownForeigner;
+            this.nationalPlayer.Checked = player.NationalPlayer;
+            this.nationalTeamRetired.Checked = (player.NationalTeam & StatusFlag.NationalTeamRetired) != 0;
+            this.captainRetired.Checked = player.CaptainRetired;
+            int audience = Audience(player); // normal, Liebling, Haßfigur
             for (int i = 0; i < this.audienceRadios.Length; i++)
                 this.audienceRadios[i].Checked = i == audience;
             foreach (RadioButton radio in this.positionRadios)
@@ -467,6 +517,10 @@ namespace A3_Trainer.View
             SetNumber(this.condition, player.Condition / 100);
             SetNumber(this.freshness, player.Freshness / 100);
             this.morale.Text = player.Morale.ToString();
+            SetNumber(this.formBase, player.FormBase);
+            int healthType = player.Health & Tables.HealthTypeMask;
+            for (int i = 0; i < this.healthRadios.Length; i++)
+                this.healthRadios[i].Checked = healthType == 1 << i;
             this.foot.SelectedIndex = player.Foot >= 1 && player.Foot <= 3 ? player.Foot - 1 : -1;
             SetNumber(this.shirt, player.ShirtNumber);
             this.ShowInjury(player);
@@ -475,7 +529,18 @@ namespace A3_Trainer.View
             SetBits(this.character, player.Character);
             SetNumber(this.salary, player.Salary);
             SetNumber(this.matchBonus, player.MatchBonus);
+            SetNumber(this.goalBonus, player.GoalBonus);
+            SetNumber(this.releaseClause, player.ReleaseClause);
             SetNumber(this.contractEnd, player.ContractEndYear);
+            this.validity.SelectedIndex = player.ContractFlags & ContractFlag.ValidityMask;
+            this.clubOption.Checked = (player.ContractFlags & ContractFlag.ClubOption) != 0;
+            this.playerOption.Checked = (player.ContractFlags & ContractFlag.PlayerOption) != 0;
+            this.regularPlace.Checked = (player.ContractFlags & ContractFlag.RegularPlace) != 0;
+            this.relationship.SelectedIndex = player.Relationship & Tables.RelationshipMask;
+            this.relationshipState.SelectedIndex = Clamp((player.Relationship & Tables.RelationshipStateMask) >> Tables.RelationshipStateShift, this.relationshipState.Items.Count);
+            this.partnerValue.Text = player.PartnerName;
+            this.childrenValue.Text = player.ChildNames.Length == 0 ? "keine" : string.Join(", ", player.ChildNames);
+            this.hobby.SelectedIndex = Clamp(player.Hobby, this.hobby.Items.Count);
         }
 
         private void ShowInjury(Player player)
@@ -521,6 +586,9 @@ namespace A3_Trainer.View
                 return;
 
             Player edited = (this.healed ?? this.shown).Clone();
+            edited.LastName = this.lastNameValue.Text;
+            edited.FirstName = this.firstNameValue.Text;
+            edited.ArtistName = this.artistNameValue.Text;
             edited.BirthDate = this.EnteredBirthDate();
             if (!edited.BirthDate.Equals(this.shown.BirthDate) && !edited.BirthDate.Exists)
             {
@@ -535,6 +603,20 @@ namespace A3_Trainer.View
             int skin = Array.FindIndex(this.skinRadios, r => r.Checked);
             if (skin >= 0)
                 edited.SkinColor = skin;
+            // A value without a matching button (e.g. hair type 4, which the game sets itself) stays unless one is picked.
+            int hairColor = Array.FindIndex(this.hairColorRadios, r => r.Checked);
+            if (hairColor >= 0)
+                edited.HairColor = hairColor;
+            int hairType = Array.FindIndex(this.hairTypeRadios, r => r.Checked);
+            if (hairType >= 0)
+                edited.HairType = hairType;
+            edited.Beard = GetBits(this.beardChecks);
+            edited.HomegrownForeigner = this.homegrownForeigner.Checked;
+            edited.NationalPlayer = this.nationalPlayer.Checked;
+            edited.CaptainRetired = this.captainRetired.Checked;
+            edited.NationalTeam = this.nationalTeamRetired.Checked
+                ? edited.NationalTeam | StatusFlag.NationalTeamRetired
+                : edited.NationalTeam & ~StatusFlag.NationalTeamRetired;
             int[] sides =this.sideChecks.Where(c => c.Checked).Select(c => (int)c.Tag).ToArray();
             edited.SidePosition1 = sides.Length > 0 ? sides[0] : 0;
             edited.SidePosition2 = sides.Length > 1 ? sides[1] : 0;
@@ -552,7 +634,41 @@ namespace A3_Trainer.View
             edited.Character = GetBits(this.character);
             edited.Salary = (int)this.salary.Value;
             edited.MatchBonus = (int)this.matchBonus.Value;
+            edited.GoalBonus = (int)this.goalBonus.Value;
+            edited.ReleaseClause = (int)this.releaseClause.Value;
             edited.ContractEndYear = (int)this.contractEnd.Value;
+            int flags = edited.ContractFlags & ~(ContractFlag.ValidityMask | ContractFlag.ClubOption | ContractFlag.PlayerOption | ContractFlag.RegularPlace);
+            flags |= Math.Max(this.validity.SelectedIndex, 0);
+            if (this.clubOption.Checked)
+                flags |= ContractFlag.ClubOption;
+            if (this.playerOption.Checked)
+                flags |= ContractFlag.PlayerOption;
+            if (this.regularPlace.Checked)
+                flags |= ContractFlag.RegularPlace;
+            edited.ContractFlags = flags;
+            // A changed audience sets the lasting reputation and the current flag, so it shows right away
+            // and outlasts the game's check after the next match.
+            int crowd = Array.FindIndex(this.audienceRadios, r => r.Checked);
+            if (crowd >= 0 && crowd != Audience(this.shown))
+            {
+                edited.Reputation = crowd + 1;
+                edited.Flags = edited.Flags & ~(CrowdFlag.Darling | CrowdFlag.Hated)
+                    | (crowd == 1 ? CrowdFlag.Darling : crowd == 2 ? CrowdFlag.Hated : 0);
+            }
+            // Only the relationship bits are replaced; a state without a name (5-7) stays unless one is picked.
+            int relation = edited.Relationship & ~Tables.RelationshipMask | Math.Max(this.relationship.SelectedIndex, 0);
+            if (this.relationshipState.SelectedIndex >= 0)
+                relation = relation & ~Tables.RelationshipStateMask | this.relationshipState.SelectedIndex << Tables.RelationshipStateShift;
+            edited.Relationship = relation;
+            if (this.hobby.SelectedIndex >= 0)
+                edited.Hobby = this.hobby.SelectedIndex;
+            // A form outside 0..20 (not set by the game) stays unless it is changed.
+            if ((int)this.formBase.Value != Math.Min(Math.Max(this.shown.FormBase, 0), Tables.MaxFormBase))
+                edited.FormBase = (int)this.formBase.Value;
+            // Only the health type bits are replaced; a word without exactly one type stays unless one is picked.
+            int health = Array.FindIndex(this.healthRadios, r => r.Checked);
+            if (health >= 0 && (edited.Health & Tables.HealthTypeMask) != 1 << health)
+                edited.Health = edited.Health & ~Tables.HealthTypeMask | 1 << health;
 
             string result;
             try
@@ -572,6 +688,16 @@ namespace A3_Trainer.View
             this.status.Text = result;
         }
 
+        // As the player info (FUN_0055A57E): darling flag, hated flag, then the lasting reputation.
+        private static int Audience(Player player)
+        {
+            if (player.Darling)
+                return 1;
+            if (player.Hated)
+                return 2;
+            return player.Reputation == 2 ? 1 : player.Reputation == 3 ? 2 : 0;
+        }
+
         private int SelectedPosition() =>
             this.positionRadios.Where(r => r.Checked).Select(r => (int)r.Tag).DefaultIfEmpty(this.shown?.Position ?? Tables.Goalkeeper).First();
 
@@ -585,6 +711,8 @@ namespace A3_Trainer.View
             combo.Items.AddRange(items.Cast<object>().ToArray());
             return combo;
         }
+
+        private static TextBox NameBox() => new TextBox { MaxLength = A3Addresses.MaxNameLength };
 
         private static NumericUpDown Number(int min, int max) => new NumericUpDown { Minimum = min, Maximum = max };
 

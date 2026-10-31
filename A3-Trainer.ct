@@ -12,7 +12,7 @@ if syntaxcheck then return end
 -- und A3-Trainer/Model/Tables.cs; A3-Trainer.Tests/CheatTableTests.cs vergleicht sie.
 local A = {
   PlayerArray = 0x00C02550, PlayerSize = 0x354, PlayerSlots = 17006,
-  NameTable = 0x019D3B68, NameTableCount = 19866,
+  NameTable = 0x019D3B68, NameTableSlots = 34000,
   PlayerCacheRoot = 0x00A3D3C4, CacheNodeLeft = 0x0, CacheNodeRight = 0x4, CacheNodeEntry = 0xC,
   CacheEntryIndex = 0x0, CacheEntryCompact = 0x8,
   ClubArray = 0x01A72FF8, ClubSize = 0x990, ClubCount = 492, ClubIndexTable = 0x00AE5EF0,
@@ -64,7 +64,7 @@ local function clubAddress(country, number)
 end
 
 local function playerName(index)
-  if index &lt;= 0 or index &gt;= A.NameTableCount then return "" end
+  if index &lt;= 0 or index &gt;= A.NameTableSlots then return "" end
   local pointer = u32(A.NameTable + index * 4)
   return pointer == 0 and "" or text(pointer, 32)
 end

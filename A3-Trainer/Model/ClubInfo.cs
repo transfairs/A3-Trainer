@@ -33,6 +33,10 @@ namespace A3_Trainer.Model
         internal string City { get; set; } = "";
         /// <summary>DM; the bank balance is this plus the season's result so far.</summary>
         internal int SeasonStartMoney { get; set; }
+        /// <summary>Club image, 10 to 50 (Tables.ClubImage).</summary>
+        internal int Image { get; set; }
+        /// <summary>Trouble byte: bits 0-4 trouble with the association (Tables.Association), the rest game state.</summary>
+        internal int Trouble { get; set; }
 
         /// <summary>Manager 1's first name.</summary>
         internal string ManagerFirstName { get; set; } = "";
@@ -42,6 +46,24 @@ namespace A3_Trainer.Model
         internal int ManagerSalary { get; set; }
         /// <summary>Manager 1's private money, DM.</summary>
         internal int ManagerPrivateMoney { get; set; }
+        /// <summary>Manager 1's popularity with the media, 0 to 100.</summary>
+        internal int MediaPopularity { get; set; }
+        /// <summary>Manager 1's popularity with the public, 0 to 100.</summary>
+        internal int PublicPopularity { get; set; }
+        /// <summary>Base of manager 1's popularity with the fans, 0 to 100 (the game scales it by the team's mood).</summary>
+        internal int FanPopularity { get; set; }
+        /// <summary>Percent the game weights the fans' base with (FUN_006A5A7D).</summary>
+        internal int FanWeight { get; set; } = 100;
+        /// <summary>Manager 1's popularity with the fans as the game shows it, 0 to 100.</summary>
+        internal int ShownFanPopularity => ShownFans(this.FanPopularity);
+        /// <summary>What the game would show for a fans' base of <paramref name="value"/>.</summary>
+        internal int ShownFans(int value) => System.Math.Min(System.Math.Max(value * this.FanWeight / 100, 0), 100);
+        /// <summary>Base of the board's trust in manager 1.</summary>
+        internal int BoardTrustBase { get; set; }
+        /// <summary>What the game adds to the base (FUN_007701B2).</summary>
+        internal int BoardTrustBonus { get; set; }
+        /// <summary>The board's trust as the game shows it, 0 to 100 percent.</summary>
+        internal int BoardTrust => System.Math.Min(System.Math.Max(this.BoardTrustBase + this.BoardTrustBonus, 0), 100);
 
         /// <summary>A copy to edit without changing this one.</summary>
         internal ClubInfo Clone() => (ClubInfo)this.MemberwiseClone();

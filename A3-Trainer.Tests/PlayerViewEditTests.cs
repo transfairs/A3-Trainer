@@ -191,6 +191,269 @@ namespace A3_Trainer.Tests
         });
 
         [Fact]
+        public void ShowAndSave_ContractHealthAndForm() => StaThread.Run(() =>
+        {
+            FakeGameMemory m = Squad();
+            uint r = Record(Defender);
+            m.PutUInt16(r + RecordOffset.GoalBonus, 25);
+            m.PutUInt16(r + RecordOffset.ReleaseClause, 300);
+            m.PutUInt16(r + RecordOffset.ContractFlags, 0x2042);   // mind. 2. Liga, Option Verein, unknown bit 0x40
+            m.PutUInt16(r + RecordOffset.Health, 0x1004);          // anfällig plus a state bit
+            m.Put(r + RecordOffset.FormBase, 12);
+            using (PlayerView view = View(m))
+            {
+                Select(view, Defender);
+
+                Assert.Equal(25, Field<NumericUpDown>(view, "goalBonus").Value);
+                Assert.Equal(300, Field<NumericUpDown>(view, "releaseClause").Value);
+                Assert.Equal(2, Field<ComboBox>(view, "validity").SelectedIndex);
+                Assert.True(Field<CheckBox>(view, "clubOption").Checked);
+                Assert.False(Field<CheckBox>(view, "playerOption").Checked);
+                Assert.False(Field<CheckBox>(view, "regularPlace").Checked);
+                Assert.True(Field<RadioButton[]>(view, "healthRadios")[2].Checked);
+                Assert.Equal(12, Field<NumericUpDown>(view, "formBase").Value);
+
+                Field<NumericUpDown>(view, "goalBonus").Value = 40;
+                Field<NumericUpDown>(view, "releaseClause").Value = 0;
+                Field<ComboBox>(view, "validity").SelectedIndex = 0;
+                Field<CheckBox>(view, "clubOption").Checked = false;
+                Field<CheckBox>(view, "playerOption").Checked = true;
+                Field<CheckBox>(view, "regularPlace").Checked = true;
+                Field<RadioButton[]>(view, "healthRadios")[1].Checked = true;   // robust
+                Field<NumericUpDown>(view, "formBase").Value = 20;
+                TestHelpers.Click(Field<Button>(view, "save"));
+
+                Assert.Equal("Gespeichert", Status(view));
+                Assert.Equal(BitConverter.GetBytes((ushort)40), m.WrittenAt(r + RecordOffset.GoalBonus));
+                Assert.Equal(new byte[] { 0, 0 }, m.WrittenAt(r + RecordOffset.ReleaseClause));
+                Assert.Equal(BitConverter.GetBytes((ushort)0x5040), m.WrittenAt(r + RecordOffset.ContractFlags));
+                Assert.Equal(BitConverter.GetBytes((ushort)0x1002), m.WrittenAt(r + RecordOffset.Health));
+                Assert.Equal(new byte[] { 20 }, m.WrittenAt(r + RecordOffset.FormBase));
+            }
+        });
+
+        [Fact]
+        public void ShowAndSave_LooksAndNationalTeamStatus() => StaThread.Run(() =>
+        {
+            FakeGameMemory m = Squad();
+            uint r = Record(Striker);
+            uint copy = 0x06000000 + 8;
+            m.PutUInt16(r + RecordOffset.ArtistName, 500);
+            A3GameTests.PutName(m, 500, "Zé", 0x02000100);
+            m.Put(r + RecordOffset.Appearance, 0x21);      // Bart, skin dunkel
+            m.Put(r + RecordOffset.Hair, 0x12);            // kurz, braun
+            m.Put(copy + CompactOffset.NationalTeam, 0x08); // a game state bit
+            using (PlayerView view = View(m))
+            {
+                Select(view, Striker);
+
+                Assert.Equal("Zé", Field<TextBox>(view, "artistNameValue").Text);
+                Assert.True(Field<RadioButton[]>(view, "skinRadios")[1].Checked);
+                Assert.True(Field<RadioButton[]>(view, "hairColorRadios")[2].Checked);
+                Assert.True(Field<RadioButton[]>(view, "hairTypeRadios")[1].Checked);
+                Assert.Equal(new[] { false, true, false, false }, Field<CheckBox[]>(view, "beardChecks").Select(c => c.Checked));
+                Assert.True(Field<CheckBox>(view, "nationalPlayer").Checked);
+                Assert.False(Field<CheckBox>(view, "homegrownForeigner").Checked);
+                Assert.False(Field<CheckBox>(view, "nationalTeamRetired").Checked);
+                Assert.False(Field<CheckBox>(view, "captainRetired").Checked);
+
+                Field<RadioButton[]>(view, "hairColorRadios")[5].Checked = true;   // Glatze
+                Field<RadioButton[]>(view, "hairTypeRadios")[3].Checked = true;    // lang
+                Field<CheckBox[]>(view, "beardChecks")[1].Checked = false;
+                Field<CheckBox[]>(view, "beardChecks")[3].Checked = true;          // Ziegenbart
+                Field<CheckBox>(view, "homegrownForeigner").Checked = true;
+                Field<CheckBox>(view, "captainRetired").Checked = true;
+                Field<CheckBox>(view, "nationalTeamRetired").Checked = true;
+                TestHelpers.Click(Field<Button>(view, "save"));
+
+                Assert.Equal("Gespeichert", Status(view));
+                Assert.Equal(new byte[] { 0x81 }, m.WrittenAt(r + RecordOffset.Appearance));
+                Assert.Equal(new byte[] { 0x35 }, m.WrittenAt(r + RecordOffset.Hair));
+                Assert.Equal(new byte[] { 0x87 | 0x10 | 0x40 }, m.WrittenAt(r + RecordOffset.FootAndReputation));
+                Assert.Equal(new byte[] { 0x0A }, m.WrittenAt(r + RecordOffset.NationalTeam));
+                Assert.Equal(new byte[] { 0x0A }, m.WrittenAt(copy + CompactOffset.NationalTeam));
+            }
+        });
+
+        [Fact]
+        public void ShowAndSave_Audience_SetsReputationAndCurrentFlag() => StaThread.Run(() =>
+        {
+            FakeGameMemory m = Squad();
+            uint copy = 0x06000000 + 8;
+            m.Put(Record(Striker) + RecordOffset.FootAndReputation, 0x86);   // national player, right foot, Liebling
+            m.PutUInt32(copy + CompactOffset.Flags, CrowdFlag.Darling | 1);
+            m.Put(Record(Midfielder) + RecordOffset.FootAndReputation, 0x07); // no current flag, verhaßt
+            using (PlayerView view = View(m))
+            {
+                RadioButton[] audience = Field<RadioButton[]>(view, "audienceRadios");
+                Select(view, Keeper);
+                Assert.True(audience[1].Enabled);
+                Assert.True(audience[1].Checked);                              // darling flag
+                Select(view, Defender);
+                Assert.True(audience[2].Checked);                              // hated flag
+
+                Select(view, Midfielder);
+                Assert.True(audience[2].Checked);                              // lasting reputation
+                audience[0].Checked = true;
+                TestHelpers.Click(Field<Button>(view, "save"));
+                Assert.Equal(new byte[] { 0x05 }, m.WrittenAt(Record(Midfielder) + RecordOffset.FootAndReputation));
+                Assert.Null(m.WrittenAt(Record(Midfielder) + RecordOffset.Flags));
+
+                Select(view, Striker);
+                Assert.True(audience[1].Checked);
+                audience[2].Checked = true;
+                TestHelpers.Click(Field<Button>(view, "save"));
+                Assert.Equal(new byte[] { 0x87 }, m.WrittenAt(Record(Striker) + RecordOffset.FootAndReputation));
+                Assert.Equal(BitConverter.GetBytes(CrowdFlag.Hated | 1), m.WrittenAt(Record(Striker) + RecordOffset.Flags));
+                Assert.Equal(BitConverter.GetBytes(CrowdFlag.Hated | 1), m.WrittenAt(copy + CompactOffset.Flags));
+
+                // An untouched audience writes nothing.
+                Select(view, Keeper);
+                TestHelpers.Click(Field<Button>(view, "save"));
+                Assert.Null(m.WrittenAt(Record(Keeper) + RecordOffset.Flags));
+            }
+        });
+
+        [Fact]
+        public void ShowAndSave_PrivateLife() => StaThread.Run(() =>
+        {
+            FakeGameMemory m = Squad();
+            uint r = Record(Striker);
+            m.Map(A3Addresses.FirstNameLists, 3 * A3Addresses.FirstNameListSize * 2);
+            uint list = A3Addresses.FirstNameLists + 2 * A3Addresses.FirstNameListSize * 2; // name country 2
+            string[] names = { "Brigitte", "Tatjana", "Jürgen" };
+            for (int i = 0; i < names.Length; i++)
+            {
+                A3GameTests.PutName(m, 600 + i, names[i], 0x02000200 + (uint)(i * 0x20));
+                m.PutUInt16(list + (uint)((7 + i) * 2), (ushort)(600 + i));
+            }
+            m.Put(r + RecordOffset.NameCountry, 2);
+            m.Put(r + RecordOffset.PartnerName, 7);
+            m.Put(r + RecordOffset.ChildNames, 8, 9);
+            m.PutUInt16(r + RecordOffset.ChildCount, 2);
+            m.Put(r + RecordOffset.Relationship, 0x83);   // verheiratet, zusammen, a game state bit
+            m.Put(r + RecordOffset.Hobby, 19);
+            using (PlayerView view = View(m))
+            {
+                Select(view, Striker);
+
+                Assert.Equal("verheiratet", Field<ComboBox>(view, "relationship").Text);
+                Assert.Equal("zusammen", Field<ComboBox>(view, "relationshipState").Text);
+                Assert.Equal("Brigitte", Field<TextBox>(view, "partnerValue").Text);
+                Assert.Equal("Tatjana, Jürgen", Field<TextBox>(view, "childrenValue").Text);
+                Assert.Equal("Gut essen gehen", Field<ComboBox>(view, "hobby").Text);
+
+                Field<ComboBox>(view, "relationship").SelectedIndex = 1;      // Freundin
+                Field<ComboBox>(view, "relationshipState").SelectedIndex = 1; // getrennt
+                Field<ComboBox>(view, "hobby").SelectedIndex = 2;             // Angeln
+                TestHelpers.Click(Field<Button>(view, "save"));
+
+                Assert.Equal("Gespeichert", Status(view));
+                Assert.Equal(new byte[] { 0x85 }, m.WrittenAt(r + RecordOffset.Relationship));
+                Assert.Equal(new byte[] { 2 }, m.WrittenAt(r + RecordOffset.Hobby));
+            }
+        });
+
+        [Fact]
+        public void PrivateLife_WithoutPartnerOrChildren_AndAnUnnamedState() => StaThread.Run(() =>
+        {
+            FakeGameMemory m = Squad();
+            m.Put(Record(Defender) + RecordOffset.Relationship, 0x1D);   // Freundin, state 7
+            m.Put(Record(Defender) + RecordOffset.PartnerName, 150);     // beyond the 100 names of a list
+            m.PutUInt16(Record(Defender) + RecordOffset.ChildCount, 9);   // beyond the limit, names unreadable
+            using (PlayerView view = View(m))
+            {
+                Select(view, Defender);
+                Assert.Equal("", Field<TextBox>(view, "partnerValue").Text);
+                Assert.Equal(", , , , ", Field<TextBox>(view, "childrenValue").Text);
+                Assert.Equal(-1, Field<ComboBox>(view, "relationshipState").SelectedIndex);
+
+                Field<ComboBox>(view, "relationship").SelectedIndex = 2;   // verlobt
+                TestHelpers.Click(Field<Button>(view, "save"));
+                Assert.Equal(new byte[] { 0x1E }, m.WrittenAt(Record(Defender) + RecordOffset.Relationship));
+                Assert.Null(m.WrittenAt(Record(Defender) + RecordOffset.Hobby));
+            }
+
+            m = Squad();
+            using (PlayerView view = View(m))
+            {
+                Select(view, Midfielder);
+                Assert.Equal("keine", Field<TextBox>(view, "childrenValue").Text);
+            }
+        });
+
+        [Fact]
+        public void Save_KeepsAHairTypeWithoutAButton() => StaThread.Run(() =>
+        {
+            FakeGameMemory m = Squad();
+            m.Put(Record(Defender) + RecordOffset.Hair, 0x52);
+            using (PlayerView view = View(m))
+            {
+                Select(view, Defender);
+                Assert.DoesNotContain(Field<RadioButton[]>(view, "hairTypeRadios"), h => h.Checked);
+
+                Field<RadioButton[]>(view, "hairColorRadios")[4].Checked = true;
+                TestHelpers.Click(Field<Button>(view, "save"));
+
+                Assert.Equal(new byte[] { 0x54 }, m.WrittenAt(Record(Defender) + RecordOffset.Hair));
+            }
+        });
+
+        [Fact]
+        public void ShowAndSave_TheHairTypeOnlyTheGameSets() => StaThread.Run(() =>
+        {
+            FakeGameMemory m = Squad();
+            m.Put(Record(Defender) + RecordOffset.Hair, 0x42);
+            using (PlayerView view = View(m))
+            {
+                Select(view, Defender);
+                RadioButton[] types = Field<RadioButton[]>(view, "hairTypeRadios");
+                Assert.Equal("Sonderfrisur", types[4].Text);
+                Assert.True(types[4].Checked);
+
+                types[0].Checked = true;
+                TestHelpers.Click(Field<Button>(view, "save"));
+                Assert.Equal(new byte[] { 0x02 }, m.WrittenAt(Record(Defender) + RecordOffset.Hair));
+            }
+
+            m = Squad();
+            m.Put(Record(Defender) + RecordOffset.Hair, 0x12);
+            using (PlayerView view = View(m))
+            {
+                Select(view, Defender);
+                RadioButton special = Field<RadioButton[]>(view, "hairTypeRadios")[4];
+                special.Checked = true;
+                TestHelpers.Click(Field<Button>(view, "save"));
+                Assert.Equal(new byte[] { 0x42 }, m.WrittenAt(Record(Defender) + RecordOffset.Hair));
+
+                // No portrait row after "asiatisch": the special hair type is switched off.
+                RadioButton[] skins = Field<RadioButton[]>(view, "skinRadios");
+                skins[3].Checked = true;
+                Assert.False(special.Enabled);
+                Assert.False(special.Checked);
+                skins[0].Checked = true;
+                Assert.True(special.Enabled);
+            }
+        });
+
+        [Fact]
+        public void Save_KeepsAFormOutsideTheRangeAndAHealthWordWithoutType() => StaThread.Run(() =>
+        {
+            FakeGameMemory m = Squad();
+            m.Put(Record(Keeper) + RecordOffset.FormBase, 30);
+            using (PlayerView view = View(m))
+            {
+                Select(view, Keeper);
+                Assert.Equal(20, Field<NumericUpDown>(view, "formBase").Value);
+                Assert.DoesNotContain(Field<RadioButton[]>(view, "healthRadios"), h => h.Checked);
+
+                TestHelpers.Click(Field<Button>(view, "save"));
+
+                Assert.Empty(m.Writes);
+            }
+        });
+
+        [Fact]
         public void Save_OfAnUnchangedKeeper_WritesNothing() => StaThread.Run(() =>
         {
             FakeGameMemory m = Squad();

@@ -54,6 +54,11 @@ namespace A3_Trainer.Controller
             new Field { Get = p => p.Morale,        Record = RecordOffset.Morale,        Compact = CompactOffset.Morale,        Size = 1 },
             new Field { Get = p => p.Salary,        Record = RecordOffset.Salary,        Compact = CompactOffset.Salary,        Size = 2 },
             new Field { Get = p => p.MatchBonus,    Record = RecordOffset.MatchBonus,    Compact = CompactOffset.MatchBonus,    Size = 2 },
+            new Field { Get = p => p.GoalBonus,     Record = RecordOffset.GoalBonus,     Compact = CompactOffset.GoalBonus,     Size = 2 },
+            new Field { Get = p => p.ReleaseClause, Record = RecordOffset.ReleaseClause, Compact = CompactOffset.ReleaseClause, Size = 2 },
+            new Field { Get = p => p.ContractFlags, Record = RecordOffset.ContractFlags, Compact = CompactOffset.ContractFlags, Size = 2 },
+            new Field { Get = p => p.Health,        Record = RecordOffset.Health,        Compact = CompactOffset.Health,        Size = 2 },
+            new Field { Get = p => p.NationalTeam,  Record = RecordOffset.NationalTeam,  Compact = CompactOffset.NationalTeam,  Size = 1 },
         };
 
         /// <summary>Whether a record slot holds a player (empty slots are all zero after the header).</summary>
@@ -74,6 +79,15 @@ namespace A3_Trainer.Controller
                 Nationality = Byte(RecordOffset.Nationality),
                 SecondNationality = Byte(RecordOffset.SecondNationality),
                 SkinColor = Byte(RecordOffset.Appearance) & 7,
+                Beard = Byte(RecordOffset.Appearance) >> 4,
+                HairColor = Byte(RecordOffset.Hair) & 0x0F,
+                HairType = Byte(RecordOffset.Hair) >> 4,
+                HomegrownForeigner = (Byte(RecordOffset.FootAndReputation) & StatusFlag.HomegrownForeigner) != 0,
+                NationalPlayer = (Byte(RecordOffset.FootAndReputation) & StatusFlag.NationalPlayer) != 0,
+                CaptainRetired = (Byte(RecordOffset.FootAndReputation) & StatusFlag.CaptainRetired) != 0,
+                NationalTeam = Byte(RecordOffset.NationalTeam),
+                Relationship = Byte(RecordOffset.Relationship),
+                Hobby = Byte(RecordOffset.Hobby),
                 Flags = BitConverter.ToUInt32(data, offset + RecordOffset.Flags),
                 Strength = Byte(RecordOffset.Strength),
                 Position = Byte(RecordOffset.Position),
@@ -82,6 +96,7 @@ namespace A3_Trainer.Controller
                 Talent = Byte(RecordOffset.Talent),
                 ShirtNumber = Byte(RecordOffset.ShirtNumber),
                 Foot = (Byte(RecordOffset.FootAndReputation) >> 2) & 3,
+                Reputation = Byte(RecordOffset.FootAndReputation) & 3,
                 Skills = Word(RecordOffset.Skills),
                 Skills2 = Word(RecordOffset.Skills2),
                 Traits = Word(RecordOffset.Traits),
@@ -89,12 +104,17 @@ namespace A3_Trainer.Controller
                 Condition = Word(RecordOffset.Condition),
                 Freshness = Word(RecordOffset.Freshness),
                 Morale = Byte(RecordOffset.Morale),
+                FormBase = (sbyte)Byte(RecordOffset.FormBase),
+                Health = Word(RecordOffset.Health),
                 InjuryType = Byte(RecordOffset.InjuryType),
                 RecordInjured = Word(RecordOffset.InjuryTo) != 0,
                 Groggy = Word(RecordOffset.Groggy) != 0,
                 Salary = Word(RecordOffset.Salary),
                 MatchBonus = Word(RecordOffset.MatchBonus),
+                GoalBonus = Word(RecordOffset.GoalBonus),
+                ReleaseClause = Word(RecordOffset.ReleaseClause),
                 ContractEndYear = Word(RecordOffset.ContractEnd),
+                ContractFlags = Word(RecordOffset.ContractFlags),
             };
         }
 
@@ -116,6 +136,7 @@ namespace A3_Trainer.Controller
             player.Flags = BitConverter.ToUInt32(compact, CompactOffset.Flags);
             player.Traits = Word(CompactOffset.Traits);
             player.Character = Word(CompactOffset.Character);
+            player.Health = Word(CompactOffset.Health);
             player.Condition = Word(CompactOffset.Condition);
             player.Freshness = Word(CompactOffset.Freshness);
             player.Nationality = Byte(CompactOffset.Nationality);
@@ -125,7 +146,11 @@ namespace A3_Trainer.Controller
             player.Groggy = Byte(CompactOffset.Groggy) != 0;
             player.Salary = Word(CompactOffset.Salary);
             player.MatchBonus = Word(CompactOffset.MatchBonus);
+            player.GoalBonus = Word(CompactOffset.GoalBonus);
+            player.ReleaseClause = Word(CompactOffset.ReleaseClause);
             player.ContractEndYear = (sbyte)Byte(CompactOffset.ContractEnd) + baseYear;
+            player.ContractFlags = Word(CompactOffset.ContractFlags);
+            player.NationalTeam = Byte(CompactOffset.NationalTeam);
             player.Morale = Byte(CompactOffset.Morale);
         }
 
@@ -133,8 +158,8 @@ namespace A3_Trainer.Controller
         /// The writes that turn <paramref name="original"/> into <paramref name="edited"/>: every
         /// changed field goes to the record and, if the game has a working copy, to that copy too
         /// (which is what the game shows and what it writes back on save).
-        /// <paramref name="footByte"/> is the record's current foot/reputation byte, of which only
-        /// the foot bits are replaced; likewise <paramref name="appearanceByte"/> for the skin colour.
+        /// <paramref name="footByte"/> is the record's current foot/status byte, of which only
+        /// the changed bits are replaced; likewise <paramref name="appearanceByte"/> for skin colour and beard.
         /// </summary>
         internal static List<MemoryWrite> Changes(Player original, Player edited, int baseYear, int footByte, int appearanceByte = 0)
         {
@@ -177,19 +202,62 @@ namespace A3_Trainer.Controller
                     writes.Add(new MemoryWrite(compact + CompactOffset.BirthDate, (byte[])date.Clone()));
             }
 
-            // The foot only exists in the record (bits 2-3); the other bits of that byte stay.
+            // Reputation (bits 0-1), foot (bits 2-3) and the status flags only exist in the record; the
+            // bits that weren't changed stay as the game holds them.
+            int status = footByte;
             if (edited.Foot != original.Foot)
-                writes.Add(new MemoryWrite(record + RecordOffset.FootAndReputation, new[] { (byte)((footByte & ~0x0C) | ((edited.Foot & 3) << 2)) }));
+                status = (status & ~0x0C) | ((edited.Foot & 3) << 2);
+            if (edited.Reputation != original.Reputation)
+                status = (status & ~3) | (edited.Reputation & 3);
+            status = SetFlag(status, StatusFlag.HomegrownForeigner, original.HomegrownForeigner, edited.HomegrownForeigner);
+            status = SetFlag(status, StatusFlag.NationalPlayer, original.NationalPlayer, edited.NationalPlayer);
+            status = SetFlag(status, StatusFlag.CaptainRetired, original.CaptainRetired, edited.CaptainRetired);
+            if (edited.Foot != original.Foot || edited.Reputation != original.Reputation || edited.HomegrownForeigner != original.HomegrownForeigner ||
+                edited.NationalPlayer != original.NationalPlayer || edited.CaptainRetired != original.CaptainRetired)
+                writes.Add(new MemoryWrite(record + RecordOffset.FootAndReputation, new[] { (byte)status }));
 
-            // The skin colour only exists in the record (bits 0-2 of the appearance byte).
-            if (edited.SkinColor != original.SkinColor)
-                writes.Add(new MemoryWrite(record + RecordOffset.Appearance, new[] { (byte)((appearanceByte & ~7) | (edited.SkinColor & 7)) }));
+            // The crowd flags share their dword with other game state; the game keeps it in both places.
+            if (edited.Flags != original.Flags)
+            {
+                byte[] flags = BitConverter.GetBytes(edited.Flags);
+                writes.Add(new MemoryWrite(record + RecordOffset.Flags, flags));
+                if (compact != 0)
+                    writes.Add(new MemoryWrite(compact + CompactOffset.Flags, (byte[])flags.Clone()));
+            }
+
+            // The form value only exists in the record; the game reads it there for loaded players too.
+            if (edited.FormBase != original.FormBase)
+                writes.Add(new MemoryWrite(record + RecordOffset.FormBase, new[] { (byte)(sbyte)edited.FormBase }));
+
+            // Skin colour (bits 0-2) and beard (bits 4-7) only exist in the record; bit 3 stays.
+            if (edited.SkinColor != original.SkinColor || edited.Beard != original.Beard)
+            {
+                int looks = appearanceByte;
+                if (edited.SkinColor != original.SkinColor)
+                    looks = (looks & ~7) | (edited.SkinColor & 7);
+                if (edited.Beard != original.Beard)
+                    looks = (looks & 0x0F) | ((edited.Beard & 0x0F) << 4);
+                writes.Add(new MemoryWrite(record + RecordOffset.Appearance, new[] { (byte)looks }));
+            }
+
+            // Hair colour and type make up the whole hair byte, which only exists in the record.
+            if (edited.HairColor != original.HairColor || edited.HairType != original.HairType)
+                writes.Add(new MemoryWrite(record + RecordOffset.Hair, new[] { (byte)((edited.HairColor & 0x0F) | ((edited.HairType & 0x0F) << 4)) }));
+
+            // Private life only exists in the record; the game reads it there for loaded players too.
+            if (edited.Relationship != original.Relationship)
+                writes.Add(new MemoryWrite(record + RecordOffset.Relationship, new[] { (byte)edited.Relationship }));
+            if (edited.Hobby != original.Hobby)
+                writes.Add(new MemoryWrite(record + RecordOffset.Hobby, new[] { (byte)edited.Hobby }));
 
             if (original.IsInjured && !edited.IsInjured || original.Groggy && !edited.Groggy)
                 writes.AddRange(HealWrites(record, compact));
 
             return writes;
         }
+
+        private static int SetFlag(int value, int flag, bool was, bool now) =>
+            was == now ? value : now ? value | flag : value & ~flag;
 
         // Healthy in the game's terms (FUN_00637177): no injury days, not groggy, injury dates and
         // flag of the record cleared.

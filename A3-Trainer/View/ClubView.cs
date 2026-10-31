@@ -7,7 +7,7 @@ using System.Windows.Forms;
 
 namespace A3_Trainer.View
 {
-    /// <summary>Own club: name, city, money.</summary>
+    /// <summary>Own club: name, city, money, image and standing with the association.</summary>
     internal sealed class ClubView : TrainerView
     {
         private readonly A3Game game;
@@ -15,6 +15,10 @@ namespace A3_Trainer.View
         private readonly TextBox clubName = new TextBox { ReadOnly = true };
         private readonly TextBox clubCity = new TextBox { ReadOnly = true };
         private readonly NumericUpDown seasonStartMoney = Money();
+        private readonly NumericUpDown image = new NumericUpDown { Minimum = 0, Maximum = 255 };
+        private readonly Label imageLevel = new Label();
+        private readonly NumericUpDown trouble = new NumericUpDown { Minimum = 0, Maximum = Tables.AssociationTroubleMask };
+        private readonly Label troubleLevel = new Label();
         private readonly Button save = new Button { Text = "Speichern" };
         private readonly Button reload = new Button { Text = "Neu laden" };
         private readonly Label status = new Label();
@@ -35,7 +39,7 @@ namespace A3_Trainer.View
 
         private void BuildLayout()
         {
-            var club = new GroupBox { Text = "Verein", Bounds = new Rectangle(8, 8, 614, 132) };
+            var club = new GroupBox { Text = "Verein", Bounds = new Rectangle(8, 8, 614, 196) };
             int y = 22;
             void ClubRow(string caption, Control input)
             {
@@ -44,16 +48,26 @@ namespace A3_Trainer.View
                 club.Controls.Add(input);
                 y += 32;
             }
+            // A value with the level the game shows for it next to it.
+            void Rated(string caption, NumericUpDown input, Label level, Func<int, string> name)
+            {
+                level.SetBounds(360, y + 3, 240, 18);
+                club.Controls.Add(level);
+                input.ValueChanged += (s, e) => level.Text = name((int)input.Value);
+                ClubRow(caption, input);
+            }
             ClubRow("Name", this.clubName);
             ClubRow("Stadt", this.clubCity);
             ClubRow("Vermögen Saisonbeginn (DM)", this.seasonStartMoney);
+            Rated("Vereinsimage (10 bis 50)", this.image, this.imageLevel, Tables.ClubImage);
+            Rated("Ärger mit dem Verband (0 bis 31)", this.trouble, this.troubleLevel, Tables.Association);
             this.Controls.Add(club);
 
-            this.save.SetBounds(8, 148, 110, 25);
+            this.save.SetBounds(8, 212, 110, 25);
             this.save.Click += (s, e) => this.Save();
-            this.reload.SetBounds(124, 148, 110, 25);
+            this.reload.SetBounds(124, 212, 110, 25);
             this.reload.Click += (s, e) => this.RefreshValues();
-            this.status.SetBounds(240, 152, 380, 20);
+            this.status.SetBounds(240, 216, 380, 20);
             this.Controls.AddRange(new Control[] { this.save, this.reload, this.status });
         }
 
@@ -65,6 +79,7 @@ namespace A3_Trainer.View
             if (this.shown == null)
             {
                 this.ClearAllFields(this);
+                this.imageLevel.Text = this.troubleLevel.Text = "";
                 this.status.Text = "Kein Spiel verbunden";
                 return;
             }
@@ -72,6 +87,10 @@ namespace A3_Trainer.View
             this.clubName.Text = this.shown.Name;
             this.clubCity.Text = this.shown.City;
             this.seasonStartMoney.Value = this.shown.SeasonStartMoney;
+            this.image.Value = this.shown.Image;
+            this.trouble.Value = this.shown.Trouble & Tables.AssociationTroubleMask;
+            this.imageLevel.Text = Tables.ClubImage(this.shown.Image);
+            this.troubleLevel.Text = Tables.Association(this.shown.Trouble & Tables.AssociationTroubleMask);
             this.status.Text = "";
         }
 
@@ -82,6 +101,8 @@ namespace A3_Trainer.View
 
             ClubInfo edited = this.shown.Clone();
             edited.SeasonStartMoney = (int)this.seasonStartMoney.Value;
+            edited.Image = (int)this.image.Value;
+            edited.Trouble = edited.Trouble & ~Tables.AssociationTroubleMask | (int)this.trouble.Value;
             try
             {
                 this.game.SaveClubInfo(this.shown, edited);

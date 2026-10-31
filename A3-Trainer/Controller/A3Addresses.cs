@@ -19,7 +19,22 @@ namespace A3_Trainer.Controller
 
         // --- Name table: char* per name; players store first/last name indices into it.
         internal const uint NameTable = 0x019D3B68;
-        internal const int NameTableCount = 19866;
+        internal const int NameTableSlots = 34000;        // room up to the next global (0x019F4ED8); the database fills 19,866
+
+        // --- Name pool: the strings behind the name table, one after another (index order). A save game
+        // stores count, size and the pool and rebuilds the table from it on loading (FUN_00678F07), so a
+        // name appended like the game does (FUN_0068F8A0) is kept.
+        internal const uint NamePool = 0x00BA10D0;
+        internal const int NamePoolWrite = 0x20;          // char*, end of the used part
+        internal const int NamePoolData = 0x28;           // first string
+        internal const int NamePoolCount = 0x3D0B8;      // word, number of names; also the end of the pool
+        internal const uint NameCount = 0x00BDE190;       // word, copy of the count set on loading
+        internal const int MaxNameLength = 20;            // longest name of the database
+
+        // --- First names for relatives: per name country 100 words (name table indices), see FUN_0067503A.
+        internal const uint FirstNameLists = 0x00B9F048;
+        internal const int FirstNameListSize = 100;
+        internal const int MaxChildren = 5;                // children a player can have (record +0x174 holds their birth dates)
 
         // --- Country names: char* per country number (nationalities and clubs); the next table starts at ClubIndexTable.
         internal const uint CountryNames = 0x00AE5940;
@@ -43,6 +58,18 @@ namespace A3_Trainer.Controller
         internal const int ClubName = 0x20;
         internal const int ClubShortName = 0x34;
         internal const int ClubCity = 0x38;
+        internal const int ClubTrouble = 0x12C;    // bits 0-4: trouble with the association (Tables.AssociationLevel), higher bits game state
+        internal const int ClubImage = 0x138;      // byte, 10-50, see Tables.ClubImages
+
+        // --- Working copies of the loaded clubs (own club, next opponent; FUN_00639E63): 6 entries of
+        // 12 bytes {used, country, number, ...; object pointer at +8}. The game writes the object back to
+        // the record (FUN_0063C908), so the trainer writes both.
+        internal const uint ClubCache = 0x00A6AB10;
+        internal const int ClubCacheSlots = 6;
+        internal const int ClubCacheEntrySize = 12;
+        internal const int ClubCacheObject = 8;
+        internal const int ClubCopyTrouble = 0x102;
+        internal const int ClubCopyImage = 0x10F;
 
         // --- Human manager 1 and the finances of his club.
         internal const uint ManagerFirstName = 0x01B995E8;
@@ -51,6 +78,16 @@ namespace A3_Trainer.Controller
         internal const uint ManagerClubNumber = 0x01B99608;   // word, number within the country
         internal const uint ManagerSalary = 0x01B99638;       // dword, DM per year
         internal const uint ManagerPrivateMoney = 0x01B99680; // dword, DM
+        internal const uint ManagerMediaPopularity = 0x01B99622;  // byte 0-100 (Beliebtheit bei den Medien)
+        internal const uint ManagerPublicPopularity = 0x01B99623; // byte 0-100 (in der Öffentlichkeit)
+        internal const uint ManagerFanPopularity = 0x01B99624;    // byte 0-100, base of the fans' view (FUN_006A5A7D)
+        // The fans see the base weighted by the manager's image (FUN_006A5A7D): (factor * 4 + 80) percent, the
+        // factor from a table picked by the image level (+0x23) and its flags (+0x17D9, FUN_006A61E5).
+        internal const uint ManagerImageLevel = 0x01B9960B;
+        internal const uint ManagerImageFlags = 0x01B9ADC1;
+        internal const uint ManagerFanFactors = 0x01B9ADEC;     // word every 0xE bytes, indexed by 0-15
+        internal const int ManagerFanFactorStride = 0xE;
+        internal const uint ManagerBoardTrust = 0x01B99684;       // word, base of the board's trust; the game adds the next 4 bytes (FUN_007701B2)
         internal const uint SeasonStartMoney = 0x00A6C1C8;    // dword, DM; bank balance = this + season result
 
         // --- Calendar: current date = Calendar[CalendarBase + DayCounter] = (year, day of year).
@@ -68,13 +105,17 @@ namespace A3_Trainer.Controller
         internal const int ClubNumber = 0x31;
         internal const int Salary = 0x150;        // word, 1000 DM
         internal const int MatchBonus = 0x152;    // word, 100 DM
+        internal const int GoalBonus = 0x154;     // word, 100 DM per goal
+        internal const int ReleaseClause = 0x156; // word, 10,000 DM; 0 = none
         internal const int ContractEnd = 0x15C;   // word, year
+        internal const int ContractFlags = 0x15E; // word, see ContractFlag
         internal const int BirthDay = 0x168;
         internal const int BirthMonth = 0x169;
         internal const int BirthYear = 0x16A;     // word
         internal const int Index = 0x1BC;         // word
         internal const int FirstName = 0x1BE;     // word, name table index
         internal const int LastName = 0x1C0;      // word, name table index
+        internal const int ArtistName = 0x1C2;    // word, name table index, 0 = none
         internal const int Skills = 0x1C4;
         internal const int Skills2 = 0x1C6;
         internal const int Traits = 0x1C8;
@@ -85,20 +126,72 @@ namespace A3_Trainer.Controller
         internal const int InjuryFrom = 0x1DA;    // word
         internal const int InjuryTo = 0x1DC;      // word
         internal const int Groggy = 0x1DE;        // word
+        internal const int Health = 0x218;        // word: bits 0-6 one health type (Tables.HealthTypes), higher bits game state
         internal const int Strength = 0x21C;
         internal const int Position = 0x21D;
         internal const int SidePosition1 = 0x21E;
         internal const int SidePosition2 = 0x21F;
         internal const int Talent = 0x222;
         internal const int ShirtNumber = 0x223;
-        internal const int Appearance = 0x21A;    // bits 0-2: skin colour
+        internal const int Appearance = 0x21A;    // bits 0-2: skin colour, bits 4-7: beard (Tables.Beards)
+        internal const int Hair = 0x21B;          // bits 0-3: hair colour, bits 4-7: hair type (Tables.HairColors / HairTypes)
         internal const int Nationality = 0x225;
         internal const int SecondNationality = 0x226; // 0 = none
         internal const int InjuryType = 0x228;
         internal const int InjuryFlag = 0x270;
-        internal const int Flags = 0x1B0;         // dword: 0x400 hated, 0x10000 darling
+        internal const int Flags = 0x1B0;         // dword, see CrowdFlag
+        internal const int MoreFlags = 0x1B4;     // dword, see MoreFlag
         internal const int Morale = 0x296;
-        internal const int FootAndReputation = 0x282; // bits 2-3: strong foot
+        internal const int FootAndReputation = 0x282; // bits 2-3: strong foot, higher bits see StatusFlag
+        internal const int NationalTeam = 0x26F;  // bit 1: retired from the national team (StatusFlag.NationalTeamRetired)
+        internal const int FormBase = 0x353;      // signed byte 0..20 (start 10), half of the shown form (FUN_006FF037)
+        // Private life (the player info's "Privat" page, FUN_0055F1D8); record only.
+        internal const int ChildCount = 0x1F6;    // word, 0-5
+        internal const int Relationship = 0x27E;  // bits 0-1 Tables.Relationships, bits 2-4 Tables.RelationshipStates, higher bits game state
+        internal const int PartnerName = 0x283;   // byte, index into the first-name list of NameCountry
+        internal const int NameCountry = 0x286;   // first-name list for partner and children
+        internal const int ChildNames = 0x288;    // one byte per child, like PartnerName
+        internal const int Hobby = 0x28D;         // Tables.Hobbies, 0 = none
+    }
+
+    /// <summary>Bits of the contract flags (record +0x15E, working copy +0x96), see the player info (FUN_0055A57E).</summary>
+    internal static class ContractFlag
+    {
+        internal const int ValidityMask = 0x0003;   // Tables.ContractValidity
+        internal const int PlayerOption = 0x1000;   // Option Spieler auf Verlängerung
+        internal const int ClubOption = 0x2000;     // Option Verein auf Verlängerung
+        internal const int RegularPlace = 0x4000;   // Stammplatzgarantie
+    }
+
+    /// <summary>
+    /// Status bits of the editor's "Daten 2" page, as the game imports them from the database
+    /// (FUN_0068C903); meanings from the editor help.
+    /// </summary>
+    internal static class StatusFlag
+    {
+        // In RecordOffset.FootAndReputation (record only).
+        internal const int HomegrownForeigner = 0x10; // Fußballinländer (database: nationality + 0x80)
+        internal const int CaptainRetired = 0x40;     // Als Kapitän zurückgetreten
+        internal const int NationalPlayer = 0x80;     // Nationalspieler (no naturalisation any more)
+        // In RecordOffset.NationalTeam / CompactOffset.NationalTeam.
+        internal const int NationalTeamRetired = 0x02; // Aus Nationalmannschaft zurückgetreten
+    }
+
+    /// <summary>Bits of the second flags dword (record +0x1B4); the others are game state.</summary>
+    internal static class MoreFlag
+    {
+        internal const uint HasArtistName = 0x80000000; // database column 15; the game shows the artist name only with it
+    }
+
+    /// <summary>
+    /// The crowd's current view of a player in the flags dword (record +0x1B0, working copy +0x20).
+    /// The game recomputes it from his performance after every match (FUN_00770BAE); the lasting
+    /// reputation in the low bits of RecordOffset.FootAndReputation is what the player info shows otherwise.
+    /// </summary>
+    internal static class CrowdFlag
+    {
+        internal const uint Hated = 0x400;
+        internal const uint Darling = 0x10000;
     }
 
     /// <summary>Offsets inside the compact working copy (cache entry + 8), see FUN_00637177.</summary>
@@ -116,6 +209,7 @@ namespace A3_Trainer.Controller
         internal const int Skills2 = 0x0E;
         internal const int Traits = 0x10;
         internal const int Character = 0x12;
+        internal const int Health = 0x14;
         internal const int Condition = 0x16;
         internal const int Freshness = 0x18;
         internal const int Nationality = 0x24;
@@ -126,7 +220,11 @@ namespace A3_Trainer.Controller
         internal const int Groggy = 0x2F;
         internal const int Salary = 0x88;
         internal const int MatchBonus = 0x8A;
+        internal const int GoalBonus = 0x8C;
+        internal const int ReleaseClause = 0x8E;
         internal const int ContractEnd = 0x94;    // byte, year - BaseYear
+        internal const int ContractFlags = 0x96;
+        internal const int NationalTeam = 0xB3;   // copy of RecordOffset.NationalTeam (FUN_00636638)
         internal const int Flags = 0x20;          // dword, see RecordOffset.Flags
         internal const int Morale = 0xCA;
         internal const int BirthDate = 0xCC;      // dword: day, month, year (word); copy of record +0x168 (FUN_00636638)

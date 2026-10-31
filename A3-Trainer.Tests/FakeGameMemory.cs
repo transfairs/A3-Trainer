@@ -33,6 +33,9 @@ namespace A3_Trainer.Tests
         internal void PutUInt32(uint address, uint value) => this.Put(address, BitConverter.GetBytes(value));
 
         internal byte Get(uint address) => this.Read(address, 1)[0];
+
+        /// <summary>The dword at <paramref name="address"/>.</summary>
+        internal uint ReadUInt32(uint address) => BitConverter.ToUInt32(this.Read(address, 4), 0);
         internal int GetUInt16(uint address) => BitConverter.ToUInt16(this.Read(address, 2), 0);
 
         public byte[] Read(uint address, int length)

@@ -252,6 +252,127 @@ namespace A3_Trainer.Tests
             Assert.All(writes, w => Assert.InRange(w.Address, Record(1039), Record(1040) - 1));
         }
 
+        [Fact]
+        public void FromRecord_AndApplyCompact_ReadContractHealthAndForm()
+        {
+            byte[] r = HuhnRecord();
+            BitConverter.GetBytes((ushort)25).CopyTo(r, RecordOffset.GoalBonus);
+            BitConverter.GetBytes((ushort)300).CopyTo(r, RecordOffset.ReleaseClause);
+            BitConverter.GetBytes((ushort)0x2041).CopyTo(r, RecordOffset.ContractFlags);
+            BitConverter.GetBytes((ushort)0x1002).CopyTo(r, RecordOffset.Health);
+            r[RecordOffset.FormBase] = 0xFF;
+
+            Player p = PlayerCodec.FromRecord(r, 0, 1039);
+
+            Assert.Equal(25, p.GoalBonus);
+            Assert.Equal(300, p.ReleaseClause);
+            Assert.Equal(0x2041, p.ContractFlags);
+            Assert.Equal(0x1002, p.Health);
+            Assert.Equal(-1, p.FormBase);
+
+            var c = new byte[A3Addresses.CompactSize];
+            BitConverter.GetBytes((ushort)40).CopyTo(c, CompactOffset.GoalBonus);
+            BitConverter.GetBytes((ushort)500).CopyTo(c, CompactOffset.ReleaseClause);
+            BitConverter.GetBytes((ushort)0x4002).CopyTo(c, CompactOffset.ContractFlags);
+            BitConverter.GetBytes((ushort)0x0008).CopyTo(c, CompactOffset.Health);
+            PlayerCodec.ApplyCompact(p, c, BaseYear);
+
+            Assert.Equal(40, p.GoalBonus);
+            Assert.Equal(500, p.ReleaseClause);
+            Assert.Equal(0x4002, p.ContractFlags);
+            Assert.Equal(0x0008, p.Health);
+            Assert.Equal(-1, p.FormBase);   // only in the record
+        }
+
+        [Fact]
+        public void Changes_ContractAndHealth_AreMirrored_FormOnlyInTheRecord()
+        {
+            Player original = PlayerCodec.FromRecord(HuhnRecord(), 0, 1039);
+            original.CacheEntry = 0x3000;
+            Player edited = original.Clone();
+            edited.GoalBonus = 50;
+            edited.ReleaseClause = 1200;
+            edited.ContractFlags = 0x6001;
+            edited.Health = 0x0002;
+            edited.FormBase = 20;
+
+            var writes = PlayerCodec.Changes(original, edited, BaseYear, 0x87);
+
+            uint copy = 0x3000 + 8;
+            Assert.Equal(9, writes.Count);
+            Assert.Contains(writes, w => w.Address == Record(1039) + RecordOffset.GoalBonus && w.Data.SequenceEqual(BitConverter.GetBytes((ushort)50)));
+            Assert.Contains(writes, w => w.Address == copy + CompactOffset.GoalBonus && w.Data.SequenceEqual(BitConverter.GetBytes((ushort)50)));
+            Assert.Contains(writes, w => w.Address == Record(1039) + RecordOffset.ReleaseClause && w.Data.SequenceEqual(BitConverter.GetBytes((ushort)1200)));
+            Assert.Contains(writes, w => w.Address == copy + CompactOffset.ReleaseClause && w.Data.SequenceEqual(BitConverter.GetBytes((ushort)1200)));
+            Assert.Contains(writes, w => w.Address == Record(1039) + RecordOffset.ContractFlags && w.Data.SequenceEqual(BitConverter.GetBytes((ushort)0x6001)));
+            Assert.Contains(writes, w => w.Address == copy + CompactOffset.ContractFlags && w.Data.SequenceEqual(BitConverter.GetBytes((ushort)0x6001)));
+            Assert.Contains(writes, w => w.Address == Record(1039) + RecordOffset.Health && w.Data.SequenceEqual(new byte[] { 2, 0 }));
+            Assert.Contains(writes, w => w.Address == copy + CompactOffset.Health && w.Data.SequenceEqual(new byte[] { 2, 0 }));
+            Assert.Contains(writes, w => w.Address == Record(1039) + RecordOffset.FormBase && w.Data.SequenceEqual(new byte[] { 20 }));
+        }
+
+        [Fact]
+        public void FromRecord_AndApplyCompact_ReadLooksAndNationalTeamStatus()
+        {
+            byte[] r = HuhnRecord();
+            r[RecordOffset.Appearance] = 0x62;   // beard Bart + Schnurrbart, skin schwarz
+            r[RecordOffset.Hair] = 0x24;         // Wuschelkopf, schwarz
+            r[RecordOffset.FootAndReputation] = 0x54; // Fußballinländer, Kapitän zurückgetreten, foot right
+            r[RecordOffset.NationalTeam] = 0x08;
+
+            Player p = PlayerCodec.FromRecord(r, 0, 1039);
+
+            Assert.Equal(2, p.SkinColor);
+            Assert.Equal(0x6, p.Beard);
+            Assert.Equal(4, p.HairColor);
+            Assert.Equal(2, p.HairType);
+            Assert.True(p.HomegrownForeigner);
+            Assert.True(p.CaptainRetired);
+            Assert.False(p.NationalPlayer);
+            Assert.Equal(0x08, p.NationalTeam);
+
+            var c = new byte[A3Addresses.CompactSize];
+            c[CompactOffset.NationalTeam] = 0x0A;
+            PlayerCodec.ApplyCompact(p, c, BaseYear);
+            Assert.Equal(0x0A, p.NationalTeam);
+        }
+
+        [Fact]
+        public void Changes_LooksAndStatus_KeepTheOtherBits_NationalTeamIsMirrored()
+        {
+            Player original = PlayerCodec.FromRecord(HuhnRecord(), 0, 1039);
+            original.CacheEntry = 0x3000;
+            Player edited = original.Clone();
+            edited.Beard = 0x8;
+            edited.HairColor = 5;
+            edited.HairType = 3;
+            edited.NationalPlayer = false;
+            edited.HomegrownForeigner = true;
+            edited.NationalTeam = 0x02;
+
+            var writes = PlayerCodec.Changes(original, edited, BaseYear, 0xA7, 0x1B);
+
+            uint copy = 0x3000 + 8;
+            Assert.Equal(5, writes.Count);
+            Assert.Contains(writes, w => w.Address == Record(1039) + RecordOffset.Appearance && w.Data.SequenceEqual(new byte[] { 0x8B })); // skin and bit 3 stay
+            Assert.Contains(writes, w => w.Address == Record(1039) + RecordOffset.Hair && w.Data.SequenceEqual(new byte[] { 0x35 }));
+            Assert.Contains(writes, w => w.Address == Record(1039) + RecordOffset.FootAndReputation && w.Data.SequenceEqual(new byte[] { 0x37 })); // foot, reputation, 0x20 stay
+            Assert.Contains(writes, w => w.Address == Record(1039) + RecordOffset.NationalTeam && w.Data.SequenceEqual(new byte[] { 0x02 }));
+            Assert.Contains(writes, w => w.Address == copy + CompactOffset.NationalTeam && w.Data.SequenceEqual(new byte[] { 0x02 }));
+        }
+
+        [Fact]
+        public void Changes_CaptainRetired_ClearsOnlyItsBit()
+        {
+            Player original = PlayerCodec.FromRecord(HuhnRecord(), 0, 1039);
+            original.CaptainRetired = true;
+            Player edited = original.Clone();
+            edited.CaptainRetired = false;
+
+            MemoryWrite write = Assert.Single(PlayerCodec.Changes(original, edited, BaseYear, 0xC7));
+            Assert.Equal(new byte[] { 0x87 }, write.Data);
+        }
+
         private static uint Record(int index) => A3Addresses.PlayerArray + (uint)(index * A3Addresses.PlayerSize);
     }
 }

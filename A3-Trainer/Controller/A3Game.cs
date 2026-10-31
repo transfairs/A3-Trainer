@@ -143,6 +143,13 @@ namespace A3_Trainer.Controller
 
                 player.FirstName = this.ReadName(BitConverter.ToUInt16(all, offset + RecordOffset.FirstName));
                 player.LastName = this.ReadName(BitConverter.ToUInt16(all, offset + RecordOffset.LastName));
+                player.ArtistName = this.ReadName(BitConverter.ToUInt16(all, offset + RecordOffset.ArtistName));
+                int nameCountry = all[offset + RecordOffset.NameCountry];
+                if ((player.Relationship & Tables.RelationshipMask) != 0)
+                    player.PartnerName = this.ReadFirstName(nameCountry, all[offset + RecordOffset.PartnerName]);
+                int children = Math.Min(Math.Max((int)BitConverter.ToInt16(all, offset + RecordOffset.ChildCount), 0), A3Addresses.MaxChildren);
+                player.ChildNames = Enumerable.Range(0, children)
+                    .Select(i => this.ReadFirstName(nameCountry, all[offset + RecordOffset.ChildNames + i])).ToArray();
                 players.Add(player);
             }
 
@@ -176,10 +183,19 @@ namespace A3_Trainer.Controller
         /// <summary>A name from the game's name table, or "" if it can't be read.</summary>
         internal string ReadName(int nameIndex)
         {
-            if (nameIndex <= 0 || nameIndex >= A3Addresses.NameTableCount)
+            if (nameIndex <= 0 || nameIndex >= A3Addresses.NameTableSlots)
                 return "";
             uint pointer = this.ReadUInt32(A3Addresses.NameTable + (uint)(nameIndex * 4));
             return pointer == 0 ? "" : this.ReadString(pointer, 32);
+        }
+
+        /// <summary>A first name from the list the game picks partners and children from, or "" if it can't be read.</summary>
+        internal string ReadFirstName(int nameCountry, int number)
+        {
+            if (number < 0 || number >= A3Addresses.FirstNameListSize)
+                return "";
+            byte[] index = this.memory.Read(A3Addresses.FirstNameLists + (uint)((nameCountry * A3Addresses.FirstNameListSize + number) * 2), 2);
+            return index == null ? "" : this.ReadName(BitConverter.ToInt16(index, 0));
         }
 
         /// <summary>The country names by country number (the nationality values), up to the first unreadable one.</summary>
@@ -209,6 +225,58 @@ namespace A3_Trainer.Controller
             byte[] appearance = this.memory.Read(record + RecordOffset.Appearance, 1);
             foreach (MemoryWrite write in PlayerCodec.Changes(original, edited, this.BaseYear(), foot != null ? foot[0] : 0, appearance != null ? appearance[0] : 0))
                 this.memory.Write(write.Address, write.Data);
+
+            // Names are indices into the shared name table and only exist in the record. A first or
+            // last name can't be empty; an empty artist name removes it.
+            string first = edited.FirstName.Trim(), last = edited.LastName.Trim(), artist = edited.ArtistName.Trim();
+            if (first.Length > 0 && first != original.FirstName)
+                this.WriteNameIndex(record + RecordOffset.FirstName, this.NameIndex(first));
+            if (last.Length > 0 && last != original.LastName)
+                this.WriteNameIndex(record + RecordOffset.LastName, this.NameIndex(last));
+            if (artist != original.ArtistName)
+            {
+                // The game shows the artist name only while this flag is set (FUN_006FEADD).
+                this.WriteNameIndex(record + RecordOffset.ArtistName, artist.Length > 0 ? this.NameIndex(artist) : 0);
+                uint flags = this.ReadUInt32(record + RecordOffset.MoreFlags);
+                flags = artist.Length > 0 ? flags | MoreFlag.HasArtistName : flags & ~MoreFlag.HasArtistName;
+                this.memory.Write(record + RecordOffset.MoreFlags, BitConverter.GetBytes(flags));
+            }
+        }
+
+        private void WriteNameIndex(uint address, int index) => this.memory.Write(address, BitConverter.GetBytes((ushort)index));
+
+        /// <summary>
+        /// The name table index of <paramref name="name"/>: the first entry with exactly that text, or a
+        /// new one appended to the name pool as the game does when it imports names (FUN_0068F8A0).
+        /// </summary>
+        internal int NameIndex(string name)
+        {
+            uint data = A3Addresses.NamePool + A3Addresses.NamePoolData;
+            uint end = A3Addresses.NamePool + A3Addresses.NamePoolCount;
+            uint write = this.ReadUInt32(A3Addresses.NamePool + A3Addresses.NamePoolWrite);
+            int count = this.ReadUInt16(A3Addresses.NamePool + A3Addresses.NamePoolCount);
+            if (write < data || write > end || count <= 0 || count > A3Addresses.NameTableSlots)
+                throw new InvalidOperationException("Namenstabelle nicht lesbar");
+
+            byte[] pool = write > data ? this.memory.Read(data, (int)(write - data)) : new byte[0];
+            if (pool == null)
+                throw new InvalidOperationException("Namenstabelle nicht lesbar");
+            string[] names = Text.GetString(pool).Split('\0');
+            for (int i = 1; i < count && i < names.Length; i++)
+                if (names[i] == name)
+                    return i;
+
+            byte[] bytes = Text.GetBytes(name + "\0");
+            if (write + bytes.Length > end || count >= A3Addresses.NameTableSlots)
+                throw new InvalidOperationException("Namenstabelle voll");
+            // String and table entry first, the count last: until then the game doesn't see the new name.
+            this.memory.Write(write, bytes);
+            this.memory.Write(A3Addresses.NameTable + (uint)(count * 4), BitConverter.GetBytes(write));
+            this.memory.Write(A3Addresses.NamePool + A3Addresses.NamePoolWrite, BitConverter.GetBytes(write + (uint)bytes.Length));
+            byte[] newCount = BitConverter.GetBytes((ushort)(count + 1));
+            this.memory.Write(A3Addresses.NamePool + A3Addresses.NamePoolCount, newCount);
+            this.memory.Write(A3Addresses.NameCount, newCount);
+            return count;
         }
 
         /// <summary>Club and manager 1 data, or null if no career is loaded.</summary>
@@ -218,6 +286,8 @@ namespace A3_Trainer.Controller
             if (!own.HasValue)
                 return null;
             uint club = this.ClubAddress(own.Value).Value;
+            uint copy = this.ClubCopy(own.Value);
+            byte[] trust = this.memory.Read(A3Addresses.ManagerBoardTrust, 6) ?? new byte[6];
 
             return new ClubInfo
             {
@@ -230,6 +300,15 @@ namespace A3_Trainer.Controller
                 ManagerLastName = this.ReadString(A3Addresses.ManagerLastName, 0x10),
                 ManagerSalary = (int)this.ReadUInt32(A3Addresses.ManagerSalary),
                 ManagerPrivateMoney = (int)this.ReadUInt32(A3Addresses.ManagerPrivateMoney),
+                // The loaded club's working copy is what the game uses; both hold the same otherwise.
+                Image = this.ReadByte(copy != 0 ? copy + A3Addresses.ClubCopyImage : club + A3Addresses.ClubImage),
+                Trouble = this.ReadByte(copy != 0 ? copy + A3Addresses.ClubCopyTrouble : club + A3Addresses.ClubTrouble),
+                MediaPopularity = this.ReadByte(A3Addresses.ManagerMediaPopularity),
+                PublicPopularity = this.ReadByte(A3Addresses.ManagerPublicPopularity),
+                FanPopularity = this.ReadByte(A3Addresses.ManagerFanPopularity),
+                FanWeight = this.FanWeight(),
+                BoardTrustBase = BitConverter.ToInt16(trust, 0),
+                BoardTrustBonus = trust[2] + trust[3] + (sbyte)trust[4] + (sbyte)trust[5],
             };
         }
 
@@ -238,8 +317,78 @@ namespace A3_Trainer.Controller
         {
             if (edited.SeasonStartMoney != original.SeasonStartMoney)
                 this.memory.Write(A3Addresses.SeasonStartMoney, BitConverter.GetBytes(edited.SeasonStartMoney));
+            if (edited.ManagerSalary != original.ManagerSalary)
+                this.memory.Write(A3Addresses.ManagerSalary, BitConverter.GetBytes(edited.ManagerSalary));
             if (edited.ManagerPrivateMoney != original.ManagerPrivateMoney)
                 this.memory.Write(A3Addresses.ManagerPrivateMoney, BitConverter.GetBytes(edited.ManagerPrivateMoney));
+            WriteByte(A3Addresses.ManagerMediaPopularity, original.MediaPopularity, edited.MediaPopularity);
+            WriteByte(A3Addresses.ManagerPublicPopularity, original.PublicPopularity, edited.PublicPopularity);
+            WriteByte(A3Addresses.ManagerFanPopularity, original.FanPopularity, edited.FanPopularity);
+            if (edited.BoardTrustBase != original.BoardTrustBase)
+                this.memory.Write(A3Addresses.ManagerBoardTrust, BitConverter.GetBytes((short)edited.BoardTrustBase));
+
+            // The club's values live in its record and, while the game has it loaded, in the working copy.
+            if (edited.Image == original.Image && edited.Trouble == original.Trouble)
+                return;
+            uint? club = this.ClubAddress(edited.Key);
+            uint copy = this.ClubCopy(edited.Key);
+            if (club.HasValue)
+            {
+                WriteByte(club.Value + A3Addresses.ClubImage, original.Image, edited.Image);
+                WriteByte(club.Value + A3Addresses.ClubTrouble, original.Trouble, edited.Trouble);
+            }
+            if (copy != 0)
+            {
+                WriteByte(copy + A3Addresses.ClubCopyImage, original.Image, edited.Image);
+                WriteByte(copy + A3Addresses.ClubCopyTrouble, original.Trouble, edited.Trouble);
+            }
+
+            void WriteByte(uint address, int was, int now)
+            {
+                if (now != was)
+                    this.memory.Write(address, new[] { (byte)now });
+            }
+        }
+
+        // As FUN_006A61E5 and FUN_006A5A7D: the image level plus its flags picks the factor.
+        private int FanWeight()
+        {
+            int level = this.ReadByte(A3Addresses.ManagerImageLevel);
+            int flags = this.ReadByte(A3Addresses.ManagerImageFlags);
+            if (level < 12)
+            {
+                int[] bonus = { 0, -1, 3, 3, 1, 2, 1, 2 };   // flags 0x01 .. 0x80
+                for (int bit = 1; bit < 8; bit++)
+                    if ((flags & (1 << bit)) != 0)
+                        level += bonus[bit];
+                level = Math.Min(level, 12);
+            }
+            else if ((flags & 2) != 0)
+                level--;
+            level = Math.Min(Math.Max(level, 0), 15);
+            byte[] factor = this.memory.Read(A3Addresses.ManagerFanFactors + (uint)(level * A3Addresses.ManagerFanFactorStride), 2);
+            return (factor == null ? 0 : BitConverter.ToInt16(factor, 0)) * 4 + 80;
+        }
+
+        /// <summary>The working copy the game holds of a loaded club (own club, next opponent), or 0 if it has none.</summary>
+        internal uint ClubCopy(ClubKey key)
+        {
+            byte[] entries = this.memory.Read(A3Addresses.ClubCache, A3Addresses.ClubCacheSlots * A3Addresses.ClubCacheEntrySize);
+            if (entries == null)
+                return 0;
+            for (int i = 0; i < A3Addresses.ClubCacheSlots; i++)
+            {
+                int entry = i * A3Addresses.ClubCacheEntrySize;
+                if (entries[entry] != 0 && entries[entry + 1] == key.Country && entries[entry + 2] == key.Number)
+                    return BitConverter.ToUInt32(entries, entry + A3Addresses.ClubCacheObject);
+            }
+            return 0;
+        }
+
+        private int ReadByte(uint address)
+        {
+            byte[] data = this.memory.Read(address, 1);
+            return data == null ? 0 : data[0];
         }
 
         private uint ReadUInt32(uint address)

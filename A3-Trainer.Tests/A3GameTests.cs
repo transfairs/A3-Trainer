@@ -31,7 +31,7 @@ namespace A3_Trainer.Tests
             m.PutUInt16(A3Addresses.DayCounter, 0);
             m.Put(A3Addresses.Calendar + 184 * 4, 0xCF, 0x07, 184, 0);
             m.PutUInt32(A3Addresses.PlayerCacheRoot, 0);
-            m.Map(A3Addresses.NameTable, A3Addresses.NameTableCount * 4);
+            m.Map(A3Addresses.NameTable, A3Addresses.NameTableSlots * 4);
             return m;
         }
 
@@ -212,11 +212,103 @@ namespace A3_Trainer.Tests
             Assert.Equal("Test", info.ManagerFirstName);
             Assert.Equal(375000, info.ManagerSalary);
 
-            game.SaveClubInfo(info, new ClubInfo { SeasonStartMoney = 20000000, ManagerPrivateMoney = info.ManagerPrivateMoney });
+            ClubInfo edited = info.Clone();
+            edited.SeasonStartMoney = 20000000;
+            game.SaveClubInfo(info, edited);
 
             MemoryWrite write = Assert.Single(m.Writes);
             Assert.Equal(A3Addresses.SeasonStartMoney, write.Address);
             Assert.Equal(BitConverter.GetBytes(20000000), write.Data);
+        }
+
+        // A name pool with "Der", "Oliver" and "Huhn" (indices 0-2) and the table pointing into it.
+        internal static FakeGameMemory WithNamePool(FakeGameMemory m)
+        {
+            uint data = A3Addresses.NamePool + A3Addresses.NamePoolData;
+            m.Map(A3Addresses.NamePool, A3Addresses.NamePoolCount + 2);
+            uint at = data;
+            string[] names = { "Der", "Oliver", "Huhn" };
+            for (int i = 0; i < names.Length; i++)
+            {
+                byte[] bytes = Encoding.GetEncoding(1252).GetBytes(names[i] + "\0");
+                m.Put(at, bytes);
+                m.PutUInt32(A3Addresses.NameTable + (uint)(i * 4), at);
+                at += (uint)bytes.Length;
+            }
+            m.PutUInt32(A3Addresses.NamePool + A3Addresses.NamePoolWrite, at);
+            m.PutUInt16(A3Addresses.NamePool + A3Addresses.NamePoolCount, 3);
+            return m;
+        }
+
+        [Fact]
+        public void NameIndex_ReusesAnExistingName_AndAppendsANewOneAsTheGameDoes()
+        {
+            FakeGameMemory m = WithNamePool(Career());
+            var game = new A3Game(m);
+            uint write = m.ReadUInt32(A3Addresses.NamePool + A3Addresses.NamePoolWrite);
+
+            Assert.Equal(2, game.NameIndex("Huhn"));
+            Assert.Empty(m.Writes);
+
+            Assert.Equal(3, game.NameIndex("Zé Roberto"));
+            Assert.Equal("Zé Roberto", game.ReadName(3));
+            Assert.Equal(write, m.ReadUInt32(A3Addresses.NameTable + 3 * 4));
+            Assert.Equal(write + 11, m.ReadUInt32(A3Addresses.NamePool + A3Addresses.NamePoolWrite));
+            Assert.Equal(new byte[] { 4, 0 }, m.WrittenAt(A3Addresses.NamePool + A3Addresses.NamePoolCount));
+            Assert.Equal(new byte[] { 4, 0 }, m.WrittenAt(A3Addresses.NameCount));
+            Assert.Equal(3, game.NameIndex("Zé Roberto"));   // found now
+            Assert.Equal(1, game.NameIndex("Oliver"));
+        }
+
+        [Fact]
+        public void NameIndex_RefusesAFullOrUnreadablePool()
+        {
+            FakeGameMemory m = WithNamePool(Career());
+            m.PutUInt32(A3Addresses.NamePool + A3Addresses.NamePoolWrite, A3Addresses.NamePool + A3Addresses.NamePoolCount - 2);
+            Assert.Equal("Namenstabelle voll", Assert.Throws<InvalidOperationException>(() => new A3Game(m).NameIndex("Neu")).Message);
+
+            m = WithNamePool(Career());
+            m.PutUInt16(A3Addresses.NamePool + A3Addresses.NamePoolCount, 0);
+            Assert.Equal("Namenstabelle nicht lesbar", Assert.Throws<InvalidOperationException>(() => new A3Game(m).NameIndex("Neu")).Message);
+
+            // No pool mapped at all.
+            Assert.Throws<InvalidOperationException>(() => new A3Game(Career()).NameIndex("Neu"));
+        }
+
+        [Fact]
+        public void SavePlayer_Names_GoToTheRecord_TheArtistNameWithItsFlag()
+        {
+            FakeGameMemory m = WithNamePool(Career());
+            PutPlayer(m, 1039, 14, 1, 1, 11);
+            m.PutUInt16(Record(1039) + RecordOffset.FirstName, 1);
+            m.PutUInt16(Record(1039) + RecordOffset.LastName, 2);
+            m.PutUInt32(Record(1039) + RecordOffset.MoreFlags, 0x10);
+            var game = new A3Game(m);
+            Player original = game.ReadPlayers(new ClubKey(14, 1)).Single();
+            Assert.Equal("Oliver Huhn", original.FullName);
+
+            Player edited = original.Clone();
+            edited.FirstName = " ";              // empty: kept
+            edited.LastName = "Kahn ";
+            edited.ArtistName = "Titan";
+            game.SavePlayer(original, edited);
+
+            Assert.Null(m.WrittenAt(Record(1039) + RecordOffset.FirstName));
+            Assert.Equal(new byte[] { 3, 0 }, m.WrittenAt(Record(1039) + RecordOffset.LastName));
+            Assert.Equal(new byte[] { 4, 0 }, m.WrittenAt(Record(1039) + RecordOffset.ArtistName));
+            Assert.Equal(BitConverter.GetBytes(0x80000010u), m.WrittenAt(Record(1039) + RecordOffset.MoreFlags));
+
+            Player titan = game.ReadPlayers(new ClubKey(14, 1)).Single();
+            Assert.Equal("Oliver Kahn", titan.FullName);
+            Assert.Equal("Titan", titan.ArtistName);
+
+            Player plain = titan.Clone();
+            plain.FirstName = "Olli";
+            plain.ArtistName = "";
+            game.SavePlayer(titan, plain);
+            Assert.Equal(new byte[] { 5, 0 }, m.WrittenAt(Record(1039) + RecordOffset.FirstName));
+            Assert.Equal(new byte[] { 0, 0 }, m.WrittenAt(Record(1039) + RecordOffset.ArtistName));
+            Assert.Equal(BitConverter.GetBytes(0x10u), m.WrittenAt(Record(1039) + RecordOffset.MoreFlags));
         }
 
         [Fact]
@@ -238,7 +330,7 @@ namespace A3_Trainer.Tests
         {
             var game = new A3Game(Career());
             Assert.Equal("", game.ReadName(0));
-            Assert.Equal("", game.ReadName(A3Addresses.NameTableCount));
+            Assert.Equal("", game.ReadName(A3Addresses.NameTableSlots));
         }
     }
 }
