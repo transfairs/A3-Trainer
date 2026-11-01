@@ -3,6 +3,7 @@ using A3_Trainer.Model;
 using A3_Trainer.View;
 using AnstossTrainer.Shared;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
 using System.Windows.Forms;
@@ -28,6 +29,9 @@ namespace A3_Trainer
         private Page page = Page.Squad;
         // The club last picked in the player view's club selection.
         private ClubKey? otherClub;
+        // The human manager whose squad, club and data the pages show; follows the turn.
+        private int manager = 1;
+        private readonly ToolStripMenuItem managerMenu = new ToolStripMenuItem("Trainer");
 
         /// <summary>Builds the menu, the views and the waiting screen and starts watching for the game.</summary>
         internal MainWindow()
@@ -47,12 +51,12 @@ namespace A3_Trainer
             players.DropDownItems.Add("Anderer Verein", null, (s, e) => this.Show(Page.Other));
             var club = new ToolStripMenuItem("Verein");
             club.DropDownItems.Add("Eigener Verein", null, (s, e) => this.Show(Page.Club));
-            var manager = new ToolStripMenuItem("Trainer");
-            manager.DropDownItems.Add("Manager (Spieler 1)", null, (s, e) => this.Show(Page.Manager));
+            this.managerMenu.DropDownItems.Add("Manager", null, (s, e) => this.Show(Page.Manager));
+            this.managerMenu.DropDownOpening += (s, e) => this.ListManagers();
             var help = new ToolStripMenuItem("?");
             help.DropDownItems.Add("Onlinehilfe", null, (s, e) => this.OpenHelp());
             help.DropDownItems.Add("Über", null, (s, e) => this.ShowAbout());
-            this.menu.Items.AddRange(new ToolStripItem[] { club, players, manager, help });
+            this.menu.Items.AddRange(new ToolStripItem[] { club, players, this.managerMenu, help });
             A3Theme.ApplyMenu(this.menu);
 
             this.Controls.Add(this.content);
@@ -81,6 +85,7 @@ namespace A3_Trainer
         /// <summary>Called by the observer once a career is loaded (also after loading another one).</summary>
         internal void OnGameAttached()
         {
+            this.manager = this.game.ActiveManager();
             this.Show(this.page);
         }
 
@@ -100,7 +105,7 @@ namespace A3_Trainer
         private void Show(Page target)
         {
             this.page = target;
-            ClubKey? own = this.memory.mProc.Process != null ? this.game.OwnClub() : null;
+            ClubKey? own = this.memory.mProc.Process != null ? this.game.OwnClub(this.manager) : null;
             if (!own.HasValue)
             {
                 this.ShowWaiting();
@@ -111,10 +116,12 @@ namespace A3_Trainer
             {
                 case Page.Club:
                     this.ShowScreen(this.clubView, "Verein: " + this.game.ClubName(own.Value));
+                    this.clubView.Manager = this.manager;
                     this.clubView.RefreshValues();
                     break;
                 case Page.Manager:
-                    this.ShowScreen(this.managerView, "Manager (Spieler 1)");
+                    this.ShowScreen(this.managerView, $"Manager (Spieler {this.manager})");
+                    this.managerView.Manager = this.manager;
                     this.managerView.RefreshValues();
                     break;
                 case Page.Opponent:
@@ -131,6 +138,29 @@ namespace A3_Trainer
                     this.ShowScreen(this.playerView, "Eigener Kader: " + this.game.ClubName(own.Value));
                     this.playerView.ShowClub(own);
                     break;
+            }
+        }
+
+        // With several human managers (hot seat) the menu lists them; picking one shows his data on the
+        // squad, club and manager pages until the turn passes.
+        private void ListManagers()
+        {
+            while (this.managerMenu.DropDownItems.Count > 1)
+                this.managerMenu.DropDownItems.RemoveAt(1);
+            List<int> managers = this.memory.mProc.Process != null ? this.game.Managers() : new List<int>();
+            if (managers.Count < 2)
+                return;
+            this.managerMenu.DropDownItems.Add(new ToolStripSeparator());
+            foreach (int number in managers)
+            {
+                ClubInfo info = this.game.ReadClubInfo(number);
+                string name = info == null ? "" : $": {(info.ManagerFirstName + " " + info.ManagerLastName).Trim()} ({info.Name})";
+                int picked = number;
+                this.managerMenu.DropDownItems.Add(new ToolStripMenuItem($"Spieler {number}{name}", null, (s, e) =>
+                {
+                    this.manager = picked;
+                    this.Show(this.page == Page.Club || this.page == Page.Squad ? this.page : Page.Manager);
+                }) { Checked = number == this.manager });
             }
         }
 

@@ -54,11 +54,13 @@ Age and motivation are shown read-only.
 For the whole team, condition and freshness can be set at once or frozen: the trainer then writes
 them back every second for the club it was switched on for.
 
-**Club** (player 1): name, short name and city, wealth at the start of the season (determines the bank balance), club image,
+**Club** (of the selected manager): name, short name and city, wealth at the start of the season (determines the bank balance), club image,
 trouble with the association (standing from "ausgezeichnet" to "verzockt").
-**Manager** (player 1): name, private wealth, board trust, popularity with the media, the public and the fans;
+**Manager**: name, private wealth, board trust, popularity with the media, the public and the fans;
 contract: salary, bonuses per point, cup round and title/promotion, season goal and its bonus, years left and the
 exit clause on offers (written to the manager object and the data the game writes it back to).
+**Several human managers** (hot seat, up to 4): the squad, club and manager pages follow the manager
+whose turn it is; with two or more, the `Trainer` menu lists them to look at another one.
 
 **Cheat Engine table** `A3-Trainer.ct` (included in every release): manager, wealth at the start
 of the season and base year as fixed entries. The script „Kader (eigener Verein und nächster
@@ -150,6 +152,6 @@ with Ascaron or the developers of *Anstoss 3*.
   decoded yet).
 - **Beard** is stored but not shown: version 1.40 passes the skin colour to the 3D match in its place
   (the beard getter `FUN_007077AB` is a copy of the skin colour getter).
-- Manager and finances: player 1 only (single-player career).
+- Hot seat: which manager has the turn is taken from the club the game has loaded as its own; not yet checked with a hot-seat career.
 - Suspensions, detailed skill values, clubs from countries other than Germany: not checked yet.
 - The UI is built in code (no designer).

@@ -18,7 +18,7 @@ namespace A3_Trainer.Tests
             FakeGameMemory m = A3GameTests.Career();
             uint club = A3Addresses.ClubArray + (uint)A3Addresses.ClubSize;
             m.Put(club + A3Addresses.ClubCity, Encoding.ASCII.GetBytes("Muenchen\0"));
-            m.PutUInt32(A3Addresses.SeasonStartMoney, 20000000);
+            m.PutUInt32(club + A3Addresses.ClubSeasonStartMoney, 20000000);
             m.PutUInt32(A3Addresses.ManagerPrivateMoney, 49700);
             m.PutUInt32(A3Addresses.ManagerSalary, 375000);
             m.Put(A3Addresses.ManagerFirstName, Encoding.ASCII.GetBytes("Test\0\0\0\0\0\0"));
@@ -53,7 +53,7 @@ namespace A3_Trainer.Tests
                 money.Value = 30000000;
                 Click(view, "save");
                 Assert.Equal("Gespeichert", Status(view));
-                Assert.Equal(BitConverter.GetBytes(30000000), m.WrittenAt(A3Addresses.SeasonStartMoney));
+                Assert.Equal(BitConverter.GetBytes(30000000), m.WrittenAt(A3Addresses.ClubArray + (uint)A3Addresses.ClubSize + A3Addresses.ClubSeasonStartMoney));
 
                 money.Value = 1;
                 Click(view, "reload");

@@ -20,9 +20,11 @@ namespace A3_Trainer.Model
         public override string ToString() => $"{this.Country}/{this.Number}";
     }
 
-    /// <summary>Club and manager data shown on the club page (human manager 1).</summary>
+    /// <summary>Club and manager data shown on the club and manager pages, for one human manager.</summary>
     internal sealed class ClubInfo
     {
+        /// <summary>The manager's number, 1 to 4.</summary>
+        internal int Manager { get; set; } = 1;
         /// <summary>The club's key.</summary>
         internal ClubKey Key { get; set; }
         /// <summary>Club name.</summary>
@@ -38,41 +40,41 @@ namespace A3_Trainer.Model
         /// <summary>Trouble byte: bits 0-4 trouble with the association (Tables.Association), the rest game state.</summary>
         internal int Trouble { get; set; }
 
-        /// <summary>Manager 1's first name.</summary>
+        /// <summary>The manager's first name.</summary>
         internal string ManagerFirstName { get; set; } = "";
-        /// <summary>Manager 1's last name.</summary>
+        /// <summary>The manager's last name.</summary>
         internal string ManagerLastName { get; set; } = "";
-        /// <summary>Manager 1's fixed salary, DM per year.</summary>
+        /// <summary>The manager's fixed salary, DM per year.</summary>
         internal int ManagerSalary { get; set; }
-        /// <summary>Manager 1's bonus per point, DM.</summary>
+        /// <summary>The manager's bonus per point, DM.</summary>
         internal int PointBonus { get; set; }
-        /// <summary>Manager 1's bonus per cup round, DM.</summary>
+        /// <summary>The manager's bonus per cup round, DM.</summary>
         internal int CupBonus { get; set; }
-        /// <summary>Manager 1's bonus per title or promotion, DM.</summary>
+        /// <summary>The manager's bonus per title or promotion, DM.</summary>
         internal int TitleBonus { get; set; }
-        /// <summary>Manager 1's bonus for reaching the season goal, DM.</summary>
+        /// <summary>The manager's bonus for reaching the season goal, DM.</summary>
         internal int GoalBonus { get; set; }
-        /// <summary>Manager 1's season goal (Tables.SeasonGoals).</summary>
+        /// <summary>The manager's season goal (Tables.SeasonGoals).</summary>
         internal int SeasonGoal { get; set; }
-        /// <summary>Seasons left on manager 1's contract.</summary>
+        /// <summary>Seasons left on the manager's contract.</summary>
         internal int ContractYears { get; set; }
-        /// <summary>Whether manager 1 may leave on an offer while the contract runs.</summary>
+        /// <summary>Whether the manager may leave on an offer while the contract runs.</summary>
         internal bool ExitClause { get; set; }
-        /// <summary>Manager 1's private money, DM.</summary>
+        /// <summary>The manager's private money, DM.</summary>
         internal int ManagerPrivateMoney { get; set; }
-        /// <summary>Manager 1's popularity with the media, 0 to 100.</summary>
+        /// <summary>The manager's popularity with the media, 0 to 100.</summary>
         internal int MediaPopularity { get; set; }
-        /// <summary>Manager 1's popularity with the public, 0 to 100.</summary>
+        /// <summary>The manager's popularity with the public, 0 to 100.</summary>
         internal int PublicPopularity { get; set; }
-        /// <summary>Base of manager 1's popularity with the fans, 0 to 100 (the game scales it by the team's mood).</summary>
+        /// <summary>Base of the manager's popularity with the fans, 0 to 100 (the game scales it by the team's mood).</summary>
         internal int FanPopularity { get; set; }
         /// <summary>Percent the game weights the fans' base with (FUN_006A5A7D).</summary>
         internal int FanWeight { get; set; } = 100;
-        /// <summary>Manager 1's popularity with the fans as the game shows it, 0 to 100.</summary>
+        /// <summary>The manager's popularity with the fans as the game shows it, 0 to 100.</summary>
         internal int ShownFanPopularity => ShownFans(this.FanPopularity);
         /// <summary>What the game would show for a fans' base of <paramref name="value"/>.</summary>
         internal int ShownFans(int value) => System.Math.Min(System.Math.Max(value * this.FanWeight / 100, 0), 100);
-        /// <summary>Base of the board's trust in manager 1.</summary>
+        /// <summary>Base of the board's trust in the manager.</summary>
         internal int BoardTrustBase { get; set; }
         /// <summary>What the game adds to the base (FUN_007701B2).</summary>
         internal int BoardTrustBonus { get; set; }

@@ -7,7 +7,7 @@ using System.Windows.Forms;
 
 namespace A3_Trainer.View
 {
-    /// <summary>Human manager 1: name, private money, board trust, popularity and contract.</summary>
+    /// <summary>A human manager: name, private money, board trust, popularity and contract.</summary>
     internal sealed class ManagerView : TrainerView
     {
         private readonly A3Game game;
@@ -49,9 +49,12 @@ namespace A3_Trainer.View
 
         protected override string GameDisplayName => "Anstoss-3";
 
+        /// <summary>The human manager (1-4) whose data the page shows.</summary>
+        internal int Manager { get; set; } = 1;
+
         private void BuildLayout()
         {
-            var manager = new GroupBox { Text = "Manager (Spieler 1)", Bounds = new Rectangle(8, 8, 614, 222) };
+            var manager = new GroupBox { Text = "Manager", Bounds = new Rectangle(8, 8, 614, 222) };
             int y = 22;
             void ManagerRow(string caption, Control input, Label note = null)
             {
@@ -114,7 +117,7 @@ namespace A3_Trainer.View
         /// <summary>Reads the values from the game (or clears the view if none is attached).</summary>
         internal void RefreshValues()
         {
-            this.shown = this.IsGameRunning(silent: true) ? this.game.ReadClubInfo() : null;
+            this.shown = this.IsGameRunning(silent: true) ? this.game.ReadClubInfo(this.Manager) : null;
             this.save.Enabled = this.shown != null;
             if (this.shown == null)
             {

@@ -26,6 +26,9 @@ namespace A3_Trainer.Tests
             m.Map(A3Addresses.ClubIndexTable, 0x200);
             m.PutUInt16(A3Addresses.ManagerClubCountry, 14);
             m.PutUInt16(A3Addresses.ManagerClubNumber, 1);
+            m.PutUInt16(A3Addresses.ManagerCount, 1);
+            m.PutUInt16(A3Addresses.ManagerOrder + 2, 1);
+            m.PutUInt16(A3Addresses.ManagerReferences + 2, 1);
             m.PutUInt16(A3Addresses.BaseYear, 1999);
             m.PutUInt16(A3Addresses.CalendarBase, 184);
             m.PutUInt16(A3Addresses.DayCounter, 0);
@@ -199,7 +202,7 @@ namespace A3_Trainer.Tests
         public void ClubInfo_ReadsAndWritesOnlyWhatChanged()
         {
             FakeGameMemory m = Career();
-            m.PutUInt32(A3Addresses.SeasonStartMoney, 10000000);
+            m.PutUInt32(Club(1) + A3Addresses.ClubSeasonStartMoney, 10000000);
             m.PutUInt32(A3Addresses.ManagerPrivateMoney, 10000);
             m.PutUInt32(A3Addresses.ManagerSalary, 375000);
             m.Put(A3Addresses.ManagerFirstName, Encoding.ASCII.GetBytes("Test\0\0\0\0\0\0"));
@@ -217,7 +220,7 @@ namespace A3_Trainer.Tests
             game.SaveClubInfo(info, edited);
 
             MemoryWrite write = Assert.Single(m.Writes);
-            Assert.Equal(A3Addresses.SeasonStartMoney, write.Address);
+            Assert.Equal(Club(1) + A3Addresses.ClubSeasonStartMoney, write.Address);
             Assert.Equal(BitConverter.GetBytes(20000000), write.Data);
         }
 

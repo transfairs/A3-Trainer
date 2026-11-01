@@ -62,7 +62,7 @@ namespace A3_Trainer.Tests
                 Assert.IsType<ClubView>(Shown(window));
                 Assert.Equal("A3-Trainer :: Verein: 1.FV München", window.Text);
 
-                TestHelpers.Click(MenuItem(window, "Trainer", "Manager (Spieler 1)"));
+                TestHelpers.Click(MenuItem(window, "Trainer", "Manager"));
                 Assert.IsType<ManagerView>(Shown(window));
                 Assert.Equal("A3-Trainer :: Manager (Spieler 1)", window.Text);
 
@@ -91,11 +91,46 @@ namespace A3_Trainer.Tests
         });
 
         [Fact]
+        public void HotSeat_FollowsTheTurn_AndTheMenuPicksAnotherManager() => StaThread.Run(() =>
+        {
+            FakeGameMemory m = A3GameEdgeTests.HotSeat();
+            m.Put(A3Addresses.ManagerFirstName, System.Text.Encoding.ASCII.GetBytes("Test".PadRight(10, '\0')));
+            m.Put(A3Addresses.ManagerLastName, System.Text.Encoding.ASCII.GetBytes("Trainer".PadRight(16, '\0')));
+            using (MainWindow window = Window(m))
+            {
+                window.OnGameAttached(); // manager 3 has the turn
+                Assert.Equal("A3-Trainer :: Eigener Kader: Hamburger FC", window.Text);
+
+                var trainer = window.MainMenuStrip.Items.Cast<ToolStripMenuItem>().Single(i => i.Text == "Trainer");
+                TestHelpers.Invoke(window, "ListManagers");
+                string[] items = trainer.DropDownItems.Cast<ToolStripItem>().Select(i => i.Text).ToArray();
+                Assert.Equal(new[] { "Manager", "", "Spieler 1: Test Trainer (1.FV München)", "Spieler 3: Zweiter (Hamburger FC)" }, items);
+                Assert.True(((ToolStripMenuItem)trainer.DropDownItems[3]).Checked);
+
+                TestHelpers.Click(trainer.DropDownItems[2]);
+                Assert.Equal("A3-Trainer :: Eigener Kader: 1.FV München", window.Text);
+                TestHelpers.Click(MenuItem(window, "Verein", "Eigener Verein"));
+                Assert.Equal("A3-Trainer :: Verein: 1.FV München", window.Text);
+                TestHelpers.Click(trainer.DropDownItems[3]);
+                Assert.Equal("A3-Trainer :: Verein: Hamburger FC", window.Text);
+                TestHelpers.Click(MenuItem(window, "Trainer", "Manager"));
+                Assert.Equal("A3-Trainer :: Manager (Spieler 3)", window.Text);
+                TestHelpers.Click(trainer.DropDownItems[2]);
+                Assert.Equal("A3-Trainer :: Manager (Spieler 1)", window.Text);
+
+                // A single manager adds no list; the next opening removes the old one.
+                m.PutUInt16(A3Addresses.ManagerCount, 1);
+                TestHelpers.Invoke(window, "ListManagers");
+                Assert.Single(trainer.DropDownItems);
+            }
+        });
+
+        [Fact]
         public void GameEvents_SwitchBetweenTheLastPageAndTheWaitingScreen() => StaThread.Run(() =>
         {
             using (MainWindow window = Window(WithOpponent()))
             {
-                TestHelpers.Click(MenuItem(window, "Trainer", "Manager (Spieler 1)"));
+                TestHelpers.Click(MenuItem(window, "Trainer", "Manager"));
 
                 window.OnGameLost();
                 Assert.IsType<Label>(Shown(window));

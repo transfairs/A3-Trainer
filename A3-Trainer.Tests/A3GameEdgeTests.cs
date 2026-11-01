@@ -146,7 +146,7 @@ namespace A3_Trainer.Tests
         }
 
         [Fact]
-        public void SaveClubInfo_WritesThePrivateMoney()
+        public void SaveClubInfo_WritesThePrivateMoney_ToTheManagerAndItsData()
         {
             var m = new FakeGameMemory();
             var original = new ClubInfo { SeasonStartMoney = 1, ManagerPrivateMoney = 2 };
@@ -155,9 +155,100 @@ namespace A3_Trainer.Tests
 
             new A3Game(m).SaveClubInfo(original, edited);
 
-            MemoryWrite write = Assert.Single(m.Writes);
-            Assert.Equal(A3Addresses.ManagerPrivateMoney, write.Address);
-            Assert.Equal(BitConverter.GetBytes(5000), write.Data);
+            Assert.Equal(new[] { A3Addresses.ManagerPrivateMoney, A3Addresses.ManagerData + 0x138 }, m.Writes.Select(w => w.Address));
+            Assert.All(m.Writes, w => Assert.Equal(BitConverter.GetBytes(5000), w.Data));
+        }
+
+        // Two human managers: 1 at 1.FV München (held by the game), 3 at Hamburger FC (not held, so his
+        // values come from his data); the game has Hamburg loaded as the own club.
+        internal static FakeGameMemory HotSeat()
+        {
+            FakeGameMemory m = A3GameTests.Career();
+            m.PutUInt16(A3Addresses.ManagerCount, 2);
+            m.PutUInt16(A3Addresses.ManagerOrder + 4, 3);
+            uint data3 = A3Addresses.ManagerData + 2 * A3Addresses.ManagerDataStride;
+            m.Map(data3, A3Addresses.ManagerDataStride);
+            m.PutUInt16(data3 + 0x3E, 14);
+            m.PutUInt16(data3 + 0x40, 10);
+            m.Put(data3 + 0x20, Encoding.ASCII.GetBytes("Zweiter\0"));
+            m.PutUInt32(data3 + 0x138, 777);
+            m.Put(data3 + 0x146, 10, 20, 30);
+            m.PutUInt32(data3 + 0x17C, 250000);
+            m.Map(A3Addresses.ClubCache, A3Addresses.ClubCacheSlots * A3Addresses.ClubCacheEntrySize);
+            m.Put(A3Addresses.ClubCache, 1, 14, 10);
+            return m;
+        }
+
+        [Fact]
+        public void Managers_InTurnOrder_AndTheActiveOneHasTheLoadedClub()
+        {
+            FakeGameMemory m = HotSeat();
+            var game = new A3Game(m);
+
+            Assert.Equal(new[] { 1, 3 }, game.Managers());
+            Assert.Equal(3, game.ActiveManager());
+            Assert.Equal(new ClubKey(14, 10), game.OwnClub());
+            Assert.Equal(new ClubKey(14, 1), game.OwnClub(1));
+
+            m.Put(A3Addresses.ClubCache, 1, 14, 1);
+            Assert.Equal(1, game.ActiveManager());
+            m.Put(A3Addresses.ClubCache, 0, 14, 10);  // slot unused: the first one
+            Assert.Equal(1, game.ActiveManager());
+
+            m.PutUInt16(A3Addresses.ManagerCount, 0);
+            Assert.Empty(game.Managers());
+            Assert.Equal(1, game.ActiveManager());
+        }
+
+        [Fact]
+        public void Managers_SkipsInvalidAndRepeatedNumbers()
+        {
+            FakeGameMemory m = HotSeat();
+            m.PutUInt16(A3Addresses.ManagerCount, 4);
+            m.PutUInt16(A3Addresses.ManagerOrder + 6, 3);
+            m.PutUInt16(A3Addresses.ManagerOrder + 8, 9);
+
+            Assert.Equal(new[] { 1, 3 }, new A3Game(m).Managers());
+        }
+
+        [Fact]
+        public void ClubInfo_OfAManagerTheGameDoesntHold_ComesFromAndGoesToHisData()
+        {
+            FakeGameMemory m = HotSeat();
+            var game = new A3Game(m);
+            uint object3 = (uint)(2 * A3Addresses.ManagerStride);
+            uint data3 = A3Addresses.ManagerData + 2 * A3Addresses.ManagerDataStride;
+
+            ClubInfo info = game.ReadClubInfo(3);
+            Assert.Equal(3, info.Manager);
+            Assert.Equal("Hamburger FC", info.Name);
+            Assert.Equal("Zweiter", info.ManagerFirstName);
+            Assert.Equal(777, info.ManagerPrivateMoney);
+            Assert.Equal(20, info.PublicPopularity);
+            Assert.Equal(250000, info.ManagerSalary);
+
+            ClubInfo edited = info.Clone();
+            edited.ManagerPrivateMoney = 999;
+            game.SaveClubInfo(info, edited);
+
+            Assert.Equal(999, (int)m.ReadUInt32(data3 + 0x138));
+            Assert.Equal(BitConverter.GetBytes(999), m.WrittenAt(A3Addresses.ManagerPrivateMoney + object3));
+            Assert.Equal(999, game.ReadClubInfo(3).ManagerPrivateMoney);
+            Assert.Null(m.WrittenAt(A3Addresses.ManagerPrivateMoney)); // manager 1 untouched
+
+            // A manager without a club (country 0) has no club page.
+            m.PutUInt16(data3 + 0x3E, 0);
+            m.PutUInt16(data3 + 0x40, 0);
+            Assert.Null(game.ReadClubInfo(3));
+        }
+
+        [Fact]
+        public void ManagerField_OutsideTheDataMap_StaysInTheObject()
+        {
+            FakeGameMemory m = HotSeat();
+            uint field = A3Addresses.Manager + 0x1000;
+
+            Assert.Equal(field + 2 * (uint)A3Addresses.ManagerStride, new A3Game(m).ManagerField(3, field));
         }
     }
 }

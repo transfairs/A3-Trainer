@@ -7,7 +7,7 @@ using System.Windows.Forms;
 
 namespace A3_Trainer.View
 {
-    /// <summary>Own club: name, city, money, image and standing with the association.</summary>
+    /// <summary>A manager's club: name, city, money, image and standing with the association.</summary>
     internal sealed class ClubView : TrainerView
     {
         private readonly A3Game game;
@@ -37,6 +37,9 @@ namespace A3_Trainer.View
         }
 
         protected override string GameDisplayName => "Anstoss-3";
+
+        /// <summary>The human manager (1-4) whose data the page shows.</summary>
+        internal int Manager { get; set; } = 1;
 
         private void BuildLayout()
         {
@@ -76,7 +79,7 @@ namespace A3_Trainer.View
         /// <summary>Reads the values from the game (or clears the view if none is attached).</summary>
         internal void RefreshValues()
         {
-            this.shown = this.IsGameRunning(silent: true) ? this.game.ReadClubInfo() : null;
+            this.shown = this.IsGameRunning(silent: true) ? this.game.ReadClubInfo(this.Manager) : null;
             this.save.Enabled = this.shown != null;
             if (this.shown == null)
             {

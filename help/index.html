@@ -239,7 +239,11 @@
       <section class="panel" id="panel-verein">
         <div class="panel-header">
           <h1>Verein &amp; Manager</h1>
-          <p class="lead">Zwei Seiten für den Verein und den Manager von Spieler 1. Werte, die das Spiel für den geladenen Verein in einer Arbeitskopie führt, schreibt der Trainer in beide.</p>
+          <p class="lead">Zwei Seiten für den Verein und den Manager. Werte, die das Spiel für den geladenen Verein in einer Arbeitskopie führt, schreibt der Trainer in beide.</p>
+          <fieldset class="groupbox">
+            <legend>Mehrere Manager (Hot Seat)</legend>
+            <p>Spielen bis zu vier Manager an einem Rechner, zeigen <span class="menu-path">Spieler → Eigener Kader</span>, <span class="menu-path">Verein → Eigener Verein</span> und <span class="menu-path">Trainer → Manager</span> immer den Manager, der gerade am Zug ist; beim Wechsel springt der Trainer von selbst um. Ab zwei Managern stehen sie zusätzlich im Menü <span class="menu-path">Trainer</span>, um einen anderen anzusehen und zu bearbeiten.</p>
+          </fieldset>
         </div>
         <div class="subpanel active" data-sub="only">
           <fieldset class="groupbox">
@@ -253,7 +257,7 @@
             <img class="screenshot" src="img/club.png" alt="Verein">
           </fieldset>
           <fieldset class="groupbox">
-            <legend>Manager (<span class="menu-path">Trainer → Manager (Spieler 1)</span>)</legend>
+            <legend>Manager (<span class="menu-path">Trainer → Manager</span>)</legend>
             <dl class="field-list">
               <dt>Vorname, Nachname</dt><dd>Höchstens 9 bzw. 15 Zeichen; ein leeres Feld behält den alten Namen. Den Eintrag des Managers in der Trainerliste des Spiels benennt der Trainer mit um, wenn genau ein Eintrag den alten Namen trägt.</dd>
               <dt>Privates Vermögen (DM)</dt><dd>Das Privatvermögen des Managers.</dd>
@@ -312,7 +316,7 @@
             <ul>
               <li><strong>Motivation</strong> berechnet das Spiel selbst, der Trainer zeigt sie nur an.</li>
               <li>Bei <strong>Torhütern</strong> zeigt das Spiel eine niedrigere Kondition an als gespeichert.</li>
-              <li>Manager und Vereinsvermögen gelten nur für <strong>Spieler 1</strong>.</li>
+              <li>Mehrere Manager: Wer am Zug ist, erkennt der Trainer am Verein, den das Spiel gerade als eigenen geladen hat. Mit einer Hot-Seat-Karriere ist das noch nicht geprüft.</li>
               <li>Sperren und Vereine anderer Länder als Deutschland sind noch nicht geprüft.</li>
             </ul>
           </fieldset>

@@ -73,8 +73,39 @@ namespace A3_Trainer.Controller
         internal const int ClubCopyName = 0x02;    // copied from the record when the club is loaded (FUN_0063B75A)
         internal const int ClubCopyTrouble = 0x102;
         internal const int ClubCopyImage = 0x10F;
+        // Finances: 250 dwords from the record's +0x488, the copy's +0x210 (FUN_0063C908); the first is the wealth at
+        // the start of the season, the bank balance is it plus the season's bookings after it.
+        internal const int ClubSeasonStartMoney = 0x488;
+        internal const int ClubCopySeasonStartMoney = 0x210;
 
-        // --- Human manager 1 and the finances of his club.
+        // --- Human managers (hot seat, up to 4). The constants below are manager 1's fields; manager n's are
+        // (n - 1) * ManagerStride further. The game works on these objects only while it holds them (reference
+        // count above 0, FUN_006A426B) and writes them back to the managers' data on every release
+        // (FUN_006A4930); ManagerDataMap says where each field lies there.
+        internal const uint Manager = 0x01B995E8;
+        internal const int ManagerStride = 0x1A70;
+        internal const int ManagerDataStride = 0x2158;
+        internal const uint ManagerReferences = 0x01B9FFAA;   // word per manager number (1-4)
+        internal const uint ManagerCount = 0x00B5CBCE;        // word, number of human managers
+        internal const uint ManagerOrder = 0x00B5CB90;        // word per turn (1-4): manager number (FUN_006A421A)
+        internal const int MaxManagers = 4;
+        /// <summary>{object offset, data offset, length} of every field the trainer uses (FUN_006A426B).</summary>
+        internal static readonly int[][] ManagerDataMap =
+        {
+            new[] { 0x00, 0x20, 10 },       // first name
+            new[] { 0x0A, 0x2A, 16 },       // last name
+            new[] { 0x1E, 0x3E, 2 },        // club country
+            new[] { 0x20, 0x40, 2 },        // club number
+            new[] { 0x22, 0x42, 2 },        // image level at +0x23
+            new[] { 0x3A, 0x146, 3 },       // popularity
+            new[] { 0x50, 0x17C, 0x20 },    // contract
+            new[] { 0x98, 0x138, 4 },       // private money
+            new[] { 0x9C, 0x1A4, 6 },       // board trust
+            new[] { 0x17BC, 0x19CC, 0x1E }, // image flags at +0x17D9
+            new[] { 0x17FA, 0x54, 0xE0 },   // fan factors from +0x1804
+        };
+
+        // --- Fields of human manager 1.
         internal const uint ManagerFirstName = 0x01B995E8;   // char[10]
         internal const uint ManagerLastName = 0x01B995F2;    // char[16]
         internal const int ManagerFirstNameSize = 10;
@@ -88,11 +119,9 @@ namespace A3_Trainer.Controller
         internal const uint ManagerClubCountry = 0x01B99606;  // word
         internal const uint ManagerClubNumber = 0x01B99608;   // word, number within the country
         internal const uint ManagerSalary = 0x01B99638;       // dword, DM per year; first field of the contract
-        // The contract (0x20 bytes from ManagerSalary, see ContractOffset). The manager object is the game's working
-        // copy of manager 1's CDatenMitspieler (FUN_006A426B), written back on every release (FUN_006A4930); the trainer
-        // writes both.
-        internal const uint ManagerData = 0x00A62578;         // CDatenMitspieler of manager 1, 0x2158 bytes per manager
-        internal const int ManagerDataContract = 0x17C;
+        // The contract: 0x20 bytes from ManagerSalary, see ContractOffset.
+        internal const uint ManagerData = 0x00A62578;         // CDatenMitspieler of manager 1, ManagerDataStride bytes per manager
+        internal const int ManagerDataContract = 0x17C;       // see ManagerDataMap
         internal const int ContractSize = 0x20;
         internal const uint ManagerPrivateMoney = 0x01B99680; // dword, DM
         internal const uint ManagerMediaPopularity = 0x01B99622;  // byte 0-100 (Beliebtheit bei den Medien)
@@ -105,7 +134,7 @@ namespace A3_Trainer.Controller
         internal const uint ManagerFanFactors = 0x01B9ADEC;     // word every 0xE bytes, indexed by 0-15
         internal const int ManagerFanFactorStride = 0xE;
         internal const uint ManagerBoardTrust = 0x01B99684;       // word, base of the board's trust; the game adds the next 4 bytes (FUN_007701B2)
-        internal const uint SeasonStartMoney = 0x00A6C1C8;    // dword, DM; bank balance = this + season result
+        internal const uint SeasonStartMoney = 0x00A6C1C8;    // ClubCopySeasonStartMoney of the own club's copy (slot 0, fixed at 0x00A6BFB8)
 
         // --- Calendar: current date = Calendar[CalendarBase + DayCounter] = (year, day of year).
         internal const uint BaseYear = 0x00B5CBCA;            // word, contract years are stored relative to it
