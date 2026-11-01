@@ -93,7 +93,7 @@
           </fieldset>
 
           <div class="toc-grid">
-            <a class="toc-card" href="#spieler" data-jump="spieler"><h3>Spieler</h3><p>Kader und nächsten Gegner bearbeiten: Daten, Positionen, Fähigkeiten, Eigenschaften, Vertrag, Privatleben.</p></a>
+            <a class="toc-card" href="#spieler" data-jump="spieler"><h3>Spieler</h3><p>Kader, nächsten Gegner und jeden anderen Verein bearbeiten: Daten, Positionen, Fähigkeiten, Eigenschaften, Vertrag, Privatleben.</p></a>
             <a class="toc-card" href="#verein" data-jump="verein"><h3>Verein &amp; Manager</h3><p>Vereinsvermögen und privates Vermögen des Managers.</p></a>
             <a class="toc-card" href="#faq" data-jump="faq"><h3>Fehlerbehebung</h3><p>Häufige Fragen, bekannte Grenzen und die Logdatei.</p></a>
           </div>
@@ -116,17 +116,18 @@
 
         <div class="subpanel active" data-sub="uebersicht">
           <fieldset class="groupbox">
-            <legend>Zwei Wege zur Spielerliste</legend>
+            <legend>Wege zur Spielerliste</legend>
             <dl class="field-list">
               <dt>Eigener Kader</dt><dd>Alle Spieler Ihres Vereins. Menü: <span class="menu-path">Spieler → Eigener Kader</span>.</dd>
               <dt>Nächster Gegner</dt><dd>Der Kader des Vereins, den das Spiel als nächsten Gegner geladen hat. Menü: <span class="menu-path">Spieler → Nächster Gegner</span>.</dd>
+              <dt>Jeder andere Verein</dt><dd>Über der Spielerliste wählen Sie Land und Verein aus; die Liste zeigt dann dessen Kader. Menü: <span class="menu-path">Spieler → Anderer Verein</span> öffnet den zuletzt gewählten Verein.</dd>
             </dl>
           </fieldset>
 
           <fieldset class="groupbox">
             <legend>Speichern</legend>
             <p><span class="btn-tag">Speichern</span> schreibt nur die Werte, die Sie geändert haben. <span class="btn-tag">Neu laden</span> liest den Kader neu aus dem Spiel, zum Beispiel nach einem Spieltag. Damit die Änderungen im Spielstand landen, speichern Sie anschließend im Spiel.</p>
-            <p>Hat das Spiel von einem Spieler gerade keine Arbeitskopie geladen (das betrifft nur Spieler außerhalb von eigenem Kader und nächstem Gegner), steht unter den Daten „Spieler nicht geladen“; die Werte kommen dann aus seinem Datensatz.</p>
+            <p>Hat das Spiel von einem Spieler gerade keine Arbeitskopie geladen (das betrifft Spieler außerhalb von eigenem Kader und nächstem Gegner), steht unter den Daten „Spieler nicht geladen“; die Werte kommen dann aus seinem Datensatz, und der Trainer schreibt auch dorthin.</p>
           </fieldset>
 
           <div class="callout warn">
@@ -206,6 +207,7 @@
               <dt>Motivation</dt><dd>Nur Anzeige: Das Spiel berechnet sie bei jeder Anzeige neu, ein geänderter Wert würde nicht halten.</dd>
               <dt>Form</dt><dd>0 bis 20, zu Spielbeginn 10. Die im Spiel angezeigte Form ergibt sich zur Hälfte aus diesem Wert, zur anderen Hälfte aus Kondition und Frische.</dd>
               <dt>Verletzung</dt><dd>Zeigt den Zustand. <span class="btn-tag">Heilen</span> macht den Spieler beim nächsten Speichern gesund.</dd>
+              <dt>Ganze Mannschaft</dt><dd>Kondition und Frische für alle Spieler des angezeigten Vereins. <span class="btn-tag">Für alle setzen</span> schreibt die Werte sofort. Mit <strong>einfrieren</strong> schreibt der Trainer sie jede Sekunde zurück, auch wenn das Spiel sie verändert, solange der Haken gesetzt ist. Das Einfrieren gilt für den Verein, bei dem Sie es eingeschaltet haben, und endet, sobald Sie einen anderen Verein anzeigen oder das Spiel beendet wird.</dd>
             </dl>
           </fieldset>
           <fieldset class="groupbox">

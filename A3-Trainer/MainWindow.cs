@@ -24,8 +24,10 @@ namespace A3_Trainer
         private readonly AboutView aboutView = new AboutView();
         private readonly Label waiting;
 
-        private enum Page { Squad, Opponent, Club, Manager }
+        private enum Page { Squad, Opponent, Other, Club, Manager }
         private Page page = Page.Squad;
+        // The club last picked in the player view's club selection.
+        private ClubKey? otherClub;
 
         /// <summary>Builds the menu, the views and the waiting screen and starts watching for the game.</summary>
         internal MainWindow()
@@ -42,6 +44,7 @@ namespace A3_Trainer
             players.DropDownItems.Add("Eigener Kader", null, (s, e) => this.Show(Page.Squad));
             this.opponentItem = new ToolStripMenuItem("Nächster Gegner", null, (s, e) => this.Show(Page.Opponent));
             players.DropDownItems.Add(this.opponentItem);
+            players.DropDownItems.Add("Anderer Verein", null, (s, e) => this.Show(Page.Other));
             var club = new ToolStripMenuItem("Verein");
             club.DropDownItems.Add("Eigener Verein", null, (s, e) => this.Show(Page.Club));
             var manager = new ToolStripMenuItem("Trainer");
@@ -58,6 +61,7 @@ namespace A3_Trainer
 
             this.game = new A3Game(new LiveGameMemory(this.memory));
             this.playerView = new PlayerView(this.memory, this.game);
+            this.playerView.ClubChosen += this.OnClubChosen;
             this.clubView = new ClubView(this.memory, this.game);
             this.managerView = new ManagerView(this.memory, this.game);
             this.waiting = new Label
@@ -83,6 +87,7 @@ namespace A3_Trainer
         /// <summary>Called by the observer when the game is gone.</summary>
         internal void OnGameLost()
         {
+            this.playerView.StopFreezing();
             this.ShowWaiting();
         }
 
@@ -117,11 +122,24 @@ namespace A3_Trainer
                     this.ShowScreen(this.playerView, opponent.HasValue ? "Nächster Gegner: " + this.game.ClubName(opponent.Value) : "Nächster Gegner (keiner geladen)");
                     this.playerView.ShowClub(opponent);
                     break;
+                case Page.Other:
+                    ClubKey other = this.otherClub.HasValue && this.game.ClubAddress(this.otherClub.Value).HasValue ? this.otherClub.Value : own.Value;
+                    this.ShowScreen(this.playerView, "Verein: " + this.game.ClubName(other));
+                    this.playerView.ShowClub(other);
+                    break;
                 default:
                     this.ShowScreen(this.playerView, "Eigener Kader: " + this.game.ClubName(own.Value));
                     this.playerView.ShowClub(own);
                     break;
             }
+        }
+
+        // A club picked in the player view: the view already shows it, only page and title follow.
+        private void OnClubChosen(ClubKey club)
+        {
+            this.page = Page.Other;
+            this.otherClub = club;
+            this.ShowScreen(this.playerView, "Verein: " + this.game.ClubName(club));
         }
 
         private void ShowWaiting() => this.ShowPlaceholder(this.waiting);

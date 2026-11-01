@@ -14,6 +14,9 @@ namespace A3_Trainer.View
     {
         private readonly A3Game game;
 
+        // Club selection above the list: country, then one of its clubs.
+        private readonly ComboBox countryBox = Combo();
+        private readonly ComboBox clubBox = Combo();
         private readonly ListView list = new ListView();
         private readonly TabControl tabs = new TabControl();
         // Names are entries of the game's shared name table; a changed name gets its own (A3Game.NameIndex).
@@ -84,8 +87,19 @@ namespace A3_Trainer.View
         private readonly Button save = new Button { Text = "Speichern" };
         private readonly Button reload = new Button { Text = "Neu laden" };
         private readonly Label status = new Label();
+        // The whole team's condition and freshness: set once, or frozen (written back every second).
+        private readonly NumericUpDown teamCondition = Number(0, 100);
+        private readonly NumericUpDown teamFreshness = Number(0, 100);
+        private readonly CheckBox freezeCondition = new CheckBox { Text = "einfrieren" };
+        private readonly CheckBox freezeFreshness = new CheckBox { Text = "einfrieren" };
+        private readonly Button teamApply = new Button { Text = "Für alle setzen" };
+        private readonly Timer freezeTimer = new Timer { Interval = 1000 };
+        private GroupBox teamGroup;
 
         private ClubKey? club;
+        private ClubKey? frozenClub;
+        private List<ClubKey> clubs = new List<ClubKey>();
+        private bool fillingClubs;
         private List<Player> players = new List<Player>();
         private Player shown;
         private Player healed;
@@ -100,20 +114,41 @@ namespace A3_Trainer.View
             this.BuildLayout();
             A3Theme.Apply(this);
             this.ShowPlayer(null);
+            this.freezeTimer.Tick += (s, e) => this.Freeze();
+            this.Disposed += (s, e) => this.freezeTimer.Dispose();
         }
 
         protected override string GameDisplayName => "Anstoss-3";
 
+        /// <summary>Raised when the user picks another club in the club selection.</summary>
+        internal event Action<ClubKey> ClubChosen;
+
         /// <summary>Shows the squad of <paramref name="club"/>, or clears the view if null.</summary>
         internal void ShowClub(ClubKey? club)
         {
+            if (!Equals(club, this.club))
+                this.StopFreezing();
             this.club = club;
+            this.FillClubs();
             this.RefreshList();
+        }
+
+        /// <summary>Ends freezing condition and freshness (e.g. when the game is gone).</summary>
+        internal void StopFreezing()
+        {
+            this.freezeCondition.Checked = false;
+            this.freezeFreshness.Checked = false;
         }
 
         private void BuildLayout()
         {
-            this.list.SetBounds(4, 4, 236, 415);
+            this.countryBox.SetBounds(4, 4, 96, 21);
+            this.clubBox.SetBounds(104, 4, 136, 21);
+            this.countryBox.SelectedIndexChanged += (s, e) => this.CountryPicked();
+            this.clubBox.SelectedIndexChanged += (s, e) => this.ClubPicked();
+            this.Controls.AddRange(new Control[] { this.countryBox, this.clubBox });
+
+            this.list.SetBounds(4, 30, 236, 389);
             this.list.View = System.Windows.Forms.View.Details;
             this.list.FullRowSelect = true;
             this.list.HideSelection = false;
@@ -368,6 +403,20 @@ namespace A3_Trainer.View
             Row(group, y, "Verletzung", this.injuryValue, 140);
             this.heal.SetBounds(270, y, 75, 23);
             group.Controls.Add(this.heal);
+
+            GroupBox team = this.teamGroup = Group(page, "Ganze Mannschaft", 188, 104);
+            y = 20;
+            this.freezeCondition.SetBounds(200, y + 1, 100, 20);
+            y = Row(team, y, "Kondition", this.teamCondition, 70);
+            this.freezeFreshness.SetBounds(200, y + 1, 100, 20);
+            y = Row(team, y, "Frische", this.teamFreshness, 70);
+            this.teamApply.SetBounds(115, y, 110, 23);
+            team.Controls.AddRange(new Control[] { this.freezeCondition, this.freezeFreshness, this.teamApply });
+            this.teamCondition.Value = 100;
+            this.teamFreshness.Value = 100;
+            this.teamApply.Click += (s, e) => this.SetTeam();
+            this.freezeCondition.CheckedChanged += (s, e) => this.FreezeChanged();
+            this.freezeFreshness.CheckedChanged += (s, e) => this.FreezeChanged();
             return page;
         }
 
@@ -477,6 +526,130 @@ namespace A3_Trainer.View
             }
         }
 
+        // Countries and clubs as the game numbers them; the shown club is selected.
+        private void FillClubs()
+        {
+            this.fillingClubs = true;
+            try
+            {
+                this.countryBox.Items.Clear();
+                this.clubBox.Items.Clear();
+                this.clubs = new List<ClubKey>();
+                if (!this.club.HasValue || !this.IsGameRunning(silent: true))
+                    return;
+                this.FillCountries();
+                this.clubs = this.game.ReadClubs();
+                this.countryBox.Items.AddRange(this.clubs.Select(c => c.Country).Distinct()
+                    .Select(country => new Choice(country < this.nationality.Items.Count ? (string)this.nationality.Items[country] : country.ToString(), new ClubKey(country, 0)))
+                    .OrderBy(c => c.Text, StringComparer.CurrentCulture).Cast<object>().ToArray());
+                this.countryBox.SelectedItem = this.countryBox.Items.Cast<Choice>().FirstOrDefault(c => c.Club.Country == this.club.Value.Country);
+                this.FillClubBox(this.club.Value.Country);
+            }
+            finally
+            {
+                this.fillingClubs = false;
+            }
+        }
+
+        private void FillClubBox(int country)
+        {
+            this.clubBox.Items.Clear();
+            foreach (ClubKey key in this.clubs.Where(c => c.Country == country))
+                this.clubBox.Items.Add(new Choice(this.game.ClubName(key), key));
+            this.clubBox.SelectedItem = this.clubBox.Items.Cast<Choice>().FirstOrDefault(c => c.Club.Equals(this.club));
+        }
+
+        // Another country shows its first club.
+        private void CountryPicked()
+        {
+            if (this.fillingClubs || !(this.countryBox.SelectedItem is Choice country))
+                return;
+            this.fillingClubs = true;
+            try
+            {
+                this.FillClubBox(country.Club.Country);
+                if (this.clubBox.SelectedIndex < 0 && this.clubBox.Items.Count > 0)
+                    this.clubBox.SelectedIndex = 0;
+            }
+            finally
+            {
+                this.fillingClubs = false;
+            }
+            this.ClubPicked();
+        }
+
+        private void ClubPicked()
+        {
+            if (this.fillingClubs || !(this.clubBox.SelectedItem is Choice choice) || choice.Club.Equals(this.club))
+                return;
+            this.StopFreezing();
+            this.club = choice.Club;
+            this.RefreshList();
+            this.ClubChosen?.Invoke(choice.Club);
+        }
+
+        /// <summary>An entry of the country or club selection.</summary>
+        private sealed class Choice
+        {
+            internal Choice(string text, ClubKey club)
+            {
+                this.Text = text;
+                this.Club = club;
+            }
+
+            internal string Text { get; }
+            internal ClubKey Club { get; }
+
+            public override string ToString() => this.Text;
+        }
+
+        private void SetTeam()
+        {
+            if (!this.club.HasValue || !this.IsGameRunning())
+                return;
+            try
+            {
+                int changed = this.game.SetTeamFitness(this.club.Value, (int)this.teamCondition.Value * 100, (int)this.teamFreshness.Value * 100);
+                Logger.Debug($"Kondition/Frische für {changed} Spieler von {this.club.Value} gesetzt");
+                this.RefreshList();
+                this.status.Text = $"{changed} Spieler geändert";
+            }
+            catch (Exception ex)
+            {
+                Logger.Error("Mannschaftswerte konnten nicht gesetzt werden", ex);
+                this.status.Text = "Fehler beim Speichern";
+            }
+        }
+
+        // Freezing holds the club shown when it was switched on; showing another club ends it.
+        private void FreezeChanged()
+        {
+            bool any = this.freezeCondition.Checked || this.freezeFreshness.Checked;
+            if (any && !this.frozenClub.HasValue)
+                this.frozenClub = this.club;
+            if (!any)
+                this.frozenClub = null;
+            this.freezeTimer.Enabled = any && this.frozenClub.HasValue;
+            if (this.freezeTimer.Enabled)
+                this.Freeze();
+        }
+
+        private void Freeze()
+        {
+            if (!this.frozenClub.HasValue || !this.IsGameRunning(silent: true))
+                return;
+            try
+            {
+                this.game.SetTeamFitness(this.frozenClub.Value,
+                    this.freezeCondition.Checked ? (int)this.teamCondition.Value * 100 : (int?)null,
+                    this.freezeFreshness.Checked ? (int)this.teamFreshness.Value * 100 : (int?)null);
+            }
+            catch (Exception ex)
+            {
+                Logger.Warn("Einfrieren fehlgeschlagen", ex);
+            }
+        }
+
         private string AgeText(Player player) => this.AgeText(player.BirthDate);
 
         private string AgeText(GameDate birth) =>
@@ -497,7 +670,7 @@ namespace A3_Trainer.View
             this.save.Enabled = has;
             if (!has)
             {
-                this.ClearAllFields(this.tabs);
+                this.ClearAllFields(this.tabs, new HashSet<Control> { this.teamGroup });
                 this.ageValue.Text = "";
                 this.notLoaded.Visible = false;
                 this.injuryValue.Text = "";

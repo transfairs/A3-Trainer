@@ -75,6 +75,55 @@ namespace A3_Trainer.Controller
             return address.HasValue ? this.ReadString(address.Value + A3Addresses.ClubName, 0x14) : "";
         }
 
+        /// <summary>
+        /// Every club that has players, in the game's club order (country by country). Taken from the
+        /// player records, because the index table can't tell a country without clubs from one whose
+        /// clubs start at number 0.
+        /// </summary>
+        internal List<ClubKey> ReadClubs()
+        {
+            var clubs = new Dictionary<ClubKey, int>();
+            byte[] all = this.memory.Read(A3Addresses.PlayerArray, A3Addresses.PlayerSlots * A3Addresses.PlayerSize);
+            if (all == null)
+                return new List<ClubKey>();
+
+            for (int index = 0; index < A3Addresses.PlayerSlots; index++)
+            {
+                int offset = index * A3Addresses.PlayerSize;
+                if (!PlayerCodec.IsUsed(all, offset))
+                    continue;
+                var key = new ClubKey(all[offset + RecordOffset.ClubCountry], all[offset + RecordOffset.ClubNumber]);
+                if (clubs.ContainsKey(key))
+                    continue;
+                uint? address = this.ClubAddress(key);
+                if (address.HasValue)
+                    clubs[key] = (int)address.Value;
+            }
+            return clubs.OrderBy(c => c.Value).Select(c => c.Key).ToList();
+        }
+
+        /// <summary>
+        /// Sets condition and/or freshness (hundredths; null leaves it) of every player of the club whose
+        /// value differs, in the working copy and the record. Returns how many players were changed.
+        /// </summary>
+        internal int SetTeamFitness(ClubKey club, int? condition, int? freshness)
+        {
+            int changed = 0;
+            foreach (Player player in this.ReadPlayers(club))
+            {
+                Player edited = player.Clone();
+                if (condition.HasValue)
+                    edited.Condition = condition.Value;
+                if (freshness.HasValue)
+                    edited.Freshness = freshness.Value;
+                if (edited.Condition == player.Condition && edited.Freshness == player.Freshness)
+                    continue;
+                this.SavePlayer(player, edited);
+                changed++;
+            }
+            return changed;
+        }
+
         /// <summary>Player number -> address of the game's working copy, for every player it has one of.</summary>
         internal Dictionary<int, uint> ReadPlayerCache()
         {

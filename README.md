@@ -39,7 +39,8 @@ To get the game running on Windows 10/11 at all:
 
 ## Features
 
-**Players** (own squad and next opponent), laid out in the tabs of the game's data editor:
+**Players** of any club (own squad, next opponent, or any club picked by country and name above the
+list), laid out in the tabs of the game's data editor:
 date of birth, strength, talent, strong foot, shirt number, nationality and second nationality,
 homegrown status (Fußballinländer), national player, retired from the national team or as captain,
 skin colour, hair colour and type (including the fifth type only the game assigns), beard, main and secondary positions, skills ("+" and "−", outfield players and goalkeepers
@@ -50,6 +51,8 @@ starting line-up, relationship and hobby, crowd standing (favourite/hate figure:
 flag), first and last name and artist name (a new name is added to the game's name table the way the
 game itself adds one, so it is kept in the save game), partner, children with names and birthdays.
 Age and motivation are shown read-only.
+For the whole team, condition and freshness can be set at once or frozen: the trainer then writes
+them back every second for the club it was switched on for.
 
 **Club** (player 1): name, short name and city, wealth at the start of the season (determines the bank balance), club image,
 trouble with the association (standing from "ausgezeichnet" to "verzockt").
@@ -87,6 +90,9 @@ Leave the `X` in place: removing it deletes the player entries again.
 - For the players of the loaded teams (own squad, next opponent) the game works on **working
   copies** („CSpieler“ cache, tree at `0x00A3D3C4`) and writes them back to the records when
   saving. The trainer therefore writes to the copy **and** the record.
+- Players of other clubs have no working copy; the trainer writes only their record. The club list
+  comes from the club keys in the player records (`+0x30`/`+0x31`), since the club index table
+  can't tell a country without clubs from one whose clubs start at 0.
 - Loaded clubs (own club, next opponent) have working copies too (6 slots from `0x00A6AB10`); club
   values are written to both as well.
 - All addresses and field meanings are in `Controller/A3Addresses.cs`.

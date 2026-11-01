@@ -35,7 +35,7 @@ namespace A3_Trainer.Tests
             return m;
         }
 
-        private static void PutClub(FakeGameMemory m, int index, string name)
+        internal static void PutClub(FakeGameMemory m, int index, string name)
         {
             m.PutUInt32(Club(index), A3Addresses.ClubVtable);
             m.Put(Club(index) + A3Addresses.ClubName, Encoding.GetEncoding(1252).GetBytes(name + "\0"));
