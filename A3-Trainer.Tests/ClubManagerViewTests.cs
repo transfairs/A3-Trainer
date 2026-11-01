@@ -90,6 +90,73 @@ namespace A3_Trainer.Tests
         });
 
         [Fact]
+        public void ManagerView_Contract_GoesToTheManagerAndItsData() => StaThread.Run(() =>
+        {
+            FakeGameMemory m = CareerWithMoney();
+            uint data = A3Addresses.ManagerData + A3Addresses.ManagerDataContract;
+            m.Map(A3Addresses.ManagerSalary, A3Addresses.ContractSize);
+            m.Map(data, A3Addresses.ContractSize);
+            m.PutUInt32(A3Addresses.ManagerSalary, 375000);
+            m.PutUInt32(A3Addresses.ManagerSalary + ContractOffset.PointBonus, 2500);
+            m.PutUInt32(A3Addresses.ManagerSalary + ContractOffset.CupBonus, 6500);
+            m.PutUInt32(A3Addresses.ManagerSalary + ContractOffset.TitleBonus, 40000);
+            m.PutUInt32(A3Addresses.ManagerSalary + ContractOffset.GoalBonus, 22222);
+            m.PutUInt16(A3Addresses.ManagerSalary + ContractOffset.SeasonGoal, 0);
+            m.PutUInt16(A3Addresses.ManagerSalary + ContractOffset.Years, 2);
+            using (var view = new ManagerView(Attached(), new A3Game(m)))
+            {
+                view.RefreshValues();
+                Assert.Equal(2500, TestHelpers.Get<NumericUpDown>(view, "pointBonus").Value);
+                Assert.Equal(6500, TestHelpers.Get<NumericUpDown>(view, "cupBonus").Value);
+                Assert.Equal(40000, TestHelpers.Get<NumericUpDown>(view, "titleBonus").Value);
+                Assert.Equal(22222, TestHelpers.Get<NumericUpDown>(view, "goalBonus").Value);
+                ComboBox goal = TestHelpers.Get<ComboBox>(view, "seasonGoal");
+                Assert.Equal("Meisterschaft", goal.Text);
+                NumericUpDown years = TestHelpers.Get<NumericUpDown>(view, "contractYears");
+                Assert.Equal(2, years.Value);
+                CheckBox exit = TestHelpers.Get<CheckBox>(view, "exitClause");
+                Assert.False(exit.Checked);
+
+                TestHelpers.Get<NumericUpDown>(view, "pointBonus").Value = 3333;
+                goal.SelectedIndex = 10;
+                years.Value = 5;
+                exit.Checked = true;
+                Click(view, "save");
+
+                Assert.Equal("Gespeichert", Status(view));
+                foreach (uint contract in new[] { A3Addresses.ManagerSalary, data })
+                {
+                    Assert.Equal(3333, (int)m.ReadUInt32(contract + ContractOffset.PointBonus));
+                    Assert.Equal(10, m.GetUInt16(contract + ContractOffset.SeasonGoal));
+                    Assert.Equal(5, m.GetUInt16(contract + ContractOffset.Years));
+                    Assert.Equal(1, m.Get(contract + ContractOffset.ExitClause));
+                }
+                Assert.Null(m.WrittenAt(data + ContractOffset.CupBonus)); // unchanged fields aren't written
+                Assert.Equal("Klassenerhalt", goal.Text);
+            }
+        });
+
+        [Fact]
+        public void ManagerView_Contract_KeepsValuesTheFieldsCantShow() => StaThread.Run(() =>
+        {
+            FakeGameMemory m = CareerWithMoney();
+            m.Map(A3Addresses.ManagerSalary, A3Addresses.ContractSize);
+            m.PutUInt16(A3Addresses.ManagerSalary + ContractOffset.SeasonGoal, 40);
+            m.PutUInt16(A3Addresses.ManagerSalary + ContractOffset.Years, 99);
+            using (var view = new ManagerView(Attached(), new A3Game(m)))
+            {
+                view.RefreshValues();
+                Assert.Equal(-1, TestHelpers.Get<ComboBox>(view, "seasonGoal").SelectedIndex);
+                Assert.Equal(20, TestHelpers.Get<NumericUpDown>(view, "contractYears").Value);
+
+                Click(view, "save");
+
+                Assert.Null(m.WrittenAt(A3Addresses.ManagerSalary + ContractOffset.SeasonGoal));
+                Assert.Null(m.WrittenAt(A3Addresses.ManagerSalary + ContractOffset.Years));
+            }
+        });
+
+        [Fact]
         public void ClubView_ImageAndAssociation_GoToRecordAndWorkingCopy() => StaThread.Run(() =>
         {
             FakeGameMemory m = CareerWithMoney();

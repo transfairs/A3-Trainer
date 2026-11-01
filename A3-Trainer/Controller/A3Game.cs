@@ -349,6 +349,13 @@ namespace A3_Trainer.Controller
                 ManagerFirstName = this.ReadString(A3Addresses.ManagerFirstName, 10),
                 ManagerLastName = this.ReadString(A3Addresses.ManagerLastName, 0x10),
                 ManagerSalary = (int)this.ReadUInt32(A3Addresses.ManagerSalary),
+                PointBonus = (int)this.ReadUInt32(A3Addresses.ManagerSalary + ContractOffset.PointBonus),
+                CupBonus = (int)this.ReadUInt32(A3Addresses.ManagerSalary + ContractOffset.CupBonus),
+                TitleBonus = (int)this.ReadUInt32(A3Addresses.ManagerSalary + ContractOffset.TitleBonus),
+                GoalBonus = (int)this.ReadUInt32(A3Addresses.ManagerSalary + ContractOffset.GoalBonus),
+                SeasonGoal = this.ReadUInt16(A3Addresses.ManagerSalary + ContractOffset.SeasonGoal),
+                ContractYears = this.ReadUInt16(A3Addresses.ManagerSalary + ContractOffset.Years),
+                ExitClause = this.ReadByte(A3Addresses.ManagerSalary + ContractOffset.ExitClause) != 0,
                 ManagerPrivateMoney = (int)this.ReadUInt32(A3Addresses.ManagerPrivateMoney),
                 // The loaded club's working copy is what the game uses; both hold the same otherwise.
                 Image = this.ReadByte(copy != 0 ? copy + A3Addresses.ClubCopyImage : club + A3Addresses.ClubImage),
@@ -369,8 +376,14 @@ namespace A3_Trainer.Controller
                 this.memory.Write(A3Addresses.SeasonStartMoney, BitConverter.GetBytes(edited.SeasonStartMoney));
             if (edited.ManagerFirstName != original.ManagerFirstName || edited.ManagerLastName != original.ManagerLastName)
                 this.RenameManager(original, edited);
-            if (edited.ManagerSalary != original.ManagerSalary)
-                this.memory.Write(A3Addresses.ManagerSalary, BitConverter.GetBytes(edited.ManagerSalary));
+            WriteContract(ContractOffset.Salary, original.ManagerSalary, edited.ManagerSalary, 4);
+            WriteContract(ContractOffset.PointBonus, original.PointBonus, edited.PointBonus, 4);
+            WriteContract(ContractOffset.CupBonus, original.CupBonus, edited.CupBonus, 4);
+            WriteContract(ContractOffset.TitleBonus, original.TitleBonus, edited.TitleBonus, 4);
+            WriteContract(ContractOffset.GoalBonus, original.GoalBonus, edited.GoalBonus, 4);
+            WriteContract(ContractOffset.SeasonGoal, original.SeasonGoal, edited.SeasonGoal, 2);
+            WriteContract(ContractOffset.Years, original.ContractYears, edited.ContractYears, 2);
+            WriteContract(ContractOffset.ExitClause, original.ExitClause ? 1 : 0, edited.ExitClause ? 1 : 0, 1);
             if (edited.ManagerPrivateMoney != original.ManagerPrivateMoney)
                 this.memory.Write(A3Addresses.ManagerPrivateMoney, BitConverter.GetBytes(edited.ManagerPrivateMoney));
             WriteByte(A3Addresses.ManagerMediaPopularity, original.MediaPopularity, edited.MediaPopularity);
@@ -410,6 +423,16 @@ namespace A3_Trainer.Controller
             {
                 if (now != was)
                     this.memory.Write(address, new[] { (byte)now });
+            }
+
+            // Contract fields go to the manager object and to the data it is written back to.
+            void WriteContract(int offset, int was, int now, int size)
+            {
+                if (now == was)
+                    return;
+                byte[] data = size == 4 ? BitConverter.GetBytes(now) : size == 2 ? BitConverter.GetBytes((ushort)now) : new[] { (byte)now };
+                this.memory.Write(A3Addresses.ManagerSalary + (uint)offset, data);
+                this.memory.Write(A3Addresses.ManagerData + A3Addresses.ManagerDataContract + (uint)offset, data);
             }
         }
 

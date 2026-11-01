@@ -44,6 +44,20 @@ namespace A3_Trainer.Model
         internal string ManagerLastName { get; set; } = "";
         /// <summary>Manager 1's fixed salary, DM per year.</summary>
         internal int ManagerSalary { get; set; }
+        /// <summary>Manager 1's bonus per point, DM.</summary>
+        internal int PointBonus { get; set; }
+        /// <summary>Manager 1's bonus per cup round, DM.</summary>
+        internal int CupBonus { get; set; }
+        /// <summary>Manager 1's bonus per title or promotion, DM.</summary>
+        internal int TitleBonus { get; set; }
+        /// <summary>Manager 1's bonus for reaching the season goal, DM.</summary>
+        internal int GoalBonus { get; set; }
+        /// <summary>Manager 1's season goal (Tables.SeasonGoals).</summary>
+        internal int SeasonGoal { get; set; }
+        /// <summary>Seasons left on manager 1's contract.</summary>
+        internal int ContractYears { get; set; }
+        /// <summary>Whether manager 1 may leave on an offer while the contract runs.</summary>
+        internal bool ExitClause { get; set; }
         /// <summary>Manager 1's private money, DM.</summary>
         internal int ManagerPrivateMoney { get; set; }
         /// <summary>Manager 1's popularity with the media, 0 to 100.</summary>

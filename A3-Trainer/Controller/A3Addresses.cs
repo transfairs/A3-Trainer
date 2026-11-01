@@ -87,7 +87,13 @@ namespace A3_Trainer.Controller
         internal const int TrainerSlots = 0x5DC;
         internal const uint ManagerClubCountry = 0x01B99606;  // word
         internal const uint ManagerClubNumber = 0x01B99608;   // word, number within the country
-        internal const uint ManagerSalary = 0x01B99638;       // dword, DM per year
+        internal const uint ManagerSalary = 0x01B99638;       // dword, DM per year; first field of the contract
+        // The contract (0x20 bytes from ManagerSalary, see ContractOffset). The manager object is the game's working
+        // copy of manager 1's CDatenMitspieler (FUN_006A426B), written back on every release (FUN_006A4930); the trainer
+        // writes both.
+        internal const uint ManagerData = 0x00A62578;         // CDatenMitspieler of manager 1, 0x2158 bytes per manager
+        internal const int ManagerDataContract = 0x17C;
+        internal const int ContractSize = 0x20;
         internal const uint ManagerPrivateMoney = 0x01B99680; // dword, DM
         internal const uint ManagerMediaPopularity = 0x01B99622;  // byte 0-100 (Beliebtheit bei den Medien)
         internal const uint ManagerPublicPopularity = 0x01B99623; // byte 0-100 (in der Öffentlichkeit)
@@ -106,6 +112,22 @@ namespace A3_Trainer.Controller
         internal const uint DayCounter = 0x00B5CBD4;          // word
         internal const uint CalendarBase = 0x00B5CBE0;        // word
         internal const uint Calendar = 0x00B1F874;            // (word year, word day of year) per day
+    }
+
+    /// <summary>
+    /// Offsets inside a manager's contract (manager object +0x50), in the order of the career score's
+    /// contract page (texts 3168-3176).
+    /// </summary>
+    internal static class ContractOffset
+    {
+        internal const int Salary = 0x00;        // dword, DM per year (Festgehalt)
+        internal const int PointBonus = 0x04;    // dword, DM per point
+        internal const int CupBonus = 0x08;      // dword, DM per cup round
+        internal const int TitleBonus = 0x0C;    // dword, DM per title or promotion
+        internal const int GoalBonus = 0x10;     // dword, DM when the season goal is reached (FUN_0062292A)
+        internal const int SeasonGoal = 0x14;    // word, Tables.SeasonGoals
+        internal const int Years = 0x16;         // word, seasons left; the season change counts it down (FUN_00624AD4)
+        internal const int ExitClause = 0x1C;    // byte, may leave on an offer while the contract runs (FUN_00442F85)
     }
 
     /// <summary>Offsets inside a CDatenSpieler record (0x354 bytes).</summary>

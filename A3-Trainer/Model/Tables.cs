@@ -70,6 +70,16 @@ namespace A3_Trainer.Model
         /// <summary>Leagues a contract is valid in, the contract flags' bits 0-1 (texts 4086-4089).</summary>
         internal static readonly string[] ContractValidity = { "alle Ligen", "nur erste Liga", "mind. 2. Liga", "mind. 3. Liga" };
 
+        /// <summary>
+        /// A manager's season goals (texts 1069-1080). The bonus is paid when the club reaches the goal or
+        /// a better one (FUN_0062292A), so a lower number is the harder goal.
+        /// </summary>
+        internal static readonly string[] SeasonGoals =
+        {
+            "Meisterschaft", "Erste Drei", "Aufstieg", "Intern. Wettbewerb", "oben mitspielen", "einstelliger Platz",
+            "gute Show", "guter Fußball", "Mittelfeldplatz", "ehrliche Arbeit", "Klassenerhalt", "zu Ende bringen",
+        };
+
         /// <summary>Highest form value the game sets (FUN_006FF0D0).</summary>
         internal const int MaxFormBase = 20;
 

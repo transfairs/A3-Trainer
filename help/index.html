@@ -94,7 +94,7 @@
 
           <div class="toc-grid">
             <a class="toc-card" href="#spieler" data-jump="spieler"><h3>Spieler</h3><p>Kader, nächsten Gegner und jeden anderen Verein bearbeiten: Daten, Positionen, Fähigkeiten, Eigenschaften, Vertrag, Privatleben.</p></a>
-            <a class="toc-card" href="#verein" data-jump="verein"><h3>Verein &amp; Manager</h3><p>Vereinsvermögen und privates Vermögen des Managers.</p></a>
+            <a class="toc-card" href="#verein" data-jump="verein"><h3>Verein &amp; Manager</h3><p>Vereinsdaten, Vermögen, Ansehen und Vertrag des Managers.</p></a>
             <a class="toc-card" href="#faq" data-jump="faq"><h3>Fehlerbehebung</h3><p>Häufige Fragen, bekannte Grenzen und die Logdatei.</p></a>
           </div>
         </div>
@@ -256,10 +256,19 @@
             <legend>Manager (<span class="menu-path">Trainer → Manager (Spieler 1)</span>)</legend>
             <dl class="field-list">
               <dt>Vorname, Nachname</dt><dd>Höchstens 9 bzw. 15 Zeichen; ein leeres Feld behält den alten Namen. Den Eintrag des Managers in der Trainerliste des Spiels benennt der Trainer mit um, wenn genau ein Eintrag den alten Namen trägt.</dd>
-              <dt>Festgehalt (DM pro Jahr)</dt><dd>Das Gehalt des Managers. Das Spiel ändert es selbst nur bei Vertragsverhandlungen.</dd>
               <dt>Privates Vermögen (DM)</dt><dd>Das Privatvermögen des Managers.</dd>
               <dt>Vorstandsvertrauen (%)</dt><dd>Der Wert, den das Spiel unter „Persönliche Erfolge“ zeigt. Es rechnet eigene Zu- und Abschläge hinzu; der Trainer setzt den Grundwert so, dass die Summe stimmt. Daneben steht das Urteil des Vorstands wie im Spiel, vom „König“ bei 100 % bis „ein Wunder, noch da zu sein“ unter 55 %. Mit eigenen Vereinsanteilen zeigt das Spiel stets 100 %.</dd>
               <dt>Beliebtheit</dt><dd>Bei den Medien und in der Öffentlichkeit 0 bis 100, mit der Stufe des Spiels daneben (Gottstatus über 95 bis Feindbild unter 20). Bei den Fans stellen Sie den Grundwert ein; das Spiel gewichtet ihn mit dem Image des Managers (80 bis 140 %). Die Stufe daneben ist die, die das Spiel anzeigt. Die Beliebtheit bei der Mannschaft ergibt sich aus den Spielern und ist hier nicht einstellbar.</dd>
+            </dl>
+          </fieldset>
+          <fieldset class="groupbox">
+            <legend>Vertrag des Managers</legend>
+            <dl class="field-list">
+              <dt>Festgehalt (DM pro Jahr)</dt><dd>Das Gehalt des Managers. Das Spiel ändert es selbst nur bei Vertragsverhandlungen.</dd>
+              <dt>Punktprämie, je Pokalrunde, je Titel / Aufstieg</dt><dd>Die Prämien in DM, wie sie die Karriere-Übersicht des Spiels zeigt.</dd>
+              <dt>Saisonziel, Bonus bei Erreichen</dt><dd>Von „Meisterschaft“ bis „zu Ende bringen“. Den Bonus zahlt das Spiel am Saisonende aufs Privatvermögen, wenn der Verein das Ziel oder ein besseres erreicht.</dd>
+              <dt>Laufzeit (Jahre)</dt><dd>Restliche Spielzeiten. Das Spiel zählt sie zum Saisonwechsel herunter; bei weniger als zwei Jahren verhandelt der Vorstand neu.</dd>
+              <dt>Ausstieg bei Angebot möglich</dt><dd>Ohne diesen Haken kann der Manager ein Angebot eines anderen Vereins nicht annehmen, solange der Vertrag läuft.</dd>
             </dl>
           </fieldset>
         </div>

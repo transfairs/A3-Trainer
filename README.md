@@ -56,7 +56,9 @@ them back every second for the club it was switched on for.
 
 **Club** (player 1): name, short name and city, wealth at the start of the season (determines the bank balance), club image,
 trouble with the association (standing from "ausgezeichnet" to "verzockt").
-**Manager** (player 1): name, salary, private wealth, board trust, popularity with the media, the public and the fans.
+**Manager** (player 1): name, private wealth, board trust, popularity with the media, the public and the fans;
+contract: salary, bonuses per point, cup round and title/promotion, season goal and its bonus, years left and the
+exit clause on offers (written to the manager object and the data the game writes it back to).
 
 **Cheat Engine table** `A3-Trainer.ct` (included in every release): manager, wealth at the start
 of the season and base year as fixed entries. The script „Kader (eigener Verein und nächster
