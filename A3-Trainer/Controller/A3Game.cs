@@ -144,12 +144,6 @@ namespace A3_Trainer.Controller
                 player.FirstName = this.ReadName(BitConverter.ToUInt16(all, offset + RecordOffset.FirstName));
                 player.LastName = this.ReadName(BitConverter.ToUInt16(all, offset + RecordOffset.LastName));
                 player.ArtistName = this.ReadName(BitConverter.ToUInt16(all, offset + RecordOffset.ArtistName));
-                int nameCountry = all[offset + RecordOffset.NameCountry];
-                if ((player.Relationship & Tables.RelationshipMask) != 0)
-                    player.PartnerName = this.ReadFirstName(nameCountry, all[offset + RecordOffset.PartnerName]);
-                int children = Math.Min(Math.Max((int)BitConverter.ToInt16(all, offset + RecordOffset.ChildCount), 0), A3Addresses.MaxChildren);
-                player.ChildNames = Enumerable.Range(0, children)
-                    .Select(i => this.ReadFirstName(nameCountry, all[offset + RecordOffset.ChildNames + i])).ToArray();
                 players.Add(player);
             }
 
@@ -189,13 +183,15 @@ namespace A3_Trainer.Controller
             return pointer == 0 ? "" : this.ReadString(pointer, 32);
         }
 
-        /// <summary>A first name from the list the game picks partners and children from, or "" if it can't be read.</summary>
-        internal string ReadFirstName(int nameCountry, int number)
+        /// <summary>
+        /// The 100 first names the game picks partners and children from for a name country (FUN_0067503A);
+        /// empty strings where a name can't be read.
+        /// </summary>
+        internal string[] ReadFirstNameList(int nameCountry)
         {
-            if (number < 0 || number >= A3Addresses.FirstNameListSize)
-                return "";
-            byte[] index = this.memory.Read(A3Addresses.FirstNameLists + (uint)((nameCountry * A3Addresses.FirstNameListSize + number) * 2), 2);
-            return index == null ? "" : this.ReadName(BitConverter.ToInt16(index, 0));
+            byte[] indices = this.memory.Read(A3Addresses.FirstNameLists + (uint)(nameCountry * A3Addresses.FirstNameListSize * 2), A3Addresses.FirstNameListSize * 2);
+            return Enumerable.Range(0, A3Addresses.FirstNameListSize)
+                .Select(i => indices == null ? "" : this.ReadName(BitConverter.ToInt16(indices, i * 2))).ToArray();
         }
 
         /// <summary>The country names by country number (the nationality values), up to the first unreadable one.</summary>
@@ -249,7 +245,10 @@ namespace A3_Trainer.Controller
         /// The name table index of <paramref name="name"/>: the first entry with exactly that text, or a
         /// new one appended to the name pool as the game does when it imports names (FUN_0068F8A0).
         /// </summary>
-        internal int NameIndex(string name)
+        internal int NameIndex(string name) => this.NameIndex(name, add: true);
+
+        /// <summary>The first name table index with exactly this text; -1 if there is none and <paramref name="add"/> is false.</summary>
+        private int NameIndex(string name, bool add)
         {
             uint data = A3Addresses.NamePool + A3Addresses.NamePoolData;
             uint end = A3Addresses.NamePool + A3Addresses.NamePoolCount;
@@ -265,6 +264,8 @@ namespace A3_Trainer.Controller
             for (int i = 1; i < count && i < names.Length; i++)
                 if (names[i] == name)
                     return i;
+            if (!add)
+                return -1;
 
             byte[] bytes = Text.GetBytes(name + "\0");
             if (write + bytes.Length > end || count >= A3Addresses.NameTableSlots)
@@ -317,6 +318,8 @@ namespace A3_Trainer.Controller
         {
             if (edited.SeasonStartMoney != original.SeasonStartMoney)
                 this.memory.Write(A3Addresses.SeasonStartMoney, BitConverter.GetBytes(edited.SeasonStartMoney));
+            if (edited.ManagerFirstName != original.ManagerFirstName || edited.ManagerLastName != original.ManagerLastName)
+                this.RenameManager(original, edited);
             if (edited.ManagerSalary != original.ManagerSalary)
                 this.memory.Write(A3Addresses.ManagerSalary, BitConverter.GetBytes(edited.ManagerSalary));
             if (edited.ManagerPrivateMoney != original.ManagerPrivateMoney)
@@ -328,7 +331,8 @@ namespace A3_Trainer.Controller
                 this.memory.Write(A3Addresses.ManagerBoardTrust, BitConverter.GetBytes((short)edited.BoardTrustBase));
 
             // The club's values live in its record and, while the game has it loaded, in the working copy.
-            if (edited.Image == original.Image && edited.Trouble == original.Trouble)
+            if (edited.Image == original.Image && edited.Trouble == original.Trouble &&
+                edited.Name == original.Name && edited.ShortName == original.ShortName && edited.City == original.City)
                 return;
             uint? club = this.ClubAddress(edited.Key);
             uint copy = this.ClubCopy(edited.Key);
@@ -336,11 +340,21 @@ namespace A3_Trainer.Controller
             {
                 WriteByte(club.Value + A3Addresses.ClubImage, original.Image, edited.Image);
                 WriteByte(club.Value + A3Addresses.ClubTrouble, original.Trouble, edited.Trouble);
+                WriteText(club.Value + A3Addresses.ClubName, original.Name, edited.Name, A3Addresses.ClubNameSize);
+                WriteText(club.Value + A3Addresses.ClubShortName, original.ShortName, edited.ShortName, A3Addresses.ClubShortNameSize);
+                WriteText(club.Value + A3Addresses.ClubCity, original.City, edited.City, A3Addresses.ClubNameSize);
             }
             if (copy != 0)
             {
                 WriteByte(copy + A3Addresses.ClubCopyImage, original.Image, edited.Image);
                 WriteByte(copy + A3Addresses.ClubCopyTrouble, original.Trouble, edited.Trouble);
+                WriteText(copy + A3Addresses.ClubCopyName, original.Name, edited.Name, A3Addresses.ClubNameSize);
+            }
+
+            void WriteText(uint address, string was, string now, int size)
+            {
+                if (now != was)
+                    this.memory.Write(address, Field(now, size));
             }
 
             void WriteByte(uint address, int was, int now)
@@ -368,6 +382,36 @@ namespace A3_Trainer.Controller
             level = Math.Min(Math.Max(level, 0), 15);
             byte[] factor = this.memory.Read(A3Addresses.ManagerFanFactors + (uint)(level * A3Addresses.ManagerFanFactorStride), 2);
             return (factor == null ? 0 : BitConverter.ToInt16(factor, 0)) * 4 + 80;
+        }
+
+        // The manager's name is text in the manager object. When the career started the game also entered it
+        // in the name table for the trainer list; the one trainer entry with the old names follows the change.
+        private void RenameManager(ClubInfo original, ClubInfo edited)
+        {
+            int oldFirst = this.NameIndex(original.ManagerFirstName, add: false);
+            int oldLast = this.NameIndex(original.ManagerLastName, add: false);
+            byte[] trainers = this.memory.Read(A3Addresses.TrainerList, A3Addresses.TrainerSlots * A3Addresses.TrainerSize);
+            int[] matches = trainers == null || oldFirst <= 0 || oldLast <= 0 ? new int[0] : Enumerable.Range(1, A3Addresses.TrainerSlots - 1)
+                .Where(t => BitConverter.ToInt16(trainers, t * A3Addresses.TrainerSize) == oldFirst &&
+                            BitConverter.ToInt16(trainers, t * A3Addresses.TrainerSize + 2) == oldLast).ToArray();
+
+            this.memory.Write(A3Addresses.ManagerFirstName, Field(edited.ManagerFirstName, A3Addresses.ManagerFirstNameSize));
+            this.memory.Write(A3Addresses.ManagerLastName, Field(edited.ManagerLastName, A3Addresses.ManagerLastNameSize));
+            if (matches.Length == 1)
+            {
+                uint entry = A3Addresses.TrainerList + (uint)(matches[0] * A3Addresses.TrainerSize);
+                this.memory.Write(entry, BitConverter.GetBytes((ushort)this.NameIndex(edited.ManagerFirstName)));
+                this.memory.Write(entry + 2, BitConverter.GetBytes((ushort)this.NameIndex(edited.ManagerLastName)));
+            }
+        }
+
+        // A text field of fixed size: the text, cut to leave room for the terminating zero, then zeros.
+        private static byte[] Field(string text, int size)
+        {
+            byte[] field = new byte[size];
+            byte[] bytes = Text.GetBytes(text);
+            Array.Copy(bytes, field, Math.Min(bytes.Length, size - 1));
+            return field;
         }
 
         /// <summary>The working copy the game holds of a loaded club (own club, next opponent), or 0 if it has none.</summary>

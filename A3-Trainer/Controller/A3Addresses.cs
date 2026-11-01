@@ -55,9 +55,11 @@ namespace A3_Trainer.Controller
         internal const int ClubSize = 0x990;
         internal const int ClubCount = 492;
         internal const uint ClubIndexTable = 0x00AE5EF0;  // word per country: first club number
-        internal const int ClubName = 0x20;
-        internal const int ClubShortName = 0x34;
-        internal const int ClubCity = 0x38;
+        internal const int ClubName = 0x20;        // char[20]
+        internal const int ClubShortName = 0x34;   // char[4]
+        internal const int ClubCity = 0x38;        // char[20]
+        internal const int ClubNameSize = 20;
+        internal const int ClubShortNameSize = 4;
         internal const int ClubTrouble = 0x12C;    // bits 0-4: trouble with the association (Tables.AssociationLevel), higher bits game state
         internal const int ClubImage = 0x138;      // byte, 10-50, see Tables.ClubImages
 
@@ -68,12 +70,21 @@ namespace A3_Trainer.Controller
         internal const int ClubCacheSlots = 6;
         internal const int ClubCacheEntrySize = 12;
         internal const int ClubCacheObject = 8;
+        internal const int ClubCopyName = 0x02;    // copied from the record when the club is loaded (FUN_0063B75A)
         internal const int ClubCopyTrouble = 0x102;
         internal const int ClubCopyImage = 0x10F;
 
         // --- Human manager 1 and the finances of his club.
-        internal const uint ManagerFirstName = 0x01B995E8;
-        internal const uint ManagerLastName = 0x01B995F2;
+        internal const uint ManagerFirstName = 0x01B995E8;   // char[10]
+        internal const uint ManagerLastName = 0x01B995F2;    // char[16]
+        internal const int ManagerFirstNameSize = 10;
+        internal const int ManagerLastNameSize = 16;
+
+        // --- Trainer list (FUN_006317C6): 0x54 bytes per trainer, numbers 1 to 0x5DB; first and last name
+        // as name table indices (words at +0 and +2). Number 0 is "Der Teamchef".
+        internal const uint TrainerList = 0x00BE3940;
+        internal const int TrainerSize = 0x54;
+        internal const int TrainerSlots = 0x5DC;
         internal const uint ManagerClubCountry = 0x01B99606;  // word
         internal const uint ManagerClubNumber = 0x01B99608;   // word, number within the country
         internal const uint ManagerSalary = 0x01B99638;       // dword, DM per year
@@ -146,6 +157,7 @@ namespace A3_Trainer.Controller
         internal const int NationalTeam = 0x26F;  // bit 1: retired from the national team (StatusFlag.NationalTeamRetired)
         internal const int FormBase = 0x353;      // signed byte 0..20 (start 10), half of the shown form (FUN_006FF037)
         // Private life (the player info's "Privat" page, FUN_0055F1D8); record only.
+        internal const int ChildBirthDates = 0x174; // 4 bytes per child like the birth date (day, month, word year)
         internal const int ChildCount = 0x1F6;    // word, 0-5
         internal const int Relationship = 0x27E;  // bits 0-1 Tables.Relationships, bits 2-4 Tables.RelationshipStates, higher bits game state
         internal const int PartnerName = 0x283;   // byte, index into the first-name list of NameCountry

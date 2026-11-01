@@ -12,8 +12,9 @@ namespace A3_Trainer.View
     {
         private readonly A3Game game;
 
-        private readonly TextBox clubName = new TextBox { ReadOnly = true };
-        private readonly TextBox clubCity = new TextBox { ReadOnly = true };
+        private readonly TextBox clubName = new TextBox { MaxLength = A3Addresses.ClubNameSize - 1 };
+        private readonly TextBox clubShortName = new TextBox { MaxLength = A3Addresses.ClubShortNameSize - 1 };
+        private readonly TextBox clubCity = new TextBox { MaxLength = A3Addresses.ClubNameSize - 1 };
         private readonly NumericUpDown seasonStartMoney = Money();
         private readonly NumericUpDown image = new NumericUpDown { Minimum = 0, Maximum = 255 };
         private readonly Label imageLevel = new Label();
@@ -39,7 +40,7 @@ namespace A3_Trainer.View
 
         private void BuildLayout()
         {
-            var club = new GroupBox { Text = "Verein", Bounds = new Rectangle(8, 8, 614, 196) };
+            var club = new GroupBox { Text = "Verein", Bounds = new Rectangle(8, 8, 614, 228) };
             int y = 22;
             void ClubRow(string caption, Control input)
             {
@@ -57,17 +58,18 @@ namespace A3_Trainer.View
                 ClubRow(caption, input);
             }
             ClubRow("Name", this.clubName);
+            ClubRow("Kurzname", this.clubShortName);
             ClubRow("Stadt", this.clubCity);
             ClubRow("Vermögen Saisonbeginn (DM)", this.seasonStartMoney);
             Rated("Vereinsimage (10 bis 50)", this.image, this.imageLevel, Tables.ClubImage);
             Rated("Ärger mit dem Verband (0 bis 31)", this.trouble, this.troubleLevel, Tables.Association);
             this.Controls.Add(club);
 
-            this.save.SetBounds(8, 212, 110, 25);
+            this.save.SetBounds(8, 244, 110, 25);
             this.save.Click += (s, e) => this.Save();
-            this.reload.SetBounds(124, 212, 110, 25);
+            this.reload.SetBounds(124, 244, 110, 25);
             this.reload.Click += (s, e) => this.RefreshValues();
-            this.status.SetBounds(240, 216, 380, 20);
+            this.status.SetBounds(240, 248, 380, 20);
             this.Controls.AddRange(new Control[] { this.save, this.reload, this.status });
         }
 
@@ -85,6 +87,7 @@ namespace A3_Trainer.View
             }
 
             this.clubName.Text = this.shown.Name;
+            this.clubShortName.Text = this.shown.ShortName;
             this.clubCity.Text = this.shown.City;
             this.seasonStartMoney.Value = this.shown.SeasonStartMoney;
             this.image.Value = this.shown.Image;
@@ -101,6 +104,10 @@ namespace A3_Trainer.View
 
             ClubInfo edited = this.shown.Clone();
             edited.SeasonStartMoney = (int)this.seasonStartMoney.Value;
+            // An emptied name stays as it was.
+            edited.Name = Filled(this.clubName.Text, this.shown.Name);
+            edited.ShortName = Filled(this.clubShortName.Text, this.shown.ShortName);
+            edited.City = Filled(this.clubCity.Text, this.shown.City);
             edited.Image = (int)this.image.Value;
             edited.Trouble = edited.Trouble & ~Tables.AssociationTroubleMask | (int)this.trouble.Value;
             try
@@ -116,6 +123,8 @@ namespace A3_Trainer.View
                 this.status.Text = "Fehler beim Speichern";
             }
         }
+
+        private static string Filled(string text, string old) => text.Trim().Length > 0 ? text.Trim() : old;
 
         /// <summary>A money input: whole DM, thousands separators, steps of 100,000.</summary>
         internal static NumericUpDown Money() => new NumericUpDown

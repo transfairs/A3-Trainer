@@ -69,7 +69,8 @@ namespace A3_Trainer.Tests
             using (var view = new ManagerView(Attached(), new A3Game(m)))
             {
                 view.RefreshValues();
-                Assert.Equal("Test Trainer", TestHelpers.Get<TextBox>(view, "managerName").Text);
+                Assert.Equal("Test", TestHelpers.Get<TextBox>(view, "firstName").Text);
+                Assert.Equal("Trainer", TestHelpers.Get<TextBox>(view, "lastName").Text);
                 NumericUpDown salary = TestHelpers.Get<NumericUpDown>(view, "managerSalary");
                 Assert.Equal(375000, salary.Value);
                 NumericUpDown money = TestHelpers.Get<NumericUpDown>(view, "privateMoney");
@@ -221,6 +222,35 @@ namespace A3_Trainer.Tests
                     trust.Value = percent;
                     Assert.Equal(text, verdict.Text);
                 }
+            }
+        });
+
+        [Fact]
+        public void Views_EditNames_AnEmptiedNameStays() => StaThread.Run(() =>
+        {
+            FakeGameMemory m = A3GameTests.WithNamePool(CareerWithMoney());
+            uint club = A3Addresses.ClubArray + (uint)A3Addresses.ClubSize;
+            using (var view = new ClubView(Attached(), new A3Game(m)))
+            {
+                view.RefreshValues();
+                Assert.Equal(A3Addresses.ClubShortNameSize - 1, TestHelpers.Get<TextBox>(view, "clubShortName").MaxLength);
+                TestHelpers.Get<TextBox>(view, "clubName").Text = " Bayern Sternstadt ";
+                TestHelpers.Get<TextBox>(view, "clubCity").Text = "";
+                Click(view, "save");
+                Assert.Equal("Gespeichert", Status(view));
+                Assert.Equal("Bayern Sternstadt", TestHelpers.Get<TextBox>(view, "clubName").Text);
+                Assert.Equal("Muenchen", TestHelpers.Get<TextBox>(view, "clubCity").Text);
+                Assert.Null(m.WrittenAt(club + A3Addresses.ClubCity));
+            }
+            using (var view = new ManagerView(Attached(), new A3Game(m)))
+            {
+                view.RefreshValues();
+                TestHelpers.Get<TextBox>(view, "firstName").Text = "Jupp";
+                TestHelpers.Get<TextBox>(view, "lastName").Text = " ";
+                Click(view, "save");
+                Assert.Equal("Gespeichert", Status(view));
+                Assert.Equal("Jupp", TestHelpers.Get<TextBox>(view, "firstName").Text);
+                Assert.Equal("Trainer", TestHelpers.Get<TextBox>(view, "lastName").Text);
             }
         });
 

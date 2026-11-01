@@ -321,7 +321,7 @@ namespace A3_Trainer.Tests
             uint r = Record(Striker);
             m.Map(A3Addresses.FirstNameLists, 3 * A3Addresses.FirstNameListSize * 2);
             uint list = A3Addresses.FirstNameLists + 2 * A3Addresses.FirstNameListSize * 2; // name country 2
-            string[] names = { "Brigitte", "Tatjana", "Jürgen" };
+            string[] names = { "Brigitte", "Tatjana", "Jürgen", "Sabine" };
             for (int i = 0; i < names.Length; i++)
             {
                 A3GameTests.PutName(m, 600 + i, names[i], 0x02000200 + (uint)(i * 0x20));
@@ -329,56 +329,93 @@ namespace A3_Trainer.Tests
             }
             m.Put(r + RecordOffset.NameCountry, 2);
             m.Put(r + RecordOffset.PartnerName, 7);
-            m.Put(r + RecordOffset.ChildNames, 8, 9);
+            m.Put(r + RecordOffset.ChildNames, 8, 9, 0, 0, 0);
+            m.Put(r + RecordOffset.ChildBirthDates, 3, 5, 0xCB, 0x07, 20, 11, 0xCD, 0x07);   // 3.5.1995, 20.11.1997
+            m.Put(r + RecordOffset.ChildBirthDates + 8, new byte[12]);
             m.PutUInt16(r + RecordOffset.ChildCount, 2);
             m.Put(r + RecordOffset.Relationship, 0x83);   // verheiratet, zusammen, a game state bit
             m.Put(r + RecordOffset.Hobby, 19);
             using (PlayerView view = View(m))
             {
                 Select(view, Striker);
+                ComboBox[] children = Field<ComboBox[]>(view, "childNames");
+                NumericUpDown[] days = Field<NumericUpDown[]>(view, "childDays");
+                NumericUpDown[] years = Field<NumericUpDown[]>(view, "childYears");
 
                 Assert.Equal("verheiratet", Field<ComboBox>(view, "relationship").Text);
                 Assert.Equal("zusammen", Field<ComboBox>(view, "relationshipState").Text);
-                Assert.Equal("Brigitte", Field<TextBox>(view, "partnerValue").Text);
-                Assert.Equal("Tatjana, Jürgen", Field<TextBox>(view, "childrenValue").Text);
+                Assert.Equal("Brigitte", Field<ComboBox>(view, "partner").Text);
                 Assert.Equal("Gut essen gehen", Field<ComboBox>(view, "hobby").Text);
+                Assert.Equal(2, Field<NumericUpDown>(view, "childCount").Value);
+                Assert.Equal(new[] { "Tatjana", "Jürgen" }, children.Take(2).Select(c => c.Text));
+                Assert.Equal(new decimal[] { 3, 20 }, days.Take(2).Select(d => d.Value));
+                Assert.Equal(1997, years[1].Value);
+                Assert.Equal(new[] { true, true, false, false, false }, children.Select(c => c.Enabled));
 
                 Field<ComboBox>(view, "relationship").SelectedIndex = 1;      // Freundin
                 Field<ComboBox>(view, "relationshipState").SelectedIndex = 1; // getrennt
                 Field<ComboBox>(view, "hobby").SelectedIndex = 2;             // Angeln
+                Field<ComboBox>(view, "partner").SelectedIndex = 10;          // Sabine
+                Field<NumericUpDown>(view, "childCount").Value = 3;           // a new child: free name, today
+                Assert.True(children[2].Enabled);
+                Assert.Equal(0, children[2].SelectedIndex);
+                Assert.Equal(1999, years[2].Value);
                 TestHelpers.Click(Field<Button>(view, "save"));
 
                 Assert.Equal("Gespeichert", Status(view));
                 Assert.Equal(new byte[] { 0x85 }, m.WrittenAt(r + RecordOffset.Relationship));
                 Assert.Equal(new byte[] { 2 }, m.WrittenAt(r + RecordOffset.Hobby));
+                Assert.Equal(new byte[] { 10 }, m.WrittenAt(r + RecordOffset.PartnerName));
+                Assert.Equal(new byte[] { 3, 0 }, m.WrittenAt(r + RecordOffset.ChildCount));
+                Assert.Equal(new byte[] { 8, 9, 0, 0, 0 }, m.WrittenAt(r + RecordOffset.ChildNames));
+                Assert.Equal(new byte[] { 3, 5, 0xCB, 0x07, 20, 11, 0xCD, 0x07, 4, 7, 0xCF, 0x07 },
+                    m.WrittenAt(r + RecordOffset.ChildBirthDates).Take(12));
             }
         });
 
         [Fact]
-        public void PrivateLife_WithoutPartnerOrChildren_AndAnUnnamedState() => StaThread.Run(() =>
+        public void PrivateLife_ChecksChangedChildren_AndKeepsAnUnnamedState() => StaThread.Run(() =>
         {
             FakeGameMemory m = Squad();
-            m.Put(Record(Defender) + RecordOffset.Relationship, 0x1D);   // Freundin, state 7
-            m.Put(Record(Defender) + RecordOffset.PartnerName, 150);     // beyond the 100 names of a list
-            m.PutUInt16(Record(Defender) + RecordOffset.ChildCount, 9);   // beyond the limit, names unreadable
+            uint r = Record(Defender);
+            m.Put(r + RecordOffset.Relationship, 0x1D);   // Freundin, state 7
+            m.Put(r + RecordOffset.PartnerName, 150);     // beyond the 100 names of a list
+            m.Put(r + RecordOffset.ChildNames, 1, 2, 0, 0, 0);
+            m.Put(r + RecordOffset.ChildBirthDates, new byte[20]);   // no dates: left alone while unchanged
+            m.PutUInt16(r + RecordOffset.ChildCount, 2);
             using (PlayerView view = View(m))
             {
                 Select(view, Defender);
-                Assert.Equal("", Field<TextBox>(view, "partnerValue").Text);
-                Assert.Equal(", , , , ", Field<TextBox>(view, "childrenValue").Text);
+                Assert.Equal(-1, Field<ComboBox>(view, "partner").SelectedIndex);
                 Assert.Equal(-1, Field<ComboBox>(view, "relationshipState").SelectedIndex);
 
                 Field<ComboBox>(view, "relationship").SelectedIndex = 2;   // verlobt
                 TestHelpers.Click(Field<Button>(view, "save"));
-                Assert.Equal(new byte[] { 0x1E }, m.WrittenAt(Record(Defender) + RecordOffset.Relationship));
-                Assert.Null(m.WrittenAt(Record(Defender) + RecordOffset.Hobby));
-            }
+                Assert.Equal(new byte[] { 0x1E }, m.WrittenAt(r + RecordOffset.Relationship));
+                Assert.Null(m.WrittenAt(r + RecordOffset.PartnerName));
+                Assert.Null(m.WrittenAt(r + RecordOffset.ChildCount));
 
-            m = Squad();
-            using (PlayerView view = View(m))
-            {
-                Select(view, Midfielder);
-                Assert.Equal("keine", Field<TextBox>(view, "childrenValue").Text);
+                Select(view, Defender);
+                ComboBox[] children = Field<ComboBox[]>(view, "childNames");
+                Field<NumericUpDown[]>(view, "childDays")[1].Value = 3;   // 3.0.0
+                TestHelpers.Click(Field<Button>(view, "save"));
+                Assert.Equal("Ungültiges Geburtsdatum eines Kindes", Status(view));
+
+                foreach (int i in new[] { 0, 1 })
+                {
+                    Field<NumericUpDown[]>(view, "childDays")[i].Value = 1;
+                    Field<NumericUpDown[]>(view, "childMonths")[i].Value = 1;
+                    Field<NumericUpDown[]>(view, "childYears")[i].Value = 1998;
+                }
+                children[1].SelectedIndex = 1;
+                TestHelpers.Click(Field<Button>(view, "save"));
+                Assert.Equal("Kinder brauchen verschiedene Namen", Status(view));
+                Assert.Null(m.WrittenAt(r + RecordOffset.ChildCount));
+
+                Field<NumericUpDown>(view, "childCount").Value = 1;
+                Assert.False(children[1].Enabled);
+                TestHelpers.Click(Field<Button>(view, "save"));
+                Assert.Equal(new byte[] { 1, 0 }, m.WrittenAt(r + RecordOffset.ChildCount));
             }
         });
 

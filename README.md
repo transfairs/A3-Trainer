@@ -48,11 +48,12 @@ freshness, form, heal injury, salary, appearance bonus, goal bonus, release clau
 leagues the contract is valid in, club and player extension options, guaranteed place in the
 starting line-up, relationship and hobby, crowd standing (favourite/hate figure: lasting reputation and current
 flag), first and last name and artist name (a new name is added to the game's name table the way the
-game itself adds one, so it is kept in the save game). Partner and children, age and motivation are shown read-only.
+game itself adds one, so it is kept in the save game), partner, children with names and birthdays.
+Age and motivation are shown read-only.
 
-**Club** (player 1): wealth at the start of the season (determines the bank balance), club image,
+**Club** (player 1): name, short name and city, wealth at the start of the season (determines the bank balance), club image,
 trouble with the association (standing from "ausgezeichnet" to "verzockt").
-**Manager** (player 1): salary, private wealth, board trust, popularity with the media, the public and the fans.
+**Manager** (player 1): name, salary, private wealth, board trust, popularity with the media, the public and the fans.
 
 **Cheat Engine table** `A3-Trainer.ct` (included in every release): manager, wealth at the start
 of the season and base year as fixed entries. The script „Kader (eigener Verein und nächster

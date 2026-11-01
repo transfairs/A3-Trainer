@@ -50,10 +50,16 @@ namespace A3_Trainer.Model
 
         /// <summary>Relationship byte: bits 0-1 Tables.Relationships, bits 2-4 Tables.RelationshipStates, higher bits game state.</summary>
         internal int Relationship { get; set; }
-        /// <summary>Partner's first name, "" if the player has none.</summary>
-        internal string PartnerName { get; set; } = "";
-        /// <summary>The children's first names (shown only: the game keeps their birth dates too).</summary>
-        internal string[] ChildNames { get; set; } = new string[0];
+        /// <summary>The first-name list partner and children are named from (Controller.A3Game.ReadFirstNameList).</summary>
+        internal int NameCountry { get; set; }
+        /// <summary>Partner's first name: number in that list.</summary>
+        internal int Partner { get; set; }
+        /// <summary>Number of children, 0 to 5.</summary>
+        internal int ChildCount { get; set; }
+        /// <summary>The children's first names (numbers in the list), all five slots.</summary>
+        internal int[] ChildNames { get; set; } = new int[5];
+        /// <summary>The children's birth dates, all five slots.</summary>
+        internal GameDate[] ChildBirthDates { get; set; } = new GameDate[5];
         /// <summary>Hobby (Tables.Hobbies), 0 = none.</summary>
         internal int Hobby { get; set; }
 
@@ -132,6 +138,12 @@ namespace A3_Trainer.Model
         internal bool IsInjured => this.HasWorkingCopy ? this.InjuryDays > 0 : this.RecordInjured;
 
         /// <summary>A copy to edit without changing this one.</summary>
-        internal Player Clone() => (Player)this.MemberwiseClone();
+        internal Player Clone()
+        {
+            var copy = (Player)this.MemberwiseClone();
+            copy.ChildNames = (int[])this.ChildNames.Clone();
+            copy.ChildBirthDates = (GameDate[])this.ChildBirthDates.Clone();
+            return copy;
+        }
     }
 }

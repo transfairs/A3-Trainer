@@ -12,7 +12,8 @@ namespace A3_Trainer.View
     {
         private readonly A3Game game;
 
-        private readonly TextBox managerName = new TextBox { ReadOnly = true };
+        private readonly TextBox firstName = new TextBox { MaxLength = A3Addresses.ManagerFirstNameSize - 1 };
+        private readonly TextBox lastName = new TextBox { MaxLength = A3Addresses.ManagerLastNameSize - 1 };
         private readonly NumericUpDown managerSalary = ClubView.Money();
         private readonly NumericUpDown privateMoney = ClubView.Money();
         private readonly NumericUpDown media = Percent();
@@ -43,7 +44,7 @@ namespace A3_Trainer.View
 
         private void BuildLayout()
         {
-            var manager = new GroupBox { Text = "Manager (Spieler 1)", Bounds = new Rectangle(8, 8, 614, 222) };
+            var manager = new GroupBox { Text = "Manager (Spieler 1)", Bounds = new Rectangle(8, 8, 614, 250) };
             int y = 22;
             void ManagerRow(string caption, Control input, Label note = null)
             {
@@ -57,7 +58,8 @@ namespace A3_Trainer.View
                 }
                 y += 28;
             }
-            ManagerRow("Name", this.managerName);
+            ManagerRow("Vorname", this.firstName);
+            ManagerRow("Nachname", this.lastName);
             ManagerRow("Festgehalt (DM pro Jahr)", this.managerSalary);
             ManagerRow("Privates Vermögen (DM)", this.privateMoney);
             ManagerRow("Vorstandsvertrauen (%)", this.boardTrust, this.boardLevel);
@@ -71,11 +73,11 @@ namespace A3_Trainer.View
             this.boardTrust.ValueChanged += (s, e) => this.boardLevel.Text = Tables.BoardTrust((int)this.boardTrust.Value, this.shown?.Name ?? "");
             this.Controls.Add(manager);
 
-            this.save.SetBounds(8, 238, 110, 25);
+            this.save.SetBounds(8, 266, 110, 25);
             this.save.Click += (s, e) => this.Save();
-            this.reload.SetBounds(124, 238, 110, 25);
+            this.reload.SetBounds(124, 266, 110, 25);
             this.reload.Click += (s, e) => this.RefreshValues();
-            this.status.SetBounds(240, 242, 380, 20);
+            this.status.SetBounds(240, 270, 380, 20);
             this.Controls.AddRange(new Control[] { this.save, this.reload, this.status });
         }
 
@@ -92,7 +94,8 @@ namespace A3_Trainer.View
                 return;
             }
 
-            this.managerName.Text = (this.shown.ManagerFirstName + " " + this.shown.ManagerLastName).Trim();
+            this.firstName.Text = this.shown.ManagerFirstName;
+            this.lastName.Text = this.shown.ManagerLastName;
             this.managerSalary.Value = this.shown.ManagerSalary;
             this.privateMoney.Value = this.shown.ManagerPrivateMoney;
             this.boardTrust.Value = this.shown.BoardTrust;
@@ -112,6 +115,11 @@ namespace A3_Trainer.View
                 return;
 
             ClubInfo edited = this.shown.Clone();
+            // An emptied name stays as it was.
+            if (this.firstName.Text.Trim().Length > 0)
+                edited.ManagerFirstName = this.firstName.Text.Trim();
+            if (this.lastName.Text.Trim().Length > 0)
+                edited.ManagerLastName = this.lastName.Text.Trim();
             edited.ManagerSalary = (int)this.managerSalary.Value;
             edited.ManagerPrivateMoney = (int)this.privateMoney.Value;
             // The game adds its own bonuses to the stored base; the base is set so the total matches.

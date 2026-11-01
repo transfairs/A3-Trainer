@@ -71,9 +71,15 @@ namespace A3_Trainer.View
         private readonly CheckBox regularPlace = new CheckBox { Text = "Stammplatzgarantie" };
         private readonly ComboBox relationship = DropDown(Tables.Relationships);
         private readonly ComboBox relationshipState = DropDown(Tables.RelationshipStates);
-        // Partner and children come from first-name lists the game draws from; shown only.
-        private readonly TextBox partnerValue = new TextBox { ReadOnly = true };
-        private readonly TextBox childrenValue = new TextBox { ReadOnly = true };
+        // Partner and children are named from one of the game's first-name lists (A3Game.ReadFirstNameList).
+        private readonly ComboBox partner = Combo();
+        private readonly NumericUpDown childCount = Number(0, A3Addresses.MaxChildren);
+        private readonly ComboBox[] childNames = new ComboBox[A3Addresses.MaxChildren];
+        private readonly NumericUpDown[] childDays = new NumericUpDown[A3Addresses.MaxChildren];
+        private readonly NumericUpDown[] childMonths = new NumericUpDown[A3Addresses.MaxChildren];
+        private readonly NumericUpDown[] childYears = new NumericUpDown[A3Addresses.MaxChildren];
+        private int firstNamesOf = -1;
+        private bool showingChildren;
         private readonly ComboBox hobby = DropDown(Tables.Hobbies);
         private readonly Button save = new Button { Text = "Speichern" };
         private readonly Button reload = new Button { Text = "Neu laden" };
@@ -394,13 +400,29 @@ namespace A3_Trainer.View
         private TabPage PrivatePage()
         {
             var page = new TabPage("Privat");
-            GroupBox group = Group(page, "Privat", 6, 152);
+            GroupBox group = Group(page, "Privat", 6, 340);
             int y = 20;
             y = Row(group, y, "Beziehung", this.relationship, 120);
             y = Row(group, y, "Stand", this.relationshipState, 120);
-            y = Row(group, y, "Partnerin", this.partnerValue, 230);
-            y = Row(group, y, "Kinder", this.childrenValue, 230);
-            Row(group, y, "Hobby", this.hobby, 230);
+            y = Row(group, y, "Partnerin", this.partner, 120);
+            y = Row(group, y, "Hobby", this.hobby, 230);
+            group.Controls.Add(Caption("Name, Geburtstag", 200, y + 3, 150));
+            y = Row(group, y, "Kinder", this.childCount, 50);
+            for (int i = 0; i < A3Addresses.MaxChildren; i++)
+            {
+                group.Controls.Add(Caption((i + 1) + ". Kind", 10, y + 3));
+                this.childNames[i] = Combo();
+                this.childNames[i].SetBounds(115, y, 110, 21);
+                this.childDays[i] = Number(0, 31);
+                this.childDays[i].SetBounds(230, y, 36, 21);
+                this.childMonths[i] = Number(0, 12);
+                this.childMonths[i].SetBounds(268, y, 36, 21);
+                this.childYears[i] = Number(0, 3000);
+                this.childYears[i].SetBounds(306, y, 46, 21);
+                group.Controls.AddRange(new Control[] { this.childNames[i], this.childDays[i], this.childMonths[i], this.childYears[i] });
+                y += 26;
+            }
+            this.childCount.ValueChanged += (s, e) => this.ShowChildRows();
             return page;
         }
 
@@ -538,9 +560,88 @@ namespace A3_Trainer.View
             this.regularPlace.Checked = (player.ContractFlags & ContractFlag.RegularPlace) != 0;
             this.relationship.SelectedIndex = player.Relationship & Tables.RelationshipMask;
             this.relationshipState.SelectedIndex = Clamp((player.Relationship & Tables.RelationshipStateMask) >> Tables.RelationshipStateShift, this.relationshipState.Items.Count);
-            this.partnerValue.Text = player.PartnerName;
-            this.childrenValue.Text = player.ChildNames.Length == 0 ? "keine" : string.Join(", ", player.ChildNames);
+            this.ShowPrivateNames(player);
             this.hobby.SelectedIndex = Clamp(player.Hobby, this.hobby.Items.Count);
+        }
+
+        // Partner and children into edited; false (with the reason in the status) if changed children
+        // have an impossible birth date or share a name, which the game never does.
+        private bool ReadChildren(Player edited)
+        {
+            if (this.partner.SelectedIndex >= 0)
+                edited.Partner = this.partner.SelectedIndex;
+            int count = (int)this.childCount.Value;
+            for (int i = 0; i < count; i++)
+            {
+                if (this.childNames[i].SelectedIndex >= 0)
+                    edited.ChildNames[i] = this.childNames[i].SelectedIndex;
+                edited.ChildBirthDates[i] = this.ChildDate(i);
+            }
+            edited.ChildCount = count;
+            if (count == this.shown.ChildCount && edited.ChildNames.SequenceEqual(this.shown.ChildNames) &&
+                edited.ChildBirthDates.SequenceEqual(this.shown.ChildBirthDates))
+                return true;
+            if (edited.ChildBirthDates.Take(count).Any(d => !d.Exists))
+                this.status.Text = "Ungültiges Geburtsdatum eines Kindes";
+            else if (edited.ChildNames.Take(count).Distinct().Count() < count)
+                this.status.Text = "Kinder brauchen verschiedene Namen";
+            else
+                return true;
+            return false;
+        }
+
+        // The first-name list is read once per name country; partner and children pick from it.
+        private void ShowPrivateNames(Player player)
+        {
+            if (this.firstNamesOf != player.NameCountry)
+            {
+                object[] names = this.game.ReadFirstNameList(player.NameCountry).Cast<object>().ToArray();
+                foreach (ComboBox combo in new[] { this.partner }.Concat(this.childNames))
+                {
+                    combo.Items.Clear();
+                    combo.Items.AddRange(names);
+                }
+                this.firstNamesOf = player.NameCountry;
+            }
+            this.partner.SelectedIndex = Clamp(player.Partner, this.partner.Items.Count);
+            for (int i = 0; i < A3Addresses.MaxChildren; i++)
+            {
+                this.childNames[i].SelectedIndex = Clamp(player.ChildNames[i], this.childNames[i].Items.Count);
+                this.SetChildDate(i, player.ChildBirthDates[i]);
+            }
+            this.showingChildren = true;
+            SetNumber(this.childCount, player.ChildCount);
+            this.ShowChildRows();
+            this.showingChildren = false;
+        }
+
+        // Only the rows of existing children are active. A row the user adds gets a free name and,
+        // unless the slot still holds a date, today's date.
+        private void ShowChildRows()
+        {
+            int count = (int)this.childCount.Value;
+            for (int i = 0; i < A3Addresses.MaxChildren; i++)
+            {
+                bool active = i < count;
+                foreach (Control input in new Control[] { this.childNames[i], this.childDays[i], this.childMonths[i], this.childYears[i] })
+                    input.Enabled = active;
+                if (!active || this.showingChildren || this.ChildDate(i).Exists)
+                    continue;
+                if (this.today.HasValue)
+                    this.SetChildDate(i, this.today.Value);
+                int[] taken = Enumerable.Range(0, count).Where(j => j != i).Select(j => this.childNames[j].SelectedIndex).ToArray();
+                this.childNames[i].SelectedIndex = Enumerable.Range(0, this.childNames[i].Items.Count).Where(n => !taken.Contains(n)).DefaultIfEmpty(-1).First();
+            }
+        }
+
+        private GameDate ChildDate(int i) =>
+            new GameDate((int)this.childYears[i].Value, (int)this.childMonths[i].Value, (int)this.childDays[i].Value);
+
+        private void SetChildDate(int i, GameDate date)
+        {
+            this.childDays[i].Value = date.IsValid ? date.Day : 0;
+            this.childMonths[i].Value = date.IsValid ? date.Month : 0;
+            SetNumber(this.childYears[i], date.IsValid ? date.Year : 0);
         }
 
         private void ShowInjury(Player player)
@@ -595,6 +696,8 @@ namespace A3_Trainer.View
                 this.status.Text = "Ungültiges Geburtsdatum";
                 return;
             }
+            if (!this.ReadChildren(edited))
+                return;
             edited.Position = this.SelectedPosition();
             if (this.nationality.SelectedIndex >= 0)
                 edited.Nationality = this.nationality.SelectedIndex;

@@ -312,6 +312,64 @@ namespace A3_Trainer.Tests
         }
 
         [Fact]
+        public void SaveClubInfo_ClubNames_GoToRecordAndWorkingCopy_CutToTheirFields()
+        {
+            FakeGameMemory m = Career();
+            uint copy = 0x07000000;
+            m.Map(A3Addresses.ClubCache, A3Addresses.ClubCacheSlots * A3Addresses.ClubCacheEntrySize);
+            m.Put(A3Addresses.ClubCache, 1, 14, 1);
+            m.PutUInt32(A3Addresses.ClubCache + A3Addresses.ClubCacheObject, copy);
+            m.Map(copy, 0x1390);
+            m.Map(Club(1) + A3Addresses.ClubShortName, 0x30);
+            var game = new A3Game(m);
+            ClubInfo info = game.ReadClubInfo();
+            ClubInfo edited = info.Clone();
+            edited.Name = "FC Sternenhimmel Nord-Ost";   // longer than 19
+            edited.ShortName = "FCS";
+            edited.City = "Sternstadt";
+
+            game.SaveClubInfo(info, edited);
+
+            byte[] name = Encoding.ASCII.GetBytes("FC Sternenhimmel No\0");
+            Assert.Equal(name, m.WrittenAt(Club(1) + A3Addresses.ClubName));
+            Assert.Equal(name, m.WrittenAt(copy + A3Addresses.ClubCopyName));
+            Assert.Equal(Encoding.ASCII.GetBytes("FCS\0"), m.WrittenAt(Club(1) + A3Addresses.ClubShortName));
+            Assert.Equal("Sternstadt", game.ReadClubInfo().City);
+        }
+
+        [Theory]
+        [InlineData(1, true)]    // exactly one trainer entry carries the old names: it follows
+        [InlineData(2, false)]   // two: none is touched
+        [InlineData(0, false)]
+        public void SaveClubInfo_RenamesTheManager_AndTheOneMatchingTrainerEntry(int entries, bool follows)
+        {
+            FakeGameMemory m = WithNamePool(Career());   // "Oliver" = 1, "Huhn" = 2
+            m.Put(A3Addresses.ManagerFirstName, Encoding.ASCII.GetBytes("Oliver").Concat(new byte[4]).ToArray());
+            m.Put(A3Addresses.ManagerLastName, Encoding.ASCII.GetBytes("Huhn").Concat(new byte[12]).ToArray());
+            m.Map(A3Addresses.TrainerList, A3Addresses.TrainerSlots * A3Addresses.TrainerSize);
+            for (int i = 0; i < entries; i++)
+                m.Put(A3Addresses.TrainerList + (uint)((5 + i) * A3Addresses.TrainerSize), 1, 0, 2, 0);
+            var game = new A3Game(m);
+            ClubInfo info = game.ReadClubInfo();
+            ClubInfo edited = info.Clone();
+            edited.ManagerFirstName = "Jupp";
+            edited.ManagerLastName = "Huhn";
+
+            game.SaveClubInfo(info, edited);
+
+            Assert.Equal(Encoding.ASCII.GetBytes("Jupp\0\0\0\0\0\0"), m.WrittenAt(A3Addresses.ManagerFirstName));
+            Assert.Equal(Encoding.ASCII.GetBytes("Huhn").Concat(new byte[12]), m.WrittenAt(A3Addresses.ManagerLastName));
+            uint entry = A3Addresses.TrainerList + 5 * A3Addresses.TrainerSize;
+            if (follows)
+            {
+                Assert.Equal(new byte[] { 3, 0 }, m.WrittenAt(entry));   // "Jupp" appended as name 3
+                Assert.Equal(new byte[] { 2, 0 }, m.WrittenAt(entry + 2));
+            }
+            else
+                Assert.Null(m.WrittenAt(entry));
+        }
+
+        [Fact]
         public void ReadCountryNames_StopsAtTheFirstEmptyEntry()
         {
             FakeGameMemory m = Career();

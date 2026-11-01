@@ -1,6 +1,7 @@
 using A3_Trainer.Model;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace A3_Trainer.Controller
 {
@@ -88,6 +89,13 @@ namespace A3_Trainer.Controller
                 NationalTeam = Byte(RecordOffset.NationalTeam),
                 Relationship = Byte(RecordOffset.Relationship),
                 Hobby = Byte(RecordOffset.Hobby),
+                NameCountry = Byte(RecordOffset.NameCountry),
+                Partner = Byte(RecordOffset.PartnerName),
+                ChildCount = Math.Min(Math.Max((int)BitConverter.ToInt16(data, offset + RecordOffset.ChildCount), 0), A3Addresses.MaxChildren),
+                ChildNames = Enumerable.Range(0, A3Addresses.MaxChildren).Select(i => Byte(RecordOffset.ChildNames + i)).ToArray(),
+                ChildBirthDates = Enumerable.Range(0, A3Addresses.MaxChildren)
+                    .Select(i => new GameDate(Word(RecordOffset.ChildBirthDates + i * 4 + 2), Byte(RecordOffset.ChildBirthDates + i * 4 + 1), Byte(RecordOffset.ChildBirthDates + i * 4)))
+                    .ToArray(),
                 Flags = BitConverter.ToUInt32(data, offset + RecordOffset.Flags),
                 Strength = Byte(RecordOffset.Strength),
                 Position = Byte(RecordOffset.Position),
@@ -249,6 +257,24 @@ namespace A3_Trainer.Controller
                 writes.Add(new MemoryWrite(record + RecordOffset.Relationship, new[] { (byte)edited.Relationship }));
             if (edited.Hobby != original.Hobby)
                 writes.Add(new MemoryWrite(record + RecordOffset.Hobby, new[] { (byte)edited.Hobby }));
+            if (edited.Partner != original.Partner)
+                writes.Add(new MemoryWrite(record + RecordOffset.PartnerName, new[] { (byte)edited.Partner }));
+            // Children: count, names and birth dates of all five slots, as the game keeps them side by side.
+            if (edited.ChildCount != original.ChildCount || !edited.ChildNames.SequenceEqual(original.ChildNames) ||
+                !edited.ChildBirthDates.SequenceEqual(original.ChildBirthDates))
+            {
+                writes.Add(new MemoryWrite(record + RecordOffset.ChildCount, BitConverter.GetBytes((ushort)edited.ChildCount)));
+                writes.Add(new MemoryWrite(record + RecordOffset.ChildNames, edited.ChildNames.Select(n => (byte)n).ToArray()));
+                byte[] dates = new byte[A3Addresses.MaxChildren * 4];
+                for (int i = 0; i < A3Addresses.MaxChildren; i++)
+                {
+                    GameDate date = edited.ChildBirthDates[i];
+                    dates[i * 4] = (byte)date.Day;
+                    dates[i * 4 + 1] = (byte)date.Month;
+                    BitConverter.GetBytes((ushort)date.Year).CopyTo(dates, i * 4 + 2);
+                }
+                writes.Add(new MemoryWrite(record + RecordOffset.ChildBirthDates, dates));
+            }
 
             if (original.IsInjured && !edited.IsInjured || original.Groggy && !edited.Groggy)
                 writes.AddRange(HealWrites(record, compact));
