@@ -54,7 +54,7 @@ namespace A3_Trainer.Model
         internal int TitleBonus { get; set; }
         /// <summary>The manager's bonus for reaching the season goal, DM.</summary>
         internal int GoalBonus { get; set; }
-        /// <summary>The manager's season goal (Tables.SeasonGoals).</summary>
+        /// <summary>The club's season goal (Tables.SeasonGoals), shown with the manager's contract.</summary>
         internal int SeasonGoal { get; set; }
         /// <summary>Seasons left on the manager's contract.</summary>
         internal int ContractYears { get; set; }

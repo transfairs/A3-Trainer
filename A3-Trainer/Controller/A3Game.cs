@@ -362,7 +362,7 @@ namespace A3_Trainer.Controller
                 CupBonus = (int)this.ReadUInt32(contract + ContractOffset.CupBonus),
                 TitleBonus = (int)this.ReadUInt32(contract + ContractOffset.TitleBonus),
                 GoalBonus = (int)this.ReadUInt32(contract + ContractOffset.GoalBonus),
-                SeasonGoal = this.ReadUInt16(contract + ContractOffset.SeasonGoal),
+                SeasonGoal = this.ReadByte(copy != 0 ? copy + A3Addresses.ClubCopySeasonGoal : club + A3Addresses.ClubSeasonGoal),
                 ContractYears = this.ReadUInt16(contract + ContractOffset.Years),
                 ExitClause = this.ReadByte(contract + ContractOffset.ExitClause) != 0,
                 ManagerPrivateMoney = (int)this.ReadUInt32(this.ManagerField(manager, A3Addresses.ManagerPrivateMoney)),
@@ -389,7 +389,6 @@ namespace A3_Trainer.Controller
             WriteManager(A3Addresses.ManagerSalary + ContractOffset.CupBonus, original.CupBonus, edited.CupBonus, 4);
             WriteManager(A3Addresses.ManagerSalary + ContractOffset.TitleBonus, original.TitleBonus, edited.TitleBonus, 4);
             WriteManager(A3Addresses.ManagerSalary + ContractOffset.GoalBonus, original.GoalBonus, edited.GoalBonus, 4);
-            WriteManager(A3Addresses.ManagerSalary + ContractOffset.SeasonGoal, original.SeasonGoal, edited.SeasonGoal, 2);
             WriteManager(A3Addresses.ManagerSalary + ContractOffset.Years, original.ContractYears, edited.ContractYears, 2);
             WriteManager(A3Addresses.ManagerSalary + ContractOffset.ExitClause, original.ExitClause ? 1 : 0, edited.ExitClause ? 1 : 0, 1);
             WriteManager(A3Addresses.ManagerPrivateMoney, original.ManagerPrivateMoney, edited.ManagerPrivateMoney, 4);
@@ -399,7 +398,7 @@ namespace A3_Trainer.Controller
             WriteManager(A3Addresses.ManagerBoardTrust, original.BoardTrustBase, edited.BoardTrustBase, 2);
 
             // The club's values live in its record and, while the game has it loaded, in the working copy.
-            if (edited.Image == original.Image && edited.Trouble == original.Trouble && edited.SeasonStartMoney == original.SeasonStartMoney &&
+            if (edited.Image == original.Image && edited.Trouble == original.Trouble && edited.SeasonStartMoney == original.SeasonStartMoney && edited.SeasonGoal == original.SeasonGoal &&
                 edited.Name == original.Name && edited.ShortName == original.ShortName && edited.City == original.City)
                 return;
             uint? club = this.ClubAddress(edited.Key);
@@ -412,6 +411,7 @@ namespace A3_Trainer.Controller
                 WriteText(club.Value + A3Addresses.ClubShortName, original.ShortName, edited.ShortName, A3Addresses.ClubShortNameSize);
                 WriteText(club.Value + A3Addresses.ClubCity, original.City, edited.City, A3Addresses.ClubNameSize);
                 WriteMoney(club.Value + A3Addresses.ClubSeasonStartMoney);
+                WriteByte(club.Value + A3Addresses.ClubSeasonGoal, original.SeasonGoal, edited.SeasonGoal);
             }
             if (copy != 0)
             {
@@ -419,6 +419,7 @@ namespace A3_Trainer.Controller
                 WriteByte(copy + A3Addresses.ClubCopyTrouble, original.Trouble, edited.Trouble);
                 WriteText(copy + A3Addresses.ClubCopyName, original.Name, edited.Name, A3Addresses.ClubNameSize);
                 WriteMoney(copy + A3Addresses.ClubCopySeasonStartMoney);
+                WriteByte(copy + A3Addresses.ClubCopySeasonGoal, original.SeasonGoal, edited.SeasonGoal);
             }
 
             void WriteText(uint address, string was, string now, int size)

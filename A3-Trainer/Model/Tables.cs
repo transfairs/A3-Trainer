@@ -71,8 +71,8 @@ namespace A3_Trainer.Model
         internal static readonly string[] ContractValidity = { "alle Ligen", "nur erste Liga", "mind. 2. Liga", "mind. 3. Liga" };
 
         /// <summary>
-        /// A manager's season goals (texts 1069-1080). The bonus is paid when the club reaches the goal or
-        /// a better one (FUN_0062292A), so a lower number is the harder goal.
+        /// Season goals a club's board sets (texts 1069-1080); a lower number is the harder goal, the game rates the
+        /// final position as one of these levels (FUN_0077600E).
         /// </summary>
         internal static readonly string[] SeasonGoals =
         {

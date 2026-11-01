@@ -77,6 +77,10 @@ namespace A3_Trainer.Controller
         // the start of the season, the bank balance is it plus the season's bookings after it.
         internal const int ClubSeasonStartMoney = 0x488;
         internal const int ClubCopySeasonStartMoney = 0x210;
+        // Season goal the board set (Tables.SeasonGoals), shown on the career score's contract page; the game rates the
+        // final position against it (FUN_007760CE).
+        internal const int ClubSeasonGoal = 0x135;
+        internal const int ClubCopySeasonGoal = 0x10C;
 
         // --- Human managers (hot seat, up to 4). The constants below are manager 1's fields; manager n's are
         // (n - 1) * ManagerStride further. The game works on these objects only while it holds them (reference
@@ -154,7 +158,8 @@ namespace A3_Trainer.Controller
         internal const int CupBonus = 0x08;      // dword, DM per cup round
         internal const int TitleBonus = 0x0C;    // dword, DM per title or promotion
         internal const int GoalBonus = 0x10;     // dword, DM when the season goal is reached (FUN_0062292A)
-        internal const int SeasonGoal = 0x14;    // word, Tables.SeasonGoals
+        // 0x14: word, meaning unknown; compared with the level the club reached for the bonus (FUN_0062292A). The
+        // season goal the career score shows is the club's (A3Addresses.ClubSeasonGoal).
         internal const int Years = 0x16;         // word, seasons left; the season change counts it down (FUN_00624AD4)
         internal const int ExitClause = 0x1C;    // byte, may leave on an offer while the contract runs (FUN_00442F85)
     }
