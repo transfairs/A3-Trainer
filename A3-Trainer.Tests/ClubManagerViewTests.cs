@@ -157,6 +157,42 @@ namespace A3_Trainer.Tests
         });
 
         [Fact]
+        public void ClubView_SponsorIncome_GoesToRecordAndWorkingCopy() => StaThread.Run(() =>
+        {
+            FakeGameMemory m = CareerWithMoney();
+            uint club = A3Addresses.ClubArray + (uint)A3Addresses.ClubSize;
+            uint copy = 0x07000000;
+            uint copyFinances = copy - (uint)A3Addresses.ClubCopyFinanceShift;
+            m.Map(A3Addresses.ClubCache, A3Addresses.ClubCacheSlots * A3Addresses.ClubCacheEntrySize);
+            m.Put(A3Addresses.ClubCache, 1, 14, 1);
+            m.PutUInt32(A3Addresses.ClubCache + A3Addresses.ClubCacheObject, copy);
+            m.Map(copy, 0x1390);
+            m.PutUInt32(copyFinances + A3Addresses.ClubSeasonStartMoney, 10000000);
+            m.Put(copyFinances + A3Addresses.ClubAdsContract, 1);
+            m.PutUInt32(copyFinances + A3Addresses.ClubAds, 1344000);
+            m.PutUInt32(copyFinances + A3Addresses.ClubOutfitter, 7200000); // no outfitter contract
+            using (var view = new ClubView(Attached(), new A3Game(m)))
+            {
+                view.RefreshValues();
+                NumericUpDown ads = TestHelpers.Get<NumericUpDown>(view, "ads");
+                NumericUpDown outfitter = TestHelpers.Get<NumericUpDown>(view, "outfitter");
+                Assert.Equal(10000000, TestHelpers.Get<NumericUpDown>(view, "seasonStartMoney").Value);
+                Assert.Equal(1344000, ads.Value);
+                Assert.True(ads.Enabled);
+                Assert.Equal(7200000, outfitter.Value);
+                Assert.False(outfitter.Enabled);
+
+                ads.Value = 2000000;
+                Click(view, "save");
+
+                Assert.Equal(BitConverter.GetBytes(2000000), m.WrittenAt(club + A3Addresses.ClubAds));
+                Assert.Equal(BitConverter.GetBytes(2000000), m.WrittenAt(copyFinances + A3Addresses.ClubAds));
+                Assert.Null(m.WrittenAt(copyFinances + A3Addresses.ClubOutfitter));
+                Assert.Null(m.WrittenAt(copyFinances + A3Addresses.ClubSeasonStartMoney));
+            }
+        });
+
+        [Fact]
         public void ClubView_ImageAndAssociation_GoToRecordAndWorkingCopy() => StaThread.Run(() =>
         {
             FakeGameMemory m = CareerWithMoney();

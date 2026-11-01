@@ -35,6 +35,14 @@ namespace A3_Trainer.Model
         internal string City { get; set; } = "";
         /// <summary>DM; the bank balance is this plus the season's result so far.</summary>
         internal int SeasonStartMoney { get; set; }
+        /// <summary>Whether the club has a contract for its advertising boards.</summary>
+        internal bool HasAdsContract { get; set; }
+        /// <summary>DM per season from the advertising boards contract.</summary>
+        internal int Ads { get; set; }
+        /// <summary>Whether the club has an outfitter.</summary>
+        internal bool HasOutfitter { get; set; }
+        /// <summary>DM per season from the outfitter.</summary>
+        internal int Outfitter { get; set; }
         /// <summary>Club image, 10 to 50 (Tables.ClubImage).</summary>
         internal int Image { get; set; }
         /// <summary>Trouble byte: bits 0-4 trouble with the association (Tables.Association), the rest game state.</summary>

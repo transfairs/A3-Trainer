@@ -77,6 +77,14 @@ namespace A3_Trainer.Controller
         // the start of the season, the bank balance is it plus the season's bookings after it.
         internal const int ClubSeasonStartMoney = 0x488;
         internal const int ClubCopySeasonStartMoney = 0x210;
+        // Sponsor contracts in that block (record offset; the copy's is 0x278 lower), each {byte years, byte signed,
+        // dword DM per season}. Without a board contract the game sums up the single boards instead (FUN_0061F4E6);
+        // without an outfitter it pays nothing (FUN_0061F572).
+        internal const int ClubAdsContract = 0x819;
+        internal const int ClubAds = 0x81C;
+        internal const int ClubOutfitterContract = 0x829;
+        internal const int ClubOutfitter = 0x82C;
+        internal const int ClubCopyFinanceShift = ClubSeasonStartMoney - ClubCopySeasonStartMoney;
         // Season goal the board set (Tables.SeasonGoals), shown on the career score's contract page; the game rates the
         // final position against it (FUN_007760CE).
         internal const int ClubSeasonGoal = 0x135;

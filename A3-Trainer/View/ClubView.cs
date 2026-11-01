@@ -7,7 +7,7 @@ using System.Windows.Forms;
 
 namespace A3_Trainer.View
 {
-    /// <summary>A manager's club: name, city, money, image and standing with the association.</summary>
+    /// <summary>A manager's club: name, city, money, sponsor income, image and standing with the association.</summary>
     internal sealed class ClubView : TrainerView
     {
         private readonly A3Game game;
@@ -16,6 +16,8 @@ namespace A3_Trainer.View
         private readonly TextBox clubShortName = new TextBox { MaxLength = A3Addresses.ClubShortNameSize - 1 };
         private readonly TextBox clubCity = new TextBox { MaxLength = A3Addresses.ClubNameSize - 1 };
         private readonly NumericUpDown seasonStartMoney = Money();
+        private readonly NumericUpDown ads = Money();
+        private readonly NumericUpDown outfitter = Money();
         private readonly NumericUpDown image = new NumericUpDown { Minimum = 0, Maximum = 255 };
         private readonly Label imageLevel = new Label();
         private readonly NumericUpDown trouble = new NumericUpDown { Minimum = 0, Maximum = Tables.AssociationTroubleMask };
@@ -43,7 +45,7 @@ namespace A3_Trainer.View
 
         private void BuildLayout()
         {
-            var club = new GroupBox { Text = "Verein", Bounds = new Rectangle(8, 8, 614, 228) };
+            var club = new GroupBox { Text = "Verein", Bounds = new Rectangle(8, 8, 614, 292) };
             int y = 22;
             void ClubRow(string caption, Control input)
             {
@@ -64,15 +66,17 @@ namespace A3_Trainer.View
             ClubRow("Kurzname", this.clubShortName);
             ClubRow("Stadt", this.clubCity);
             ClubRow("Vermögen Saisonbeginn (DM)", this.seasonStartMoney);
+            ClubRow("Bandenwerbung (DM/Saison)", this.ads);
+            ClubRow("Ausrüster (DM/Saison)", this.outfitter);
             Rated("Vereinsimage (10 bis 50)", this.image, this.imageLevel, Tables.ClubImage);
             Rated("Ärger mit dem Verband (0 bis 31)", this.trouble, this.troubleLevel, Tables.Association);
             this.Controls.Add(club);
 
-            this.save.SetBounds(8, 244, 110, 25);
+            this.save.SetBounds(8, 308, 110, 25);
             this.save.Click += (s, e) => this.Save();
-            this.reload.SetBounds(124, 244, 110, 25);
+            this.reload.SetBounds(124, 308, 110, 25);
             this.reload.Click += (s, e) => this.RefreshValues();
-            this.status.SetBounds(240, 248, 380, 20);
+            this.status.SetBounds(240, 312, 380, 20);
             this.Controls.AddRange(new Control[] { this.save, this.reload, this.status });
         }
 
@@ -93,6 +97,11 @@ namespace A3_Trainer.View
             this.clubShortName.Text = this.shown.ShortName;
             this.clubCity.Text = this.shown.City;
             this.seasonStartMoney.Value = this.shown.SeasonStartMoney;
+            // Without a contract the game doesn't use the amount (boards are then paid one by one).
+            this.ads.Value = this.shown.Ads;
+            this.ads.Enabled = this.shown.HasAdsContract;
+            this.outfitter.Value = this.shown.Outfitter;
+            this.outfitter.Enabled = this.shown.HasOutfitter;
             this.image.Value = this.shown.Image;
             this.trouble.Value = this.shown.Trouble & Tables.AssociationTroubleMask;
             this.imageLevel.Text = Tables.ClubImage(this.shown.Image);
@@ -107,6 +116,8 @@ namespace A3_Trainer.View
 
             ClubInfo edited = this.shown.Clone();
             edited.SeasonStartMoney = (int)this.seasonStartMoney.Value;
+            edited.Ads = (int)this.ads.Value;
+            edited.Outfitter = (int)this.outfitter.Value;
             // An emptied name stays as it was.
             edited.Name = Filled(this.clubName.Text, this.shown.Name);
             edited.ShortName = Filled(this.clubShortName.Text, this.shown.ShortName);

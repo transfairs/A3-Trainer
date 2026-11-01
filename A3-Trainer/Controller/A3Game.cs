@@ -344,6 +344,8 @@ namespace A3_Trainer.Controller
                 return null;
             uint club = this.ClubAddress(own.Value).Value;
             uint copy = this.ClubCopy(own.Value);
+            // The finance block of the loaded copy (what the game uses), else the record's, at the record's offsets.
+            uint finances = copy != 0 ? copy - (uint)A3Addresses.ClubCopyFinanceShift : club;
             byte[] trust = this.memory.Read(this.ManagerField(manager, A3Addresses.ManagerBoardTrust), 6) ?? new byte[6];
             uint contract = this.ManagerField(manager, A3Addresses.ManagerSalary);
 
@@ -354,7 +356,11 @@ namespace A3_Trainer.Controller
                 Name = this.ReadString(club + A3Addresses.ClubName, 0x14),
                 ShortName = this.ReadString(club + A3Addresses.ClubShortName, 4),
                 City = this.ReadString(club + A3Addresses.ClubCity, 0x14),
-                SeasonStartMoney = (int)this.ReadUInt32(copy != 0 ? copy + A3Addresses.ClubCopySeasonStartMoney : club + A3Addresses.ClubSeasonStartMoney),
+                SeasonStartMoney = (int)this.ReadUInt32(finances + A3Addresses.ClubSeasonStartMoney),
+                HasAdsContract = this.ReadByte(finances + A3Addresses.ClubAdsContract) != 0,
+                Ads = (int)this.ReadUInt32(finances + A3Addresses.ClubAds),
+                HasOutfitter = this.ReadByte(finances + A3Addresses.ClubOutfitterContract) != 0,
+                Outfitter = (int)this.ReadUInt32(finances + A3Addresses.ClubOutfitter),
                 ManagerFirstName = this.ReadString(this.ManagerField(manager, A3Addresses.ManagerFirstName), 10),
                 ManagerLastName = this.ReadString(this.ManagerField(manager, A3Addresses.ManagerLastName), 0x10),
                 ManagerSalary = (int)this.ReadUInt32(contract),
@@ -399,6 +405,7 @@ namespace A3_Trainer.Controller
 
             // The club's values live in its record and, while the game has it loaded, in the working copy.
             if (edited.Image == original.Image && edited.Trouble == original.Trouble && edited.SeasonStartMoney == original.SeasonStartMoney && edited.SeasonGoal == original.SeasonGoal &&
+                edited.Ads == original.Ads && edited.Outfitter == original.Outfitter &&
                 edited.Name == original.Name && edited.ShortName == original.ShortName && edited.City == original.City)
                 return;
             uint? club = this.ClubAddress(edited.Key);
@@ -410,7 +417,7 @@ namespace A3_Trainer.Controller
                 WriteText(club.Value + A3Addresses.ClubName, original.Name, edited.Name, A3Addresses.ClubNameSize);
                 WriteText(club.Value + A3Addresses.ClubShortName, original.ShortName, edited.ShortName, A3Addresses.ClubShortNameSize);
                 WriteText(club.Value + A3Addresses.ClubCity, original.City, edited.City, A3Addresses.ClubNameSize);
-                WriteMoney(club.Value + A3Addresses.ClubSeasonStartMoney);
+                WriteFinances(club.Value);
                 WriteByte(club.Value + A3Addresses.ClubSeasonGoal, original.SeasonGoal, edited.SeasonGoal);
             }
             if (copy != 0)
@@ -418,7 +425,7 @@ namespace A3_Trainer.Controller
                 WriteByte(copy + A3Addresses.ClubCopyImage, original.Image, edited.Image);
                 WriteByte(copy + A3Addresses.ClubCopyTrouble, original.Trouble, edited.Trouble);
                 WriteText(copy + A3Addresses.ClubCopyName, original.Name, edited.Name, A3Addresses.ClubNameSize);
-                WriteMoney(copy + A3Addresses.ClubCopySeasonStartMoney);
+                WriteFinances(copy - (uint)A3Addresses.ClubCopyFinanceShift);
                 WriteByte(copy + A3Addresses.ClubCopySeasonGoal, original.SeasonGoal, edited.SeasonGoal);
             }
 
@@ -434,10 +441,18 @@ namespace A3_Trainer.Controller
                     this.memory.Write(address, new[] { (byte)now });
             }
 
-            void WriteMoney(uint address)
+            // The finance block, addressed with the record's offsets from the record or the copy shifted to match.
+            void WriteFinances(uint finances)
             {
-                if (edited.SeasonStartMoney != original.SeasonStartMoney)
-                    this.memory.Write(address, BitConverter.GetBytes(edited.SeasonStartMoney));
+                WriteDword(finances + A3Addresses.ClubSeasonStartMoney, original.SeasonStartMoney, edited.SeasonStartMoney);
+                WriteDword(finances + A3Addresses.ClubAds, original.Ads, edited.Ads);
+                WriteDword(finances + A3Addresses.ClubOutfitter, original.Outfitter, edited.Outfitter);
+            }
+
+            void WriteDword(uint address, int was, int now)
+            {
+                if (now != was)
+                    this.memory.Write(address, BitConverter.GetBytes(now));
             }
 
             void WriteManager(uint field, int was, int now, int size)
