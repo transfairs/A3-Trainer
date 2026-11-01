@@ -37,8 +37,16 @@ namespace A3_Trainer.Tests
             Find(clickable.GetType(), t => t.GetMethod("OnClick", BindingFlags.Instance | BindingFlags.NonPublic, null, new[] { typeof(EventArgs) }, null))
                 .Invoke(clickable, new object[] { EventArgs.Empty });
 
+        private delegate bool EnumWindowsProc(IntPtr hWnd, IntPtr lParam);
+
+        [DllImport("user32.dll")]
+        private static extern bool EnumThreadWindows(uint threadId, EnumWindowsProc callback, IntPtr lParam);
+
         [DllImport("user32.dll", CharSet = CharSet.Unicode)]
-        private static extern IntPtr FindWindow(string className, string windowName);
+        private static extern int GetWindowText(IntPtr hWnd, System.Text.StringBuilder text, int maxCount);
+
+        [DllImport("kernel32.dll")]
+        private static extern uint GetCurrentThreadId();
 
         [DllImport("user32.dll")]
         private static extern bool PostMessage(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam);
@@ -47,22 +55,28 @@ namespace A3_Trainer.Tests
 
         /// <summary>
         /// Runs <paramref name="action"/>, which is expected to show a modal message box titled
-        /// <paramref name="title"/>, and closes that box from another thread once it appears.
+        /// <paramref name="title"/>, and closes that box from another thread once it appears. Only
+        /// windows of the calling thread count, so tests running in parallel can expect the same title.
         /// </summary>
         internal static void ExpectDialog(string title, Action action)
         {
             bool seen = false;
+            uint thread = GetCurrentThreadId();
             var closer = new Thread(() =>
             {
                 for (int attempt = 0; attempt < 200 && !seen; attempt++)
                 {
                     Thread.Sleep(25);
-                    IntPtr dialog = FindWindow(null, title);
-                    if (dialog != IntPtr.Zero)
+                    EnumThreadWindows(thread, (window, _) =>
                     {
+                        var text = new System.Text.StringBuilder(256);
+                        GetWindowText(window, text, text.Capacity);
+                        if (text.ToString() != title)
+                            return true;
                         seen = true;
-                        PostMessage(dialog, WM_CLOSE, IntPtr.Zero, IntPtr.Zero);
-                    }
+                        PostMessage(window, WM_CLOSE, IntPtr.Zero, IntPtr.Zero);
+                        return false;
+                    }, IntPtr.Zero);
                 }
             }) { IsBackground = true };
             closer.Start();
