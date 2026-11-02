@@ -55,6 +55,9 @@ cup and European goals, penalties and free kicks, substitute goals and appearanc
 team of the day, caps, yellow, yellow-red and red cards per competition, a ban in weeks and the European ban.
 For the whole team, condition and freshness can be set at once or frozen: the trainer then writes
 them back every second for the club it was switched on for.
+**Transfers** (tab `Wechsel`): move a player to any club for a fee, right away or at the season end. The game
+makes the move at the next daily processing with its own transfer function (squads, line-up, money, contract
+at the new club, news); loans aren't supported yet.
 
 **Club** (of the selected manager): name, short name and city, wealth at the start of the season (determines the bank balance), season income from the advertising boards and the outfitter, club image,
 trouble with the association (standing from "ausgezeichnet" to "verzockt").
@@ -105,10 +108,14 @@ Leave the `X` in place: removing it deletes the player entries again.
   copies** („CSpieler“ cache, tree at `0x00A3D3C4`) and writes them back to the records when
   saving. The trainer therefore writes to the copy **and** the record.
 - Players of other clubs have no working copy; the trainer writes only their record. The club list
-  comes from the club keys in the player records (`+0x30`/`+0x31`), since the club index table
+  comes from the club keys in the player records (`+0x220`/`+0x221`), since the club index table
   can't tell a country without clubs from one whose clubs start at 0.
 - Loaded clubs (own club, next opponent) have working copies too (6 slots from `0x00A6AB10`); club
   values are written to both as well.
+- Transfers: `Controller/TransferInjector.cs` places a small stub in the game process and redirects the two
+  calls of the daily transfer market to it. With a request pending, the stub fetches both clubs and the player,
+  lets the game build the new contract and calls its transfer function, then continues with the market. The
+  redirects live in the running process only.
 - All addresses and field meanings are in `Controller/A3Addresses.cs`.
 
 ## Project layout

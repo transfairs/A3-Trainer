@@ -20,7 +20,7 @@ namespace A3_Trainer.Tests
 
         // Two German clubs (14/1, 14/10), a Danish one (13/0, club 220) and a player whose club key
         // names no club; 1039 has a working copy. Countries 0-14 have names.
-        private static FakeGameMemory Clubs()
+        internal static FakeGameMemory Clubs()
         {
             FakeGameMemory m = A3GameTests.Career();
             m.PutUInt16(A3Addresses.ClubIndexTable + 13 * 2, 220);

@@ -219,6 +219,27 @@ namespace A3_Trainer.Controller
         internal const int PageShown = 0x4BA0;             // the shown stadium
     }
 
+    /// <summary>
+    /// The game's own transfer code, which TransferInjector's stub calls at the daily processing as the
+    /// computer clubs' transfers do (FUN_0076D021). Every function is cdecl.
+    /// </summary>
+    internal static class TransferCode
+    {
+        internal static readonly uint[] MarketCallSites = { 0x00650285, 0x00650426 };   // CALL rel32 in the daily processing FUN_0064F981
+        internal const uint Market = 0x0076CB3E;        // the day's transfer market (day)
+        internal const uint FetchPlayer = 0x00636459;   // (player number) -> working copy
+        internal const uint ReleasePlayer = 0x006364CF; // (working copy)
+        internal const uint FetchClub = 0x0063DD1C;     // (country, number in it, 0xFFFF) -> working copy
+        internal const uint ReleaseClub = 0x0063DF96;   // (working copy)
+        internal const uint BuildContract = 0x00709FB6; // (&contract, player, new club): the new club's offer
+        internal const uint Move = 0x0070CA69;          // (player, new club, old club, fee in DM, &contract, immediate)
+        internal const int ContractSize = 0x14;         // zeroed like the game's constructor does
+        internal const int ContractYears = 0x0C;        // byte; the game raises it to at least 2
+        internal const int SquadCount = 0xE2;           // club working copy: word
+        internal const int Squad = 0xB50;               // club working copy: pointer per player to its working copy, number first
+        internal const int SquadCapacity = 35;          // the game's own limit for adding a player (0x23)
+    }
+
     /// <summary>Offsets in a stadium (0xD0 bytes), see the database import FUN_0068BCCB; checked on the stadium page.</summary>
     internal static class StadiumOffset
     {
@@ -306,8 +327,10 @@ namespace A3_Trainer.Controller
     internal static class RecordOffset
     {
         internal const int Used = 0x20;           // dword, 0 = empty slot
-        internal const int ClubCountry = 0x30;
-        internal const int ClubNumber = 0x31;
+        // The current club, as the game writes it back from the working copy (FUN_00637177) and lists the squads;
+        // the bytes at +0x30 keep an older club after a transfer.
+        internal const int ClubCountry = 0x220;
+        internal const int ClubNumber = 0x221;
         internal const int Salary = 0x150;        // word, 1000 DM
         internal const int MatchBonus = 0x152;    // word, 100 DM
         internal const int GoalBonus = 0x154;     // word, 100 DM per goal

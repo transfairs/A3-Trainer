@@ -66,6 +66,7 @@
     <Compile Include="Controller\GameMemory.cs" />
     <Compile Include="Controller\Logger.A3.cs" />
     <Compile Include="Controller\PlayerCodec.cs" />
+    <Compile Include="Controller\TransferInjector.cs" />
     <Compile Include="MainWindow.cs">
       <SubType>Form</SubType>
     </Compile>

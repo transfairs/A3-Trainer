@@ -68,8 +68,9 @@ namespace A3_Trainer
             this.Controls.Add(this.menu);
             this.MainMenuStrip = this.menu;
 
-            this.game = new A3Game(new LiveGameMemory(this.memory));
-            this.playerView = new PlayerView(this.memory, this.game);
+            var live = new LiveGameMemory(this.memory);
+            this.game = new A3Game(live);
+            this.playerView = new PlayerView(this.memory, this.game) { Transfers = new TransferInjector(live, live) };
             this.playerView.ClubChosen += this.OnClubChosen;
             this.clubView = new ClubView(this.memory, this.game);
             this.identityView = new IdentityView(this.memory, this.game);

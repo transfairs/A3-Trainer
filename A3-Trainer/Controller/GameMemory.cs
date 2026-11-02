@@ -16,8 +16,18 @@ namespace A3_Trainer.Controller
         void Write(uint address, byte[] data);
     }
 
+    /// <summary>Placing code in the game process, for TransferInjector.</summary>
+    internal interface IGameCode
+    {
+        /// <summary>Executable, writable memory of <paramref name="size"/> bytes, or null if it can't be had.</summary>
+        uint? AllocateExecutable(int size);
+
+        /// <summary>Writes over the game's code; returns whether it was written.</summary>
+        bool WriteCode(uint address, byte[] data);
+    }
+
     /// <summary>The attached game process, via the shared ProcessMemory.</summary>
-    internal sealed class LiveGameMemory : IGameMemory
+    internal sealed class LiveGameMemory : IGameMemory, IGameCode
     {
         private readonly ProcessMemory memory;
 
@@ -32,5 +42,11 @@ namespace A3_Trainer.Controller
 
         /// <inheritdoc/>
         public void Write(uint address, byte[] data) => this.memory.WriteBytesAtAddress(address, data);
+
+        /// <inheritdoc/>
+        public uint? AllocateExecutable(int size) => this.memory.AllocateExecutable(size);
+
+        /// <inheritdoc/>
+        public bool WriteCode(uint address, byte[] data) => this.memory.WriteCode(address, data);
     }
 }

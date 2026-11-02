@@ -85,6 +85,15 @@ namespace A3_Trainer.View
         private bool showingChildren;
         private readonly ComboBox hobby = DropDown(Tables.Hobbies);
         private readonly NumericUpDown[] seasonStats = new NumericUpDown[SeasonStat.All.Length];
+        // Moving the player to another club through the game's own transfer (TransferInjector).
+        private readonly ComboBox transferCountry = Combo();
+        private readonly ComboBox transferClub = Combo();
+        private readonly NumericUpDown transferFee = Number(0, 2000000);
+        private readonly CheckBox transferNow = new CheckBox { Text = "sofort (sonst zum Saisonende)" };
+        private readonly Button transferRequest = new Button { Text = "Wechsel anfordern" };
+        private readonly Label transferStatus = new Label();
+        private string transferNote = "";
+        private GroupBox transferGroup;
         private readonly Button save = new Button { Text = "Speichern" };
         private readonly Button reload = new Button { Text = "Neu laden" };
         private readonly Label status = new Label();
@@ -120,6 +129,9 @@ namespace A3_Trainer.View
         }
 
         protected override string GameDisplayName => "Anstoss-3";
+
+        /// <summary>Requests transfers in the game; without it the "Wechsel" tab can't request any.</summary>
+        internal TransferInjector Transfers { get; set; }
 
         /// <summary>Raised when the user picks another club in the club selection.</summary>
         internal event Action<ClubKey> ClubChosen;
@@ -174,6 +186,7 @@ namespace A3_Trainer.View
             this.tabs.TabPages.Add(this.SeasonPage());
             this.tabs.TabPages.Add(this.ContractPage());
             this.tabs.TabPages.Add(this.PrivatePage());
+            this.tabs.TabPages.Add(this.TransferPage());
             this.Controls.Add(this.tabs);
 
             this.save.SetBounds(246, 394, 110, 25);
@@ -494,6 +507,33 @@ namespace A3_Trainer.View
             return page;
         }
 
+        private TabPage TransferPage()
+        {
+            var page = new TabPage("Wechsel");
+            GroupBox group = this.transferGroup = Group(page, "Wechsel", 6, 214);
+            int y = 20;
+            y = Row(group, y, "Land", this.transferCountry, 160);
+            y = Row(group, y, "Neuer Verein", this.transferClub, 230);
+            group.Controls.Add(new Label { Text = "× 1.000 DM", Bounds = new Rectangle(200, y + 3, 150, 18) });
+            y = Row(group, y, "Ablöse", this.transferFee, 80);
+            this.transferNow.SetBounds(14, y, 330, 18);
+            group.Controls.Add(this.transferNow);
+            y += 26;
+            this.transferRequest.SetBounds(14, y, 130, 25);
+            group.Controls.Add(this.transferRequest);
+            this.transferStatus.SetBounds(14, y + 32, 336, 44);
+            group.Controls.Add(this.transferStatus);
+            page.Controls.Add(new Label
+            {
+                Text = "Der Wechsel geschieht beim nächsten Tagesabschluss mit den Funktionen des Spiels: " +
+                       "Kader, Vertrag beim neuen Verein, Ablöse und Meldungen wie bei seinen eigenen Wechseln.",
+                Bounds = new Rectangle(10, 228, 352, 60),
+            });
+            this.transferCountry.SelectedIndexChanged += (s, e) => this.FillTransferClubs();
+            this.transferRequest.Click += (s, e) => this.RequestTransfer();
+            return page;
+        }
+
         private void RefreshList()
         {
             this.list.BeginUpdate();
@@ -507,6 +547,9 @@ namespace A3_Trainer.View
                 if (this.club.HasValue && this.IsGameRunning(silent: true))
                 {
                     this.FillCountries();
+                    TransferInjector.Outcome outcome = this.Transfers?.TakeOutcome() ?? TransferInjector.Outcome.None;
+                    if (outcome != TransferInjector.Outcome.None)
+                        this.transferNote = OutcomeText(outcome);
                     this.today = this.game.Today();
                     this.players = this.game.ReadPlayers(this.club.Value);
                 }
@@ -563,6 +606,8 @@ namespace A3_Trainer.View
                     .OrderBy(c => c.Text, StringComparer.CurrentCulture).Cast<object>().ToArray());
                 this.countryBox.SelectedItem = this.countryBox.Items.Cast<Choice>().FirstOrDefault(c => c.Club.Country == this.club.Value.Country);
                 this.FillClubBox(this.club.Value.Country);
+                this.transferCountry.Items.Clear();
+                this.transferCountry.Items.AddRange(this.countryBox.Items.Cast<object>().ToArray());
             }
             finally
             {
@@ -689,7 +734,7 @@ namespace A3_Trainer.View
             this.save.Enabled = has;
             if (!has)
             {
-                this.ClearAllFields(this.tabs, new HashSet<Control> { this.teamGroup });
+                this.ClearAllFields(this.tabs, new HashSet<Control> { this.teamGroup, this.transferGroup });
                 this.ageValue.Text = "";
                 this.notLoaded.Visible = false;
                 this.injuryValue.Text = "";
@@ -756,7 +801,60 @@ namespace A3_Trainer.View
             this.hobby.SelectedIndex = Clamp(player.Hobby, this.hobby.Items.Count);
             for (int i = 0; i < SeasonStat.All.Length; i++)
                 SetNumber(this.seasonStats[i], player.SeasonStats[i] & SeasonStat.All[i].Mask);
+            this.ShowTransfer(player);
         }
+
+        // The target stays as picked for the next player; until one is picked it starts at the player's country.
+        private void ShowTransfer(Player player)
+        {
+            if (this.transferCountry.SelectedIndex < 0)
+            {
+                this.transferNow.Checked = true;
+                this.transferCountry.SelectedItem = this.transferCountry.Items.Cast<Choice>().FirstOrDefault(c => c.Club.Country == player.ClubCountry);
+            }
+            if (this.transferClub.SelectedIndex < 0 && this.transferClub.Items.Count > 0)
+                this.transferClub.SelectedIndex = 0;
+            SetNumber(this.transferFee, (int)this.transferFee.Value);
+            this.transferStatus.Text = this.Transfers?.PendingPlayer() == player.Index
+                ? "Wechsel angefordert, er geschieht beim nächsten Tagesabschluss."
+                : this.transferNote;
+        }
+
+        private void FillTransferClubs()
+        {
+            this.transferClub.Items.Clear();
+            if (this.transferCountry.SelectedItem is Choice country)
+                foreach (ClubKey key in this.clubs.Where(c => c.Country == country.Club.Country))
+                    this.transferClub.Items.Add(new Choice(this.game.ClubName(key), key));
+            if (this.transferClub.Items.Count > 0)
+                this.transferClub.SelectedIndex = 0;
+        }
+
+        private void RequestTransfer()
+        {
+            if (this.shown == null || !(this.transferClub.SelectedItem is Choice target) || !this.IsGameRunning())
+                return;
+            if (this.Transfers == null)
+            {
+                this.transferStatus.Text = "Wechsel nicht verfügbar";
+                return;
+            }
+            var from = new ClubKey(this.shown.ClubCountry, this.shown.ClubNumber);
+            TransferInjector.RequestResult result = this.Transfers.Request(
+                this.shown.Index, from, target.Club, (int)this.transferFee.Value * 1000, this.transferNow.Checked);
+            this.transferNote = "";
+            this.transferStatus.Text =
+                result == TransferInjector.RequestResult.Requested ? $"Wechsel zu {target.Text} angefordert, er geschieht beim nächsten Tagesabschluss." :
+                result == TransferInjector.RequestResult.SameClub ? "Der Spieler spielt schon bei diesem Verein." :
+                "Wechsel nicht möglich: Der Code des Spiels ist nicht wie erwartet.";
+        }
+
+        // Reported once, after the daily processing that ran the request.
+        private static string OutcomeText(TransferInjector.Outcome outcome) =>
+            outcome == TransferInjector.Outcome.Done ? "Der letzte angeforderte Wechsel wurde ausgeführt." :
+            outcome == TransferInjector.Outcome.NotInClub ? "Der letzte angeforderte Wechsel fiel aus: Der Spieler war nicht mehr beim alten Verein." :
+            outcome == TransferInjector.Outcome.SquadFull ? $"Der letzte angeforderte Wechsel fiel aus: Der neue Verein hatte schon {TransferCode.SquadCapacity} Spieler." :
+            "";
 
         // Partner and children into edited; false (with the reason in the status) if changed children
         // have an impossible birth date or share a name, which the game never does.

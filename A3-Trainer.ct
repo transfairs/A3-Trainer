@@ -22,7 +22,7 @@ local A = {
 }
 -- Spielerdatensatz (CDatenSpieler)
 local R = {
-  Used = 0x20, ClubCountry = 0x30, ClubNumber = 0x31, Salary = 0x150, MatchBonus = 0x152,
+  Used = 0x20, ClubCountry = 0x220, ClubNumber = 0x221, Salary = 0x150, MatchBonus = 0x152,
   ContractEnd = 0x15C, BirthDay = 0x168, FirstName = 0x1BE, LastName = 0x1C0,
   Skills = 0x1C4, Skills2 = 0x1C6, Traits = 0x1C8, Character = 0x1CA, Condition = 0x1CE, Freshness = 0x1D0,
   Strength = 0x21C, Position = 0x21D, SidePosition1 = 0x21E, SidePosition2 = 0x21F,

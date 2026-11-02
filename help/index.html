@@ -93,7 +93,7 @@
           </fieldset>
 
           <div class="toc-grid">
-            <a class="toc-card" href="#spieler" data-jump="spieler"><h3>Spieler</h3><p>Kader, nächsten Gegner und jeden anderen Verein bearbeiten: Daten, Positionen, Fähigkeiten, Eigenschaften, Vertrag, Privatleben.</p></a>
+            <a class="toc-card" href="#spieler" data-jump="spieler"><h3>Spieler</h3><p>Kader, nächsten Gegner und jeden anderen Verein bearbeiten: Daten, Positionen, Fähigkeiten, Eigenschaften, Vertrag, Privatleben, Wechsel.</p></a>
             <a class="toc-card" href="#verein" data-jump="verein"><h3>Verein &amp; Manager</h3><p>Vereinsdaten, Vermögen, Ansehen und Vertrag des Managers.</p></a>
             <a class="toc-card" href="#faq" data-jump="faq"><h3>Fehlerbehebung</h3><p>Häufige Fragen, bekannte Grenzen und die Logdatei.</p></a>
           </div>
@@ -104,7 +104,7 @@
       <section class="panel" id="panel-spieler">
         <div class="panel-header">
           <h1>Spieler</h1>
-          <p class="lead">Erreichbar über das Menü <span class="menu-path">Spieler</span>. Links steht die Spielerliste (verletzte Spieler in Rot), rechts der gewählte Spieler in neun Registerkarten: acht angeordnet wie im Spieleditor von Anstoss 3, dazu „Privat“ wie in der Spielerinfo.</p>
+          <p class="lead">Erreichbar über das Menü <span class="menu-path">Spieler</span>. Links steht die Spielerliste (verletzte Spieler in Rot), rechts der gewählte Spieler in elf Registerkarten: die meisten angeordnet wie im Spieleditor von Anstoss 3, „Saison“ und „Privat“ wie in der Spielerinfo, dazu „Wechsel“.</p>
         </div>
         <div class="subtabs">
           <button data-sub="uebersicht" class="active">Übersicht</button>
@@ -112,6 +112,7 @@
           <button data-sub="faehigkeiten">Positionen &amp; Fähigkeiten</button>
           <button data-sub="eigenschaften">Eigenschaften</button>
           <button data-sub="vertrag">Verfassung, Vertrag &amp; Privat</button>
+          <button data-sub="wechsel">Wechsel</button>
         </div>
 
         <div class="subpanel active" data-sub="uebersicht">
@@ -238,6 +239,20 @@
               <dt>Kinder</dt><dd>Anzahl 0 bis 5, darunter je Kind Name (aus derselben Liste) und Geburtstag. Ein neu hinzugefügtes Kind bekommt einen freien Namen und das heutige Datum. Wie im Spiel tragen Geschwister verschiedene Namen; ein Geburtstag, den es nicht gibt, wird nicht gespeichert.</dd>
               <dt>Hobby</dt><dd>Eines der 39 Hobbys des Spiels oder keins. Manche Hobbys lösen eigene Ereignisse aus.</dd>
             </dl>
+          </fieldset>
+        </div>
+
+        <div class="subpanel" data-sub="wechsel">
+          <fieldset class="groupbox">
+            <legend>Registerkarte „Wechsel“</legend>
+            <p>Schickt den Spieler zu einem anderen Verein. Das geht in beide Richtungen: einen eigenen Spieler abgeben oder über die Vereinsauswahl über der Liste einen Spieler eines anderen Vereins wählen und den eigenen Verein als Ziel nehmen. Das Spiel führt den Wechsel mit seinen eigenen Funktionen aus, also mit Kader, Aufstellung, Ablöse und Meldungen. Bei einem Neuzugang im eigenen Verein fragt es wie gewohnt nach der Rückennummer.</p>
+            <dl class="field-list">
+              <dt>Land, Neuer Verein</dt><dd>Der Verein, zu dem der Spieler wechselt. Die Auswahl bleibt für den nächsten Spieler stehen.</dd>
+              <dt>Ablöse</dt><dd>In 1.000 DM. Der neue Verein zahlt sie an den alten.</dd>
+              <dt>sofort</dt><dd>Der Spieler wechselt gleich. Ohne Haken trägt das Spiel den Wechsel für das Saisonende ein.</dd>
+              <dt>Wechsel anfordern</dt><dd>Der Wechsel geschieht beim nächsten <strong>Tagesabschluss</strong>. Eine neue Anforderung ersetzt eine noch nicht ausgeführte. Nach dem Tagesabschluss meldet die Registerkarte beim nächsten <span class="btn-tag">Neu laden</span>, ob er geklappt hat.</dd>
+            </dl>
+            <p>Den Vertrag beim neuen Verein (Gehalt, Prämien, Laufzeit von mindestens 2 Jahren) bestimmt das Spiel wie bei seinen eigenen Wechseln; ändern lässt er sich danach auf der Registerkarte „Vertrag“. Abgelehnt wird der Wechsel, wenn der Kader des neuen Vereins schon 35 Spieler hat oder der Spieler zum Zeitpunkt des Tagesabschlusses nicht mehr beim alten Verein ist. Leihen sind noch nicht möglich.</p>
           </fieldset>
         </div>
       </section>
