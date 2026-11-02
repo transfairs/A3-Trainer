@@ -109,15 +109,15 @@ namespace A3_Trainer.Tests
                 Assert.Equal(6500, TestHelpers.Get<NumericUpDown>(view, "cupBonus").Value);
                 Assert.Equal(40000, TestHelpers.Get<NumericUpDown>(view, "titleBonus").Value);
                 Assert.Equal(22222, TestHelpers.Get<NumericUpDown>(view, "goalBonus").Value);
-                ComboBox goal = TestHelpers.Get<ComboBox>(view, "seasonGoal");
-                Assert.Equal("Meisterschaft", goal.Text);
+                CheckBox option = TestHelpers.Get<CheckBox>(view, "clubOption");
+                Assert.False(option.Checked);
                 NumericUpDown years = TestHelpers.Get<NumericUpDown>(view, "contractYears");
                 Assert.Equal(2, years.Value);
                 CheckBox exit = TestHelpers.Get<CheckBox>(view, "exitClause");
                 Assert.False(exit.Checked);
 
                 TestHelpers.Get<NumericUpDown>(view, "pointBonus").Value = 3333;
-                goal.SelectedIndex = 10;
+                option.Checked = true;
                 years.Value = 5;
                 exit.Checked = true;
                 Click(view, "save");
@@ -126,13 +126,11 @@ namespace A3_Trainer.Tests
                 foreach (uint contract in new[] { A3Addresses.ManagerSalary, data })
                 {
                     Assert.Equal(3333, (int)m.ReadUInt32(contract + ContractOffset.PointBonus));
-                    Assert.Null(m.WrittenAt(contract + 0x14)); // not the season goal
+                    Assert.Equal(1, m.Get(contract + ContractOffset.ClubOption));
                     Assert.Equal(5, m.GetUInt16(contract + ContractOffset.Years));
                     Assert.Equal(1, m.Get(contract + ContractOffset.ExitClause));
                 }
                 Assert.Null(m.WrittenAt(data + ContractOffset.CupBonus)); // unchanged fields aren't written
-                Assert.Equal("Klassenerhalt", goal.Text);
-                Assert.Equal(10, m.Get(A3Addresses.ClubArray + (uint)A3Addresses.ClubSize + A3Addresses.ClubSeasonGoal)); // the club's
             }
         });
 
@@ -141,17 +139,14 @@ namespace A3_Trainer.Tests
         {
             FakeGameMemory m = CareerWithMoney();
             m.Map(A3Addresses.ManagerSalary, A3Addresses.ContractSize);
-            m.Put(A3Addresses.ClubArray + (uint)A3Addresses.ClubSize + A3Addresses.ClubSeasonGoal, 40);
             m.PutUInt16(A3Addresses.ManagerSalary + ContractOffset.Years, 99);
             using (var view = new ManagerView(Attached(), new A3Game(m)))
             {
                 view.RefreshValues();
-                Assert.Equal(-1, TestHelpers.Get<ComboBox>(view, "seasonGoal").SelectedIndex);
                 Assert.Equal(20, TestHelpers.Get<NumericUpDown>(view, "contractYears").Value);
 
                 Click(view, "save");
 
-                Assert.Null(m.WrittenAt(A3Addresses.ClubArray + (uint)A3Addresses.ClubSize + A3Addresses.ClubSeasonGoal));
                 Assert.Null(m.WrittenAt(A3Addresses.ManagerSalary + ContractOffset.Years));
             }
         });

@@ -20,7 +20,7 @@ namespace A3_Trainer.View
         private readonly NumericUpDown cupBonus = ClubView.Money();
         private readonly NumericUpDown titleBonus = ClubView.Money();
         private readonly NumericUpDown goalBonus = ClubView.Money();
-        private readonly ComboBox seasonGoal = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList };
+        private readonly CheckBox clubOption = new CheckBox { Text = "Option Verein auf Verlängerung" };
         private readonly NumericUpDown contractYears = new NumericUpDown { Minimum = 0, Maximum = 20 };
         private readonly CheckBox exitClause = new CheckBox { Text = "Ausstieg bei Angebot möglich" };
         private readonly NumericUpDown media = Percent();
@@ -98,12 +98,11 @@ namespace A3_Trainer.View
             ContractRow(0, "Punktprämie (DM)", this.pointBonus);
             ContractRow(0, "je Pokalrunde (DM)", this.cupBonus);
             ContractRow(0, "je Titel / Aufstieg (DM)", this.titleBonus);
-            ContractRow(1, "Saisonziel", this.seasonGoal);
             ContractRow(1, "Bonus bei Erreichen (DM)", this.goalBonus);
             ContractRow(1, "Laufzeit (Jahre)", this.contractYears);
-            this.exitClause.SetBounds(316, 22 + 3 * 28, 280, 21);
-            contract.Controls.Add(this.exitClause);
-            this.seasonGoal.Items.AddRange(Tables.SeasonGoals);
+            this.exitClause.SetBounds(316, 22 + 2 * 28, 280, 21);
+            this.clubOption.SetBounds(316, 22 + 3 * 28, 280, 21);
+            contract.Controls.AddRange(new Control[] { this.exitClause, this.clubOption });
             this.Controls.Add(contract);
 
             this.save.SetBounds(8, 384, 110, 25);
@@ -135,9 +134,9 @@ namespace A3_Trainer.View
             this.cupBonus.Value = this.shown.CupBonus;
             this.titleBonus.Value = this.shown.TitleBonus;
             this.goalBonus.Value = this.shown.GoalBonus;
-            this.seasonGoal.SelectedIndex = this.shown.SeasonGoal < Tables.SeasonGoals.Length ? this.shown.SeasonGoal : -1;
             this.contractYears.Value = Math.Min(this.shown.ContractYears, (int)this.contractYears.Maximum);
             this.exitClause.Checked = this.shown.ExitClause;
+            this.clubOption.Checked = this.shown.ClubOption;
             this.boardTrust.Value = this.shown.BoardTrust;
             this.media.Value = Math.Min(this.shown.MediaPopularity, 100);
             this.publicView.Value = Math.Min(this.shown.PublicPopularity, 100);
@@ -166,12 +165,11 @@ namespace A3_Trainer.View
             edited.CupBonus = (int)this.cupBonus.Value;
             edited.TitleBonus = (int)this.titleBonus.Value;
             edited.GoalBonus = (int)this.goalBonus.Value;
-            // A goal without a name stays unless one is picked; so does a term above the field's limit.
-            if (this.seasonGoal.SelectedIndex >= 0)
-                edited.SeasonGoal = this.seasonGoal.SelectedIndex;
+            // A term above the field's limit stays unless it is changed.
             if ((int)this.contractYears.Value != Math.Min(this.shown.ContractYears, (int)this.contractYears.Maximum))
                 edited.ContractYears = (int)this.contractYears.Value;
             edited.ExitClause = this.exitClause.Checked;
+            edited.ClubOption = this.clubOption.Checked;
             // The game adds its own bonuses to the stored base; the base is set so the total matches.
             if ((int)this.boardTrust.Value != this.shown.BoardTrust)
                 edited.BoardTrustBase = (int)this.boardTrust.Value - this.shown.BoardTrustBonus;
