@@ -60,7 +60,10 @@ them back every second for the club it was switched on for.
 trouble with the association (standing from "ausgezeichnet" to "verzockt").
 **Stadium** (`Verein → Eigener Verein`, tab `Stadion`): name and city, VIP places, seats and standing places, heaters, roof, running track
 and condition per tribune, scoreboard and comfort (undersoil heating, heated seats, retractable pitch, seat cushions,
-luxury boxes, floodlight); the capacity follows the places.
+luxury boxes, floodlight); the capacity follows the places. While the game's stadium page is open, its copy is
+changed as well, since the page writes it back when it is left.
+**Club identity** (`Verein → Eigener Verein`, tab `Identität`): fan name, number and kind of fans, board, fan
+friendship (kept mutual) and arch rival among the clubs of the same country.
 **Manager**: name, private wealth, board trust, popularity with the media, the public and the fans;
 contract: salary, bonuses per point, cup round and title/promotion, the bonus for reaching the season goal, years left, the
 exit clause on offers and the club's option to extend (written to the manager object and the data the game writes it back to).

@@ -606,7 +606,31 @@ namespace A3_Trainer.Controller
         /// <summary>Writes what changed; the capacity the game keeps follows the places.</summary>
         internal void SaveStadium(Stadium original, Stadium edited)
         {
-            uint address = edited.Address;
+            foreach (uint address in this.StadiumCopies(edited.Address))
+                this.WriteStadium(address, original, edited);
+        }
+
+        // The stadium and, while the game's stadium page shows it, the page's copies of it.
+        private IEnumerable<uint> StadiumCopies(uint stadium)
+        {
+            yield return stadium;
+            uint page = this.ReadUInt32(this.ReadUInt32(StadiumAddress.PageHolder) + StadiumAddress.CurrentPage);
+            if (page == 0 || this.ReadUInt32(page) != StadiumAddress.PageVtable)
+                yield break;
+            uint copy = this.ReadUInt32(page + StadiumAddress.PageClubCopy);
+            if (copy == 0)
+                yield break;
+            var club = new ClubKey(this.ReadByte(copy + A3Addresses.ClubCopyCountry), this.ReadByte(copy + A3Addresses.ClubCopyNumber));
+            if (this.FindStadium(club) != stadium)
+                yield break;
+            // Slot 0 is the current stadium, the others are being built.
+            yield return page + StadiumAddress.PageSlots;
+            if (this.ReadUInt16(page + StadiumAddress.PageSlot) == 0)
+                yield return page + StadiumAddress.PageShown;
+        }
+
+        private void WriteStadium(uint address, Stadium original, Stadium edited)
+        {
             if (edited.Name != original.Name && edited.Name.Length > 0)
                 this.memory.Write(address + StadiumOffset.Name, Field(edited.Name, StadiumOffset.NameSize));
             if (edited.City != original.City && edited.City.Length > 0)
@@ -649,6 +673,102 @@ namespace A3_Trainer.Controller
             return this.ReadString(address + StadiumAddress.Data + StadiumOffset.Name, StadiumOffset.NameSize).Length > 0
                 ? address + StadiumAddress.Data
                 : (uint?)null;
+        }
+
+        /// <summary>Fans, board, fan friendship and arch rival of a club, or null if there is no such club.</summary>
+        internal ClubIdentity ReadIdentity(ClubKey key)
+        {
+            uint? club = this.ClubAddress(key);
+            if (!club.HasValue)
+                return null;
+            // The loaded club's working copy is what the game uses; the fan name lives only in the record.
+            uint copy = this.ClubCopy(key);
+            int Value(int recordOffset, int copyOffset) =>
+                this.ReadByte(copy != 0 ? copy + (uint)copyOffset : club.Value + (uint)recordOffset);
+            return new ClubIdentity
+            {
+                Key = key,
+                FanName = this.ReadString(club.Value + A3Addresses.ClubFanName, A3Addresses.ClubFanNameSize),
+                FanCrowd = Value(A3Addresses.ClubFanCrowd, A3Addresses.ClubCopyFanCrowd),
+                FanType = Value(A3Addresses.ClubFanType, A3Addresses.ClubCopyFanType),
+                Board = Value(A3Addresses.ClubBoard, A3Addresses.ClubCopyBoard),
+                Friend = (sbyte)Value(A3Addresses.ClubFriend, A3Addresses.ClubCopyFriend),
+                Rival = (sbyte)Value(A3Addresses.ClubRival, A3Addresses.ClubCopyRival),
+            };
+        }
+
+        /// <summary>
+        /// Writes the identity values that changed. A fan friendship is mutual, as in the game's club editor: the new
+        /// friend gets this club as its friend, and whoever was a friend of either club before loses that friendship.
+        /// </summary>
+        internal void SaveIdentity(ClubIdentity original, ClubIdentity edited)
+        {
+            uint club = this.ClubAddress(edited.Key).Value;
+            if (edited.FanName != original.FanName)
+                this.memory.Write(club + A3Addresses.ClubFanName, Field(edited.FanName, A3Addresses.ClubFanNameSize));
+            this.WriteClubField(edited.Key, A3Addresses.ClubFanCrowd, A3Addresses.ClubCopyFanCrowd, original.FanCrowd, edited.FanCrowd);
+            this.WriteClubField(edited.Key, A3Addresses.ClubFanType, A3Addresses.ClubCopyFanType, original.FanType, edited.FanType);
+            this.WriteClubField(edited.Key, A3Addresses.ClubBoard, A3Addresses.ClubCopyBoard, original.Board, edited.Board);
+            this.WriteClubField(edited.Key, A3Addresses.ClubRival, A3Addresses.ClubCopyRival, original.Rival, edited.Rival);
+            if (edited.Friend == original.Friend)
+                return;
+
+            this.WriteFriend(edited.Key, original.Friend, edited.Friend);
+            this.EndFriendship(new ClubKey(edited.Key.Country, original.Friend), edited.Key.Number);
+            if (edited.Friend < 0)
+                return;
+            var friend = new ClubKey(edited.Key.Country, edited.Friend);
+            ClubIdentity theirs = this.ReadIdentity(friend);
+            if (theirs == null)
+                return;
+            if (theirs.Friend != edited.Key.Number)
+                this.EndFriendship(new ClubKey(edited.Key.Country, theirs.Friend), edited.Friend);
+            this.WriteFriend(friend, theirs.Friend, edited.Key.Number);
+        }
+
+        private void WriteFriend(ClubKey key, int was, int now) =>
+            this.WriteClubField(key, A3Addresses.ClubFriend, A3Addresses.ClubCopyFriend, was, now);
+
+        // Clears the friendship of club, if it is with the club number partner.
+        private void EndFriendship(ClubKey club, int partner)
+        {
+            if (club.Number < 0 || club.Number == partner)
+                return;
+            ClubIdentity identity = this.ReadIdentity(club);
+            if (identity != null && identity.Friend == partner)
+                this.WriteFriend(club, partner, -1);
+        }
+
+        // A byte in the club's record and, while the game has the club loaded, its working copy.
+        private void WriteClubField(ClubKey key, int recordOffset, int copyOffset, int was, int now)
+        {
+            if (now == was)
+                return;
+            uint? club = this.ClubAddress(key);
+            if (!club.HasValue)
+                return;
+            var value = new[] { (byte)now };
+            this.memory.Write(club.Value + (uint)recordOffset, value);
+            uint copy = this.ClubCopy(key);
+            if (copy != 0)
+                this.memory.Write(copy + (uint)copyOffset, value);
+        }
+
+        /// <summary>The clubs of a country by their number in it, with names.</summary>
+        internal List<KeyValuePair<int, string>> CountryClubs(int country)
+        {
+            var clubs = new List<KeyValuePair<int, string>>();
+            // The index table only gives the first club; a number past the country's clubs lands in the next country.
+            for (int number = 0; number < 256; number++)
+            {
+                uint? address = this.ClubAddress(new ClubKey(country, number));
+                if (!address.HasValue)
+                    continue;
+                if (this.ReadByte(address.Value + A3Addresses.ClubOwnCountry) != country)
+                    break;
+                clubs.Add(new KeyValuePair<int, string>(number, this.ReadString(address.Value + A3Addresses.ClubName, A3Addresses.ClubNameSize)));
+            }
+            return clubs;
         }
 
         /// <summary>The working copy the game holds of a loaded club (own club, next opponent), or 0 if it has none.</summary>

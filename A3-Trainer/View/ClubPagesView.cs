@@ -8,14 +8,15 @@ namespace A3_Trainer.View
     {
         private readonly TabControl tabs = new TabControl();
 
-        /// <summary>Puts <paramref name="club"/> and <paramref name="stadium"/> on a tab each.</summary>
-        internal ClubPagesView(ClubView club, StadiumView stadium)
+        /// <summary>Puts <paramref name="club"/>, <paramref name="identity"/> and <paramref name="stadium"/> on a tab each.</summary>
+        internal ClubPagesView(ClubView club, IdentityView identity, StadiumView stadium)
         {
             this.Size = new Size(630, 423);
             this.Font = new Font("Microsoft Sans Serif", 8.25f);
             this.tabs.SetBounds(4, 4, 622, 415);
             this.tabs.ItemSize = new Size(80, 18);
             this.AddPage("Verein", club);
+            this.AddPage("Identität", identity);
             this.AddPage("Stadion", stadium);
             this.Controls.Add(this.tabs);
             A3Theme.Apply(this);

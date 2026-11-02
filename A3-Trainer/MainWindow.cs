@@ -21,6 +21,7 @@ namespace A3_Trainer
         private readonly A3Game game;
         private readonly PlayerView playerView;
         private readonly ClubView clubView;
+        private readonly IdentityView identityView;
         private readonly StadiumView stadiumView;
         private readonly ClubPagesView clubPages;
         private readonly ManagerView managerView;
@@ -69,8 +70,9 @@ namespace A3_Trainer
             this.playerView = new PlayerView(this.memory, this.game);
             this.playerView.ClubChosen += this.OnClubChosen;
             this.clubView = new ClubView(this.memory, this.game);
+            this.identityView = new IdentityView(this.memory, this.game);
             this.stadiumView = new StadiumView(this.memory, this.game);
-            this.clubPages = new ClubPagesView(this.clubView, this.stadiumView);
+            this.clubPages = new ClubPagesView(this.clubView, this.identityView, this.stadiumView);
             this.managerView = new ManagerView(this.memory, this.game);
             this.waiting = new Label
             {
@@ -122,6 +124,8 @@ namespace A3_Trainer
                     this.ShowScreen(this.clubPages, "Verein: " + this.game.ClubName(own.Value));
                     this.clubView.Manager = this.manager;
                     this.clubView.RefreshValues();
+                    this.identityView.Club = own.Value;
+                    this.identityView.RefreshValues();
                     this.stadiumView.Club = own.Value;
                     this.stadiumView.RefreshValues();
                     break;

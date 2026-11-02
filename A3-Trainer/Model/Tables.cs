@@ -88,6 +88,18 @@ namespace A3_Trainer.Model
         /// <summary>Highest form value the game sets (FUN_006FF0D0).</summary>
         internal const int MaxFormBase = 20;
 
+        /// <summary>A club's fan crowd (texts 1033-1039).</summary>
+        internal static readonly string[] FanCrowds = { "wahre Horden", "sehr hoch", "hoch", "Durchschnitt", "bescheiden", "ärmlich", "Fans?" };
+
+        /// <summary>The kind of a club's fans (texts 3513-3520 via table 0x00880D8C).</summary>
+        internal static readonly string[] FanTypes =
+        {
+            "normal", "lautstark", "verwöhnt", "anspruchsvoll", "treu", "erfolgshungrig", "frustriert", "euphorisch",
+        };
+
+        /// <summary>A club's board (texts 1040-1045).</summary>
+        internal static readonly string[] Boards = { "Pulverfass", "Schleudersitz", "nervös", "normal", "anspruchslos", "treu" };
+
         /// <summary>Skin colours, bits 0-2 of the appearance byte.</summary>
         internal static readonly string[] SkinColors = { "hell", "dunkel", "schwarz", "asiatisch" };
 

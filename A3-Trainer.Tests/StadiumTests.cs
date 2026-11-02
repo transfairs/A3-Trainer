@@ -98,6 +98,50 @@ namespace A3_Trainer.Tests
         }
 
         [Fact]
+        public void SaveStadium_AlsoWritesTheOpenStadiumPage()
+        {
+            const uint Holder = 0x05000000, Page = 0x06000000, Copy = 0x00A6BFB8;
+            FakeGameMemory m = WithStadiums();
+            m.PutUInt32(StadiumAddress.PageHolder, Holder);
+            m.Map(Holder, StadiumAddress.CurrentPage + 4);
+            m.PutUInt32(Holder + StadiumAddress.CurrentPage, Page);
+            m.Map(Page, StadiumAddress.PageShown + StadiumAddress.Size);
+            m.PutUInt32(Page, StadiumAddress.PageVtable);
+            m.PutUInt32(Page + StadiumAddress.PageClubCopy, Copy);
+            m.Put(Copy + A3Addresses.ClubCopyNumber, 1, 14);
+            var game = new A3Game(m);
+
+            Stadium original = game.ReadStadium(new ClubKey(14, 1));
+            Stadium edited = original.Clone();
+            edited.Vip[0] = 500;
+            game.SaveStadium(original, edited);
+            Assert.Equal(500, m.GetUInt16(Page + StadiumAddress.PageShown + StadiumOffset.Vip));
+            Assert.Equal(500, m.GetUInt16(Page + StadiumAddress.PageSlots + StadiumOffset.Vip));
+            Assert.Null(m.WrittenAt(Page + StadiumAddress.PageSlots + StadiumAddress.Size + StadiumOffset.Vip));
+
+            // A stadium being built is shown: only the current one's slot.
+            m.PutUInt16(Page + StadiumAddress.PageSlot, 1);
+            edited.Vip[0] = 600;
+            game.SaveStadium(original, edited);
+            Assert.Equal(600, m.GetUInt16(Page + StadiumAddress.PageSlots + StadiumOffset.Vip));
+            Assert.Equal(500, m.GetUInt16(Page + StadiumAddress.PageShown + StadiumOffset.Vip));
+
+            // Another club's stadium, or another page: the page stays as it is.
+            m.Put(Copy + A3Addresses.ClubCopyNumber, 10);
+            edited.Vip[0] = 700;
+            game.SaveStadium(original, edited);
+            m.Put(Copy + A3Addresses.ClubCopyNumber, 1);
+            m.PutUInt32(Page, 0x00829EB4);
+            game.SaveStadium(original, edited);
+            Assert.Equal(700, m.GetUInt16(Munich + StadiumOffset.Vip));
+            Assert.Equal(600, m.GetUInt16(Page + StadiumAddress.PageSlots + StadiumOffset.Vip));
+            m.PutUInt32(Page, StadiumAddress.PageVtable);
+            m.PutUInt32(Page + StadiumAddress.PageClubCopy, 0);
+            game.SaveStadium(original, edited);
+            Assert.Equal(600, m.GetUInt16(Page + StadiumAddress.PageSlots + StadiumOffset.Vip));
+        }
+
+        [Fact]
         public void View_ShowsAndSavesTheStadium() => StaThread.Run(() =>
         {
             FakeGameMemory m = WithStadiums();
@@ -183,6 +227,7 @@ namespace A3_Trainer.Tests
                 var game = new A3Game(m);
                 TestHelpers.Set(window, "game", game);
                 TestHelpers.Set(TestHelpers.Get<ClubView>(window, "clubView"), "game", game);
+                TestHelpers.Set(TestHelpers.Get<IdentityView>(window, "identityView"), "game", game);
                 TestHelpers.Set(TestHelpers.Get<StadiumView>(window, "stadiumView"), "game", game);
                 TestHelpers.Get<ProcessMemory>(window, "memory").mProc.Process = Process.GetCurrentProcess();
                 ToolStripMenuItem club = window.MainMenuStrip.Items.Cast<ToolStripMenuItem>().Single(i => i.Text == "Verein");
@@ -192,9 +237,9 @@ namespace A3_Trainer.Tests
 
                 Assert.Equal("A3-Trainer :: Verein: 1.FV München", window.Text);
                 TabControl tabs = TestHelpers.Get<TabControl>(TestHelpers.Get<ClubPagesView>(window, "clubPages"), "tabs");
-                Assert.Equal(new[] { "Verein", "Stadion" }, tabs.TabPages.Cast<TabPage>().Select(p => p.Text));
+                Assert.Equal(new[] { "Verein", "Identität", "Stadion" }, tabs.TabPages.Cast<TabPage>().Select(p => p.Text));
                 StadiumView stadium = TestHelpers.Get<StadiumView>(window, "stadiumView");
-                Assert.Same(tabs.TabPages[1], stadium.Parent);
+                Assert.Same(tabs.TabPages[2], stadium.Parent);
                 Assert.Equal("Zentralstadion", TestHelpers.Get<TextBox>(stadium, "stadiumName").Text);
             }
         });

@@ -62,6 +62,15 @@ namespace A3_Trainer.Controller
         internal const int ClubShortNameSize = 4;
         internal const int ClubTrouble = 0x12C;    // bits 0-4: trouble with the association (Tables.AssociationLevel), higher bits game state
         internal const int ClubImage = 0x138;      // byte, 10-50, see Tables.ClubImages
+        // Identity as the database import fills it (FUN_0068D411).
+        internal const int ClubFanName = 0x6A;     // char[], what the fans are called ("Bayern", "Pfälzer")
+        internal const int ClubFanNameSize = 20;
+        internal const int ClubFanCrowd = 0x11C;   // byte, Tables.FanCrowds, 0 = most fans
+        internal const int ClubFanType = 0x11D;    // byte, Tables.FanTypes (texts 3513-3520)
+        internal const int ClubFriend = 0x121;     // signed byte, number in the own country of the club with a fan friendship, -1 = none
+        internal const int ClubRival = 0x122;      // signed byte, number in the own country of the arch rival, -1 = none
+        internal const int ClubBoard = 0x123;      // byte, Tables.Boards; club actions move it by one (FUN_005F4C42)
+        internal const int ClubOwnCountry = 0x12D; // byte, the club's country
 
         // --- Working copies of the loaded clubs (own club, next opponent; FUN_00639E63): 6 entries of
         // 12 bytes {used, country, number, ...; object pointer at +8}. The game writes the object back to
@@ -73,6 +82,13 @@ namespace A3_Trainer.Controller
         internal const int ClubCopyName = 0x02;    // copied from the record when the club is loaded (FUN_0063B75A)
         internal const int ClubCopyTrouble = 0x102;
         internal const int ClubCopyImage = 0x10F;
+        internal const int ClubCopyFanCrowd = 0xEC;
+        internal const int ClubCopyFanType = 0xED;
+        internal const int ClubCopyFriend = 0xF3;
+        internal const int ClubCopyRival = 0xF4;
+        internal const int ClubCopyBoard = 0xF5;
+        internal const int ClubCopyNumber = 0x103;   // byte, number in the country
+        internal const int ClubCopyCountry = 0x104;  // byte
         // Finances: 250 dwords from the record's +0x488, the copy's +0x210 (FUN_0063C908); the first is the wealth at
         // the start of the season, the bank balance is it plus the season's bookings after it.
         internal const int ClubSeasonStartMoney = 0x488;
@@ -183,6 +199,17 @@ namespace A3_Trainer.Controller
         internal const uint OtherFirst = 0x00AE6304;       // word, first club index with a CDatenStadion
         internal const int Data = 0x20;
         internal const int Tribunes = 4;                   // Haupt-, Gegen-, linke und rechte Tribüne
+        internal const int Size = 0xD0;
+
+        // The game's stadium page copies the club's stadiums when it opens and writes them back when it is
+        // left (FUN_0057CC42, FUN_0057DE04); the shown one goes into its slot first.
+        internal const uint PageHolder = 0x01C6BF4C;       // pointer to the object holding the current page
+        internal const int CurrentPage = 0x42F8;
+        internal const uint PageVtable = 0x0082891C;       // the stadium page
+        internal const int PageClubCopy = 0x3758;          // pointer to the club's working copy
+        internal const int PageSlot = 0x492C;              // word, slot of the shown stadium
+        internal const int PageSlots = 0x4930;             // three stadiums of Size bytes, the first the current one
+        internal const int PageShown = 0x4BA0;             // the shown stadium
     }
 
     /// <summary>Offsets in a stadium (0xD0 bytes), see the database import FUN_0068BCCB; checked on the stadium page.</summary>
