@@ -473,18 +473,20 @@ namespace A3_Trainer.Controller
         private static uint CompetencyField(int level, int competency) =>
             A3Addresses.ManagerCompetencies + (uint)(level * A3Addresses.ManagerCompetencyRow + competency * 2);
 
-        /// <summary>Birthday, level and competencies of human manager <paramref name="manager"/> (1-4).</summary>
+        /// <summary>Birthday, nerves, level and competencies of human manager <paramref name="manager"/> (1-4).</summary>
         internal ManagerPerson ReadPerson(int manager)
         {
             byte[] birthday = this.memory.Read(this.ManagerBirthday(manager), 4);
             byte[] table = this.memory.Read(this.ManagerField(manager, A3Addresses.ManagerCompetencies),
                                             A3Addresses.ManagerLevels * A3Addresses.ManagerCompetencyRow);
-            if (birthday == null || table == null)
+            byte[] nerves = this.memory.Read(this.ManagerField(manager, A3Addresses.ManagerNerves), 2);
+            if (birthday == null || table == null || nerves == null)
                 return null;
             return new ManagerPerson
             {
                 Manager = manager,
                 Birthday = new GameDate(BitConverter.ToInt16(birthday, 2), birthday[1], birthday[0]),
+                Nerves = BitConverter.ToInt16(nerves, 0),
                 Level = this.ReadByte(this.ManagerField(manager, A3Addresses.ManagerLevel)),
                 LevelFlags = this.ReadByte(this.ManagerField(manager, A3Addresses.ManagerLevelFlags)),
                 Competencies = Enumerable.Range(0, A3Addresses.ManagerLevels)
@@ -494,7 +496,7 @@ namespace A3_Trainer.Controller
             };
         }
 
-        /// <summary>Writes the birthday, level and competencies that changed.</summary>
+        /// <summary>Writes the birthday, nerves, level and competencies that changed.</summary>
         internal void SavePerson(ManagerPerson original, ManagerPerson edited)
         {
             int manager = edited.Manager;
@@ -504,6 +506,8 @@ namespace A3_Trainer.Controller
                 byte[] year = BitConverter.GetBytes((short)date.Year);
                 this.memory.Write(this.ManagerBirthday(manager), new[] { (byte)date.Day, (byte)date.Month, year[0], year[1] });
             }
+            if (edited.Nerves != original.Nerves)
+                this.WriteManagerField(manager, A3Addresses.ManagerNerves, BitConverter.GetBytes((short)edited.Nerves));
             if (edited.Level != original.Level)
                 this.WriteManagerField(manager, A3Addresses.ManagerLevel, new[] { (byte)edited.Level });
             for (int level = 0; level < A3Addresses.ManagerLevels; level++)

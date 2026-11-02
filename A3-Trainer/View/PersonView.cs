@@ -8,7 +8,7 @@ using System.Windows.Forms;
 
 namespace A3_Trainer.View
 {
-    /// <summary>A human manager as a person: birthday, manager level and competencies.</summary>
+    /// <summary>A human manager as a person: birthday, nerves, manager level and competencies.</summary>
     internal sealed class PersonView : TrainerView
     {
         private const int MaxCompetency = 15;
@@ -19,6 +19,7 @@ namespace A3_Trainer.View
         private readonly NumericUpDown birthMonth = new NumericUpDown { Minimum = 0, Maximum = 12 };
         private readonly NumericUpDown birthYear = new NumericUpDown { Minimum = 0, Maximum = 3000 };
         private readonly Label age = new Label();
+        private readonly NumericUpDown nerves = new NumericUpDown { Minimum = 0, Maximum = 100 };
         private readonly NumericUpDown level = new NumericUpDown { Minimum = 0, Maximum = A3Addresses.ManagerLevels - 1 };
         private readonly Label levelInForce = new Label();
         private readonly GroupBox competencyGroup = new GroupBox();
@@ -60,6 +61,9 @@ namespace A3_Trainer.View
             person.Controls.Add(new Label { Text = "Alter", Bounds = new Rectangle(12, 53, 170, 18) });
             this.age.SetBounds(190, 53, 160, 18);
             person.Controls.Add(this.age);
+            person.Controls.Add(new Label { Text = "Nervenkostüm", Bounds = new Rectangle(380, 25, 110, 18) });
+            this.nerves.SetBounds(496, 22, 60, 21);
+            person.Controls.Add(this.nerves);
             foreach (NumericUpDown part in new[] { this.birthDay, this.birthMonth, this.birthYear })
                 part.ValueChanged += (s, e) => this.age.Text = this.AgeText();
             this.Controls.Add(person);
@@ -111,6 +115,7 @@ namespace A3_Trainer.View
             SetNumber(this.birthMonth, birthday.IsValid ? birthday.Month : 0);
             SetNumber(this.birthYear, birthday.IsValid ? birthday.Year : 0);
             this.age.Text = this.AgeText();
+            SetNumber(this.nerves, this.shown.Nerves);
             SetNumber(this.level, this.shown.Level);
             this.ShowRow();
             this.status.Text = "";
@@ -165,6 +170,8 @@ namespace A3_Trainer.View
                 this.status.Text = "Ungültiges Geburtsdatum";
                 return;
             }
+            if ((int)this.nerves.Value != Math.Min(Math.Max(this.shown.Nerves, 0), 100))
+                edited.Nerves = (int)this.nerves.Value;
             if ((int)this.level.Value != Math.Min(this.shown.Level, (int)this.level.Maximum))
                 edited.Level = (int)this.level.Value;
             this.TakeRow();

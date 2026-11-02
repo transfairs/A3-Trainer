@@ -20,12 +20,13 @@ namespace A3_Trainer.Tests
         private static uint Cell(int level, int competency) =>
             A3Addresses.ManagerCompetencies + (uint)(level * A3Addresses.ManagerCompetencyRow + competency * 2);
 
-        // Born 1.1.1970, level 9; every competency of a row holds the row's level, as the game starts them.
+        // Born 1.1.1970, nerves 98, level 9; every competency of a row holds the row's level, as the game starts them.
         internal static FakeGameMemory WithPerson()
         {
             FakeGameMemory m = A3GameTests.Career();
             m.Map(A3Addresses.ManagerData, A3Addresses.ManagerDataStride);
             m.Put(Birthday, 1, 1, 0xB2, 0x07);
+            m.PutUInt16(A3Addresses.ManagerNerves, 98);
             m.Put(A3Addresses.ManagerLevel, 9);
             m.Put(A3Addresses.ManagerLevelFlags, 0);
             m.Map(A3Addresses.ManagerCompetencies, A3Addresses.ManagerLevels * A3Addresses.ManagerCompetencyRow);
@@ -47,6 +48,7 @@ namespace A3_Trainer.Tests
         {
             ManagerPerson person = new A3Game(WithPerson()).ReadPerson(1);
             Assert.Equal(new GameDate(1970, 1, 1), person.Birthday);
+            Assert.Equal(98, person.Nerves);
             Assert.Equal(9, person.Level);
             Assert.Equal(9, person.LevelInForce(person.Level));
             Assert.Equal(Enumerable.Repeat(9, 7), person.Competencies[9]);
@@ -63,12 +65,15 @@ namespace A3_Trainer.Tests
             ManagerPerson original = game.ReadPerson(1);
             ManagerPerson edited = original.Clone();
             edited.Birthday = new GameDate(1965, 12, 24);
+            edited.Nerves = 40;
             edited.Level = 10;
             edited.Competencies[10][0] = 14;
 
             game.SavePerson(original, edited);
 
             Assert.Equal(new byte[] { 24, 12, 0xAD, 0x07 }, m.Read(Birthday, 4));
+            Assert.Equal(40, m.GetUInt16(A3Addresses.ManagerNerves));
+            Assert.Equal(40, m.GetUInt16(A3Addresses.ManagerData + 0x13E));
             Assert.Equal(10, m.Get(A3Addresses.ManagerLevel));
             Assert.Equal(10, m.Get(A3Addresses.ManagerData + 0x43));
             Assert.Equal(14, m.GetUInt16(Cell(10, 0)));
@@ -87,6 +92,7 @@ namespace A3_Trainer.Tests
                 view.RefreshValues();
                 Assert.Equal("1", TestHelpers.Get<NumericUpDown>(view, "birthDay").Text);
                 Assert.Equal("29", TestHelpers.Get<Label>(view, "age").Text);
+                Assert.Equal(98, TestHelpers.Get<NumericUpDown>(view, "nerves").Value);
                 NumericUpDown level = TestHelpers.Get<NumericUpDown>(view, "level");
                 NumericUpDown[] competencies = TestHelpers.Get<NumericUpDown[]>(view, "competencies");
                 Assert.Equal(9, level.Value);
@@ -102,11 +108,13 @@ namespace A3_Trainer.Tests
                 Assert.Equal(12, competencies[0].Value);
                 level.Value = 11;
                 TestHelpers.Get<NumericUpDown>(view, "birthYear").Value = 1980;
+                TestHelpers.Get<NumericUpDown>(view, "nerves").Value = 60;
                 Assert.Equal("19", TestHelpers.Get<Label>(view, "age").Text);
                 TestHelpers.Click(TestHelpers.Get<Button>(view, "save"));
 
                 Assert.Equal("Gespeichert", TestHelpers.Get<Label>(view, "status").Text);
                 Assert.Equal(11, m.Get(A3Addresses.ManagerLevel));
+                Assert.Equal(60, m.GetUInt16(A3Addresses.ManagerNerves));
                 Assert.Equal(12, m.GetUInt16(Cell(9, 0)));
                 Assert.Equal(3, m.GetUInt16(Cell(11, 6)));
                 Assert.Null(m.WrittenAt(Cell(11, 5)));
@@ -127,6 +135,7 @@ namespace A3_Trainer.Tests
                 Assert.Equal(15, TestHelpers.Get<NumericUpDown[]>(view, "competencies")[2].Value);
                 TestHelpers.Click(TestHelpers.Get<Button>(view, "save"));
                 Assert.Null(m.WrittenAt(Cell(12, 2)));               // kept above the field's limit
+                Assert.Null(m.WrittenAt(A3Addresses.ManagerNerves));
 
                 TestHelpers.Get<NumericUpDown>(view, "birthMonth").Value = 2;
                 TestHelpers.Get<NumericUpDown>(view, "birthDay").Value = 30;

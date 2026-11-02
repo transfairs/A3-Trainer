@@ -121,6 +121,7 @@ namespace A3_Trainer.Controller
             new[] { 0x1E, 0x3E, 2 },        // club country
             new[] { 0x20, 0x40, 2 },        // club number
             new[] { 0x22, 0x42, 2 },        // manager level at +0x23
+            new[] { 0x32, 0x13E, 2 },       // nerves
             new[] { 0x3A, 0x146, 3 },       // popularity
             new[] { 0x50, 0x17C, 0x20 },    // contract
             new[] { 0x98, 0x138, 4 },       // private money
@@ -161,7 +162,8 @@ namespace A3_Trainer.Controller
         internal const int ManagerCompetencyRow = 0xE;
         internal const int ManagerLevels = 16;
         internal const int ManagerCharisma = 5;                   // column of "Ausstrahlung"
-        internal const int ManagerDataBirthday = 0x4E;            // in the managers' data only (FUN_006A54FA): day, month, word year
+        internal const uint ManagerNerves = 0x01B9961A;           // word 0-100, "Nervenkostüm"; starts at 100 (FUN_006A3B61), daily changes in FUN_006AF8FD
+        internal const int ManagerDataBirthday = 0x4E;           // in the managers' data only (FUN_006A54FA): day, month, word year
         internal const uint ManagerBoardTrust = 0x01B99684;       // word, base of the board's trust; the game adds the next 4 bytes (FUN_007701B2)
         internal const uint SeasonStartMoney = 0x00A6C1C8;    // ClubCopySeasonStartMoney of the own club's copy (slot 0, fixed at 0x00A6BFB8)
 

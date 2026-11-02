@@ -4,14 +4,16 @@ using System.Linq;
 
 namespace A3_Trainer.Model
 {
-    /// <summary>A human manager as a person: birthday, manager level and competencies.</summary>
+    /// <summary>A human manager as a person: birthday, nerves, manager level and competencies.</summary>
     internal sealed class ManagerPerson
     {
         /// <summary>The manager's number, 1 to 4.</summary>
         internal int Manager { get; set; } = 1;
         /// <summary>Date of birth.</summary>
         internal GameDate Birthday { get; set; }
-        /// <summary>The stored manager level; see <see cref="LevelInForce"/>.</summary>
+        /// <summary>Nerves ("Nervenkostüm"), 0 to 100.</summary>
+        internal int Nerves { get; set; }
+        /// <summary>The stored manager level;see <see cref="LevelInForce"/>.</summary>
         internal int Level { get; set; }
         /// <summary>Flags that raise or lower the level in force (game state, not edited).</summary>
         internal int LevelFlags { get; set; }
