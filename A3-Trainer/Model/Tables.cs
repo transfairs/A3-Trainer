@@ -70,6 +70,21 @@ namespace A3_Trainer.Model
         /// <summary>Leagues a contract is valid in, the contract flags' bits 0-1 (texts 4086-4089).</summary>
         internal static readonly string[] ContractValidity = { "alle Ligen", "nur erste Liga", "mind. 2. Liga", "mind. 3. Liga" };
 
+        /// <summary>The stadium's tribunes in the order of the stadium page.</summary>
+        internal static readonly string[] Tribunes = { "Haupttribüne", "Gegentribüne", "Trib. links", "Trib. rechts" };
+
+        /// <summary>Scoreboards (texts 1129-1133).</summary>
+        internal static readonly string[] Scoreboards =
+        {
+            "keine Anzeigetafel", "Ergebnisanzeige mit Tafeln", "kleine LED-Anzeigetafel", "große LED-Anzeigetafel", "Videowand",
+        };
+
+        /// <summary>A tribune's condition by level (texts 4144-4150); the stadium stores the level times 5.</summary>
+        internal static readonly string[] StadiumConditions =
+        {
+            "neu", "fast neu", "unmodern", "angestaubt", "baufällig", "vermodert", "Bruchbude",
+        };
+
         /// <summary>Highest form value the game sets (FUN_006FF0D0).</summary>
         internal const int MaxFormBase = 20;
 

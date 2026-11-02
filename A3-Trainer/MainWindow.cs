@@ -21,11 +21,12 @@ namespace A3_Trainer
         private readonly A3Game game;
         private readonly PlayerView playerView;
         private readonly ClubView clubView;
+        private readonly StadiumView stadiumView;
         private readonly ManagerView managerView;
         private readonly AboutView aboutView = new AboutView();
         private readonly Label waiting;
 
-        private enum Page { Squad, Opponent, Other, Club, Manager }
+        private enum Page { Squad, Opponent, Other, Club, Stadium, Manager }
         private Page page = Page.Squad;
         // The club last picked in the player view's club selection.
         private ClubKey? otherClub;
@@ -51,6 +52,7 @@ namespace A3_Trainer
             players.DropDownItems.Add("Anderer Verein", null, (s, e) => this.Show(Page.Other));
             var club = new ToolStripMenuItem("Verein");
             club.DropDownItems.Add("Eigener Verein", null, (s, e) => this.Show(Page.Club));
+            club.DropDownItems.Add("Stadion", null, (s, e) => this.Show(Page.Stadium));
             this.managerMenu.DropDownItems.Add("Manager", null, (s, e) => this.Show(Page.Manager));
             this.managerMenu.DropDownOpening += (s, e) => this.ListManagers();
             var help = new ToolStripMenuItem("?");
@@ -67,6 +69,7 @@ namespace A3_Trainer
             this.playerView = new PlayerView(this.memory, this.game);
             this.playerView.ClubChosen += this.OnClubChosen;
             this.clubView = new ClubView(this.memory, this.game);
+            this.stadiumView = new StadiumView(this.memory, this.game);
             this.managerView = new ManagerView(this.memory, this.game);
             this.waiting = new Label
             {
@@ -119,6 +122,11 @@ namespace A3_Trainer
                     this.clubView.Manager = this.manager;
                     this.clubView.RefreshValues();
                     break;
+                case Page.Stadium:
+                    this.ShowScreen(this.stadiumView, "Stadion: " + this.game.ClubName(own.Value));
+                    this.stadiumView.Club = own.Value;
+                    this.stadiumView.RefreshValues();
+                    break;
                 case Page.Manager:
                     this.ShowScreen(this.managerView, $"Manager (Spieler {this.manager})");
                     this.managerView.Manager = this.manager;
@@ -159,7 +167,7 @@ namespace A3_Trainer
                 this.managerMenu.DropDownItems.Add(new ToolStripMenuItem($"Spieler {number}{name}", null, (s, e) =>
                 {
                     this.manager = picked;
-                    this.Show(this.page == Page.Club || this.page == Page.Squad ? this.page : Page.Manager);
+                    this.Show(this.page == Page.Club || this.page == Page.Stadium || this.page == Page.Squad ? this.page : Page.Manager);
                 }) { Checked = number == this.manager });
             }
         }

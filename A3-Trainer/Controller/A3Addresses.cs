@@ -170,6 +170,51 @@ namespace A3_Trainer.Controller
     }
 
     /// <summary>
+    /// Stadiums (FUN_00638335): clubs below the club index in StadiumOtherFirst have a CDatenStadionStadt
+    /// (up to three stadiums, the first is the current one), the others a CDatenStadion. Both hold the
+    /// stadium itself (StadiumOffset) at +0x20; the game copies it out only while it shows or plays in it.
+    /// </summary>
+    internal static class StadiumAddress
+    {
+        internal const uint CityStadiums = 0x01A48138;     // CDatenStadionStadt, by club index
+        internal const int CityStadiumSize = 0x290;
+        internal const uint OtherStadiums = 0x01A3AF38;    // CDatenStadion, by club index - StadiumOtherFirst
+        internal const int OtherStadiumSize = 0xF0;
+        internal const uint OtherFirst = 0x00AE6304;       // word, first club index with a CDatenStadion
+        internal const int Data = 0x20;
+        internal const int Tribunes = 4;                   // Haupt-, Gegen-, linke und rechte Tribüne
+    }
+
+    /// <summary>Offsets in a stadium (0xD0 bytes), see the database import FUN_0068BCCB; checked on the stadium page.</summary>
+    internal static class StadiumOffset
+    {
+        internal const int Name = 0x02;           // char[30]
+        internal const int City = 0x20;           // char[24]
+        internal const int NameSize = 30;
+        internal const int CitySize = 21;         // the database allows 20 characters
+        internal const int Capacity = 0x38;       // dword, sum of all places; the stadium page adds them up itself
+        internal const int Capacity2 = 0x3C;      // dword, the same sum as imported
+        internal const int Vip = 0x40;            // word per tribune
+        internal const int Standing = 0x48;       // word per tribune
+        internal const int Seats = 0x50;          // word per tribune
+        internal const int Condition = 0x58;      // byte per tribune, Tables.StadiumConditions level * 5
+        internal const int TribuneBits = 0x60;    // word: bits 0-3 roof, 4-7 running track, 8-11 heaters, one per tribune
+        internal const int Comfort = 0x64;        // word, see StadiumComfort
+        internal const int Scoreboard = 0x66;     // byte, Tables.Scoreboards
+    }
+
+    /// <summary>Bits of the stadium's comfort word (getters FUN_00718489 and following, used by the stadium page).</summary>
+    internal static class StadiumComfort
+    {
+        internal const int Floodlight = 0x040;
+        internal const int UndersoilHeating = 0x080;
+        internal const int LuxuryBoxes = 0x100;
+        internal const int SeatCushions = 0x200;
+        internal const int HeatedSeats = 0x400;
+        internal const int RetractablePitch = 0x800;
+    }
+
+    /// <summary>
     /// A season statistic of a player: one byte in the record and in the working copy (FUN_00637177), of
     /// which <see cref="Mask"/> holds the value; the other bits are game state.
     /// </summary>

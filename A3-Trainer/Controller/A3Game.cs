@@ -579,6 +579,78 @@ namespace A3_Trainer.Controller
             return field;
         }
 
+        /// <summary>The club's stadium, or null if the club or its stadium can't be found.</summary>
+        internal Stadium ReadStadium(ClubKey key)
+        {
+            uint? address = this.FindStadium(key);
+            byte[] data = address.HasValue ? this.memory.Read(address.Value, 0x70) : null;
+            if (data == null)
+                return null;
+            short Word(int offset) => BitConverter.ToInt16(data, offset);
+            int tribunes = StadiumAddress.Tribunes;
+            return new Stadium
+            {
+                Address = address.Value,
+                Name = this.ReadString(address.Value + StadiumOffset.Name, StadiumOffset.NameSize),
+                City = this.ReadString(address.Value + StadiumOffset.City, StadiumOffset.CitySize),
+                Vip = Enumerable.Range(0, tribunes).Select(t => (int)Word(StadiumOffset.Vip + t * 2)).ToArray(),
+                Seats = Enumerable.Range(0, tribunes).Select(t => (int)Word(StadiumOffset.Seats + t * 2)).ToArray(),
+                Standing = Enumerable.Range(0, tribunes).Select(t => (int)Word(StadiumOffset.Standing + t * 2)).ToArray(),
+                Condition = Enumerable.Range(0, tribunes).Select(t => (int)data[StadiumOffset.Condition + t]).ToArray(),
+                TribuneBits = (ushort)Word(StadiumOffset.TribuneBits),
+                Comfort = (ushort)Word(StadiumOffset.Comfort),
+                Scoreboard = data[StadiumOffset.Scoreboard],
+            };
+        }
+
+        /// <summary>Writes what changed; the capacity the game keeps follows the places.</summary>
+        internal void SaveStadium(Stadium original, Stadium edited)
+        {
+            uint address = edited.Address;
+            if (edited.Name != original.Name && edited.Name.Length > 0)
+                this.memory.Write(address + StadiumOffset.Name, Field(edited.Name, StadiumOffset.NameSize));
+            if (edited.City != original.City && edited.City.Length > 0)
+                this.memory.Write(address + StadiumOffset.City, Field(edited.City, StadiumOffset.CitySize));
+            for (int t = 0; t < StadiumAddress.Tribunes; t++)
+            {
+                WriteWord(StadiumOffset.Vip + t * 2, original.Vip[t], edited.Vip[t]);
+                WriteWord(StadiumOffset.Seats + t * 2, original.Seats[t], edited.Seats[t]);
+                WriteWord(StadiumOffset.Standing + t * 2, original.Standing[t], edited.Standing[t]);
+                if (edited.Condition[t] != original.Condition[t])
+                    this.memory.Write(address + (uint)(StadiumOffset.Condition + t), new[] { (byte)edited.Condition[t] });
+            }
+            WriteWord(StadiumOffset.TribuneBits, original.TribuneBits, edited.TribuneBits);
+            WriteWord(StadiumOffset.Comfort, original.Comfort, edited.Comfort);
+            if (edited.Scoreboard != original.Scoreboard)
+                this.memory.Write(address + StadiumOffset.Scoreboard, new[] { (byte)edited.Scoreboard });
+            if (edited.Capacity != original.Capacity)
+            {
+                this.memory.Write(address + StadiumOffset.Capacity, BitConverter.GetBytes(edited.Capacity));
+                this.memory.Write(address + StadiumOffset.Capacity2, BitConverter.GetBytes(edited.Capacity));
+            }
+
+            void WriteWord(int offset, int was, int now)
+            {
+                if (now != was)
+                    this.memory.Write(address + (uint)offset, BitConverter.GetBytes((ushort)now));
+            }
+        }
+
+        // The current stadium of a club (FUN_00638335), or null if the club has none the trainer knows.
+        private uint? FindStadium(ClubKey key)
+        {
+            if (!this.ClubAddress(key).HasValue)
+                return null;
+            int index = this.ReadUInt16(A3Addresses.ClubIndexTable + (uint)(key.Country * 2)) + key.Number;
+            int otherFirst = this.ReadUInt16(StadiumAddress.OtherFirst);
+            uint address = index < otherFirst
+                ? StadiumAddress.CityStadiums + (uint)(index * StadiumAddress.CityStadiumSize)
+                : StadiumAddress.OtherStadiums + (uint)((index - otherFirst) * StadiumAddress.OtherStadiumSize);
+            return this.ReadString(address + StadiumAddress.Data + StadiumOffset.Name, StadiumOffset.NameSize).Length > 0
+                ? address + StadiumAddress.Data
+                : (uint?)null;
+        }
+
         /// <summary>The working copy the game holds of a loaded club (own club, next opponent), or 0 if it has none.</summary>
         internal uint ClubCopy(ClubKey key)
         {

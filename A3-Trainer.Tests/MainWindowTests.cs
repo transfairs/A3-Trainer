@@ -20,7 +20,7 @@ namespace A3_Trainer.Tests
             var window = new MainWindow();
             var game = new A3Game(m);
             TestHelpers.Set(window, "game", game);
-            foreach (string view in new[] { "playerView", "clubView", "managerView" })
+            foreach (string view in new[] { "playerView", "clubView", "stadiumView", "managerView" })
                 TestHelpers.Set(TestHelpers.Get<object>(window, view), "game", game);
             if (attached)
                 TestHelpers.Get<ProcessMemory>(window, "memory").mProc.Process = Process.GetCurrentProcess();
