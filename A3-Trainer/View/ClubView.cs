@@ -45,7 +45,7 @@ namespace A3_Trainer.View
 
         private void BuildLayout()
         {
-            var club = new GroupBox { Text = "Verein", Bounds = new Rectangle(8, 8, 614, 292) };
+            var club = new GroupBox { Text = "Verein", Bounds = new Rectangle(8, 8, 598, 292) };
             int y = 22;
             void ClubRow(string caption, Control input)
             {
@@ -57,7 +57,7 @@ namespace A3_Trainer.View
             // A value with the level the game shows for it next to it.
             void Rated(string caption, NumericUpDown input, Label level, Func<int, string> name)
             {
-                level.SetBounds(360, y + 3, 240, 18);
+                level.SetBounds(360, y + 3, 230, 18);
                 club.Controls.Add(level);
                 input.ValueChanged += (s, e) => level.Text = name((int)input.Value);
                 ClubRow(caption, input);
@@ -76,7 +76,7 @@ namespace A3_Trainer.View
             this.save.Click += (s, e) => this.Save();
             this.reload.SetBounds(124, 308, 110, 25);
             this.reload.Click += (s, e) => this.RefreshValues();
-            this.status.SetBounds(240, 312, 380, 20);
+            this.status.SetBounds(240, 312, 366, 20);
             this.Controls.AddRange(new Control[] { this.save, this.reload, this.status });
         }
 

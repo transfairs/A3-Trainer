@@ -175,22 +175,27 @@ namespace A3_Trainer.Tests
         });
 
         [Fact]
-        public void Window_ClubMenu_ShowsTheStadium() => StaThread.Run(() =>
+        public void Window_OwnClub_HasAStadiumTab() => StaThread.Run(() =>
         {
             FakeGameMemory m = WithStadiums();
             using (var window = new MainWindow())
             {
                 var game = new A3Game(m);
                 TestHelpers.Set(window, "game", game);
+                TestHelpers.Set(TestHelpers.Get<ClubView>(window, "clubView"), "game", game);
                 TestHelpers.Set(TestHelpers.Get<StadiumView>(window, "stadiumView"), "game", game);
                 TestHelpers.Get<ProcessMemory>(window, "memory").mProc.Process = Process.GetCurrentProcess();
-                ToolStripItem stadium = window.MainMenuStrip.Items.Cast<ToolStripMenuItem>().Single(i => i.Text == "Verein")
-                    .DropDownItems.Cast<ToolStripItem>().Single(i => i.Text == "Stadion");
+                ToolStripMenuItem club = window.MainMenuStrip.Items.Cast<ToolStripMenuItem>().Single(i => i.Text == "Verein");
+                Assert.DoesNotContain(club.DropDownItems.Cast<ToolStripItem>(), i => i.Text == "Stadion");
 
-                TestHelpers.Click(stadium);
+                TestHelpers.Click(club.DropDownItems.Cast<ToolStripItem>().Single(i => i.Text == "Eigener Verein"));
 
-                Assert.Equal("A3-Trainer :: Stadion: 1.FV München", window.Text);
-                Assert.Equal("Zentralstadion", TestHelpers.Get<TextBox>(TestHelpers.Get<StadiumView>(window, "stadiumView"), "stadiumName").Text);
+                Assert.Equal("A3-Trainer :: Verein: 1.FV München", window.Text);
+                TabControl tabs = TestHelpers.Get<TabControl>(TestHelpers.Get<ClubPagesView>(window, "clubPages"), "tabs");
+                Assert.Equal(new[] { "Verein", "Stadion" }, tabs.TabPages.Cast<TabPage>().Select(p => p.Text));
+                StadiumView stadium = TestHelpers.Get<StadiumView>(window, "stadiumView");
+                Assert.Same(tabs.TabPages[1], stadium.Parent);
+                Assert.Equal("Zentralstadion", TestHelpers.Get<TextBox>(stadium, "stadiumName").Text);
             }
         });
     }

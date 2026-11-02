@@ -87,6 +87,9 @@
     <Compile Include="View\ManagerView.cs">
       <SubType>UserControl</SubType>
     </Compile>
+    <Compile Include="View\ClubPagesView.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
     <Compile Include="View\StadiumView.cs">
       <SubType>UserControl</SubType>
     </Compile>

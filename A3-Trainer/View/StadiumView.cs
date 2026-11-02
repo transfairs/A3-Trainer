@@ -55,7 +55,7 @@ namespace A3_Trainer.View
 
         private void BuildLayout()
         {
-            var stadium = new GroupBox { Text = "Stadion", Bounds = new Rectangle(8, 8, 614, 76) };
+            var stadium = new GroupBox { Text = "Stadion", Bounds = new Rectangle(8, 6, 598, 76) };
             stadium.Controls.Add(new Label { Text = "Name", Bounds = new Rectangle(12, 23, 60, 18) });
             this.stadiumName.SetBounds(80, 20, 220, 21);
             stadium.Controls.Add(new Label { Text = "Ort", Bounds = new Rectangle(12, 49, 60, 18) });
@@ -65,9 +65,9 @@ namespace A3_Trainer.View
             stadium.Controls.AddRange(new Control[] { this.stadiumName, this.city, this.capacity });
             this.Controls.Add(stadium);
 
-            var tribunes = new GroupBox { Text = "Tribünen", Bounds = new Rectangle(8, 90, 614, 160) };
+            var tribunes = new GroupBox { Text = "Tribünen", Bounds = new Rectangle(8, 86, 598, 150) };
             string[] headers = { "VIP-Plätze", "Sitzplätze", "Stehplätze", "Wärmestr.", "Dach", "Laufbahn", "Zustand" };
-            int[] columns = { 110, 185, 260, 340, 405, 455, 515 };
+            int[] columns = { 105, 178, 251, 326, 391, 441, 499 };
             for (int c = 0; c < headers.Length; c++)
                 tribunes.Controls.Add(new Label { Text = headers[c], Bounds = new Rectangle(columns[c], 18, c + 1 < columns.Length ? columns[c + 1] - columns[c] - 2 : 88, 16) });
             for (int t = 0; t < StadiumAddress.Tribunes; t++)
@@ -87,23 +87,23 @@ namespace A3_Trainer.View
             }
             this.Controls.Add(tribunes);
 
-            var comfort = new GroupBox { Text = "Stadionkomfort", Bounds = new Rectangle(8, 256, 614, 110) };
+            var comfort = new GroupBox { Text = "Stadionkomfort", Bounds = new Rectangle(8, 240, 598, 106) };
             comfort.Controls.Add(new Label { Text = "Anzeigetafel", Bounds = new Rectangle(12, 23, 90, 18) });
             this.scoreboard.SetBounds(110, 20, 220, 21);
             comfort.Controls.Add(this.scoreboard);
             CheckBox[] checks = this.Comfort;
             for (int i = 0; i < checks.Length; i++)
             {
-                checks[i].SetBounds(12 + (i % 3) * 200, 52 + (i / 3) * 26, 190, 20);
+                checks[i].SetBounds(12 + (i % 3) * 195, 52 + (i / 3) * 26, 180, 20);
                 comfort.Controls.Add(checks[i]);
             }
             this.Controls.Add(comfort);
 
-            this.save.SetBounds(8, 374, 110, 25);
+            this.save.SetBounds(8, 354, 110, 25);
             this.save.Click += (s, e) => this.Save();
-            this.reload.SetBounds(124, 374, 110, 25);
+            this.reload.SetBounds(124, 354, 110, 25);
             this.reload.Click += (s, e) => this.RefreshValues();
-            this.status.SetBounds(240, 378, 380, 20);
+            this.status.SetBounds(240, 358, 366, 20);
             this.Controls.AddRange(new Control[] { this.save, this.reload, this.status });
         }
 

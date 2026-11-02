@@ -59,7 +59,7 @@ namespace A3_Trainer.Tests
             using (MainWindow window = Window(WithOpponent()))
             {
                 TestHelpers.Click(MenuItem(window, "Verein", "Eigener Verein"));
-                Assert.IsType<ClubView>(Shown(window));
+                Assert.IsType<ClubPagesView>(Shown(window));
                 Assert.Equal("A3-Trainer :: Verein: 1.FV München", window.Text);
 
                 TestHelpers.Click(MenuItem(window, "Trainer", "Manager"));
