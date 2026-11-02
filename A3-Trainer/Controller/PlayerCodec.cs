@@ -123,6 +123,7 @@ namespace A3_Trainer.Controller
                 ReleaseClause = Word(RecordOffset.ReleaseClause),
                 ContractEndYear = Word(RecordOffset.ContractEnd),
                 ContractFlags = Word(RecordOffset.ContractFlags),
+                SeasonStats = SeasonStat.All.Select(s => Byte(s.Record)).ToArray(),
             };
         }
 
@@ -160,6 +161,7 @@ namespace A3_Trainer.Controller
             player.ContractFlags = Word(CompactOffset.ContractFlags);
             player.NationalTeam = Byte(CompactOffset.NationalTeam);
             player.Morale = Byte(CompactOffset.Morale);
+            player.SeasonStats = SeasonStat.All.Select((s, i) => s.Compact >= 0 ? Byte(s.Compact) : player.SeasonStats[i]).ToArray();
         }
 
         /// <summary>
@@ -189,6 +191,10 @@ namespace A3_Trainer.Controller
                 if (value != field.Get(original))
                     Write(field.Record, field.Compact, value, field.Size);
             }
+
+            for (int i = 0; i < SeasonStat.All.Length; i++)
+                if (edited.SeasonStats[i] != original.SeasonStats[i])
+                    Write(SeasonStat.All[i].Record, SeasonStat.All[i].Compact, edited.SeasonStats[i], 1);
 
             if (edited.ContractEndYear != original.ContractEndYear)
             {

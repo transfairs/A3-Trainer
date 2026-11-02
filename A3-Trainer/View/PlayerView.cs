@@ -84,6 +84,7 @@ namespace A3_Trainer.View
         private int firstNamesOf = -1;
         private bool showingChildren;
         private readonly ComboBox hobby = DropDown(Tables.Hobbies);
+        private readonly NumericUpDown[] seasonStats = new NumericUpDown[SeasonStat.All.Length];
         private readonly Button save = new Button { Text = "Speichern" };
         private readonly Button reload = new Button { Text = "Neu laden" };
         private readonly Label status = new Label();
@@ -170,6 +171,7 @@ namespace A3_Trainer.View
             this.tabs.TabPages.Add(this.TraitsPage());
             this.tabs.TabPages.Add(this.HealthPage());
             this.tabs.TabPages.Add(this.ConditionPage());
+            this.tabs.TabPages.Add(this.SeasonPage());
             this.tabs.TabPages.Add(this.ContractPage());
             this.tabs.TabPages.Add(this.PrivatePage());
             this.Controls.Add(this.tabs);
@@ -417,6 +419,23 @@ namespace A3_Trainer.View
             this.teamApply.Click += (s, e) => this.SetTeam();
             this.freezeCondition.CheckedChanged += (s, e) => this.FreezeChanged();
             this.freezeFreshness.CheckedChanged += (s, e) => this.FreezeChanged();
+            return page;
+        }
+
+        // As the player info's season page; each value is one byte (or its low bits) of record and working copy.
+        private TabPage SeasonPage()
+        {
+            var page = new TabPage("Saison");
+            GroupBox group = Group(page, "Saisonstatistik", 6, 340);
+            int half = (SeasonStat.All.Length + 1) / 2;
+            for (int i = 0; i < SeasonStat.All.Length; i++)
+            {
+                int x = i < half ? 10 : 184, y = 16 + (i % half) * 24;
+                group.Controls.Add(new Label { Text = SeasonStat.All[i].Caption, Bounds = new Rectangle(x, y + 3, 118, 18) });
+                this.seasonStats[i] = Number(0, SeasonStat.All[i].Mask);
+                this.seasonStats[i].SetBounds(x + 120, y, 48, 21);
+                group.Controls.Add(this.seasonStats[i]);
+            }
             return page;
         }
 
@@ -735,6 +754,8 @@ namespace A3_Trainer.View
             this.relationshipState.SelectedIndex = Clamp((player.Relationship & Tables.RelationshipStateMask) >> Tables.RelationshipStateShift, this.relationshipState.Items.Count);
             this.ShowPrivateNames(player);
             this.hobby.SelectedIndex = Clamp(player.Hobby, this.hobby.Items.Count);
+            for (int i = 0; i < SeasonStat.All.Length; i++)
+                SetNumber(this.seasonStats[i], player.SeasonStats[i] & SeasonStat.All[i].Mask);
         }
 
         // Partner and children into edited; false (with the reason in the status) if changed children
@@ -938,6 +959,9 @@ namespace A3_Trainer.View
             edited.Relationship = relation;
             if (this.hobby.SelectedIndex >= 0)
                 edited.Hobby = this.hobby.SelectedIndex;
+            // Only the value bits are replaced; the rest of each byte is game state.
+            for (int i = 0; i < SeasonStat.All.Length; i++)
+                edited.SeasonStats[i] = edited.SeasonStats[i] & ~SeasonStat.All[i].Mask | (int)this.seasonStats[i].Value;
             // A form outside 0..20 (not set by the game) stays unless it is changed.
             if ((int)this.formBase.Value != Math.Min(Math.Max(this.shown.FormBase, 0), Tables.MaxFormBase))
                 edited.FormBase = (int)this.formBase.Value;
@@ -992,8 +1016,12 @@ namespace A3_Trainer.View
 
         private static NumericUpDown Number(int min, int max) => new NumericUpDown { Minimum = min, Maximum = max };
 
-        private static void SetNumber(NumericUpDown number, int value) =>
+        // Setting the value it already has doesn't redraw the text, which ClearAllFields may have emptied.
+        private static void SetNumber(NumericUpDown number, int value)
+        {
             number.Value = Math.Min(Math.Max(value, (int)number.Minimum), (int)number.Maximum);
+            number.Text = number.Value.ToString();
+        }
 
         private static int Clamp(int index, int count) => index >= 0 && index < count ? index : -1;
 

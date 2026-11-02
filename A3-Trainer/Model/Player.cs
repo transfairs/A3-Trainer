@@ -137,10 +137,14 @@ namespace A3_Trainer.Model
         /// <summary>Whether the player is injured: from the working copy's days if loaded, else from the record.</summary>
         internal bool IsInjured => this.HasWorkingCopy ? this.InjuryDays > 0 : this.RecordInjured;
 
+        /// <summary>The bytes of the season statistics (Controller.SeasonStat.All), including their game state bits.</summary>
+        internal int[] SeasonStats { get; set; } = new int[Controller.SeasonStat.All.Length];
+
         /// <summary>A copy to edit without changing this one.</summary>
         internal Player Clone()
         {
             var copy = (Player)this.MemberwiseClone();
+            copy.SeasonStats = (int[])this.SeasonStats.Clone();
             copy.ChildNames = (int[])this.ChildNames.Clone();
             copy.ChildBirthDates = (GameDate[])this.ChildBirthDates.Clone();
             return copy;

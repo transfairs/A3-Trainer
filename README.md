@@ -50,7 +50,9 @@ leagues the contract is valid in, club and player extension options, guaranteed 
 starting line-up, relationship and hobby, crowd standing (favourite/hate figure: lasting reputation and current
 flag), first and last name and artist name (a new name is added to the game's name table the way the
 game itself adds one, so it is kept in the save game), partner, children with names and birthdays.
-Age and motivation are shown read-only.
+Age and motivation are shown read-only. Season statistics as on the player info's season page: goals, assists,
+cup and European goals, penalties and free kicks, substitute goals and appearances, own goals, appearances,
+team of the day, caps, yellow, yellow-red and red cards per competition, a ban in weeks and the European ban.
 For the whole team, condition and freshness can be set at once or frozen: the trainer then writes
 them back every second for the club it was switched on for.
 

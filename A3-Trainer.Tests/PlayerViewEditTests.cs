@@ -618,5 +618,45 @@ namespace A3_Trainer.Tests
                 Assert.Equal(0, TestHelpers.Invoke(view, "SelectedPosition"));
             }
         });
+
+        [Fact]
+        public void SeasonStats_ShowTheValueBits_AndSaveKeepsTheGameState() => StaThread.Run(() =>
+        {
+            FakeGameMemory m = Squad();
+            int goals = Array.FindIndex(SeasonStat.All, s => s.Caption == "Tore");
+            int ban = Array.FindIndex(SeasonStat.All, s => s.Caption == "Sperre EP (Spiele)");
+            int red = Array.FindIndex(SeasonStat.All, s => s.Caption == "Rot Pokal");           // record only
+            uint compact = 0x06000000 + 8;
+            m.Put(Record(Keeper) + (uint)SeasonStat.All[goals].Record, 7);
+            m.Put(Record(Keeper) + (uint)SeasonStat.All[ban].Record, 0x83);      // 3 games, a state bit
+            m.Put(compact + (uint)SeasonStat.All[goals].Compact, 4);             // the striker's working copy
+            m.Put(Record(Striker) + (uint)SeasonStat.All[red].Record, 2);
+            using (PlayerView view = View(m))
+            {
+                NumericUpDown[] stats = Field<NumericUpDown[]>(view, "seasonStats");
+                Select(view, Keeper);
+                Assert.Equal(7, stats[goals].Value);
+                Assert.Equal(3, stats[ban].Value);
+                Assert.Equal(31, stats[ban].Maximum);
+                Assert.Equal("0", stats[red].Text); // a zero shows as 0, not empty
+
+                stats[goals].Value = 9;
+                stats[ban].Value = 0;
+                TestHelpers.Click(Field<Button>(view, "save"));
+                Assert.Equal("Gespeichert", Status(view));
+                Assert.Equal(9, m.Get(Record(Keeper) + (uint)SeasonStat.All[goals].Record));
+                Assert.Equal(0x80, m.Get(Record(Keeper) + (uint)SeasonStat.All[ban].Record));
+
+                Select(view, Striker);
+                Assert.Equal(4, stats[goals].Value);
+                Assert.Equal(2, stats[red].Value);
+                stats[red].Value = 0;
+                stats[goals].Value = 5;
+                TestHelpers.Click(Field<Button>(view, "save"));
+                Assert.Equal(5, m.Get(compact + (uint)SeasonStat.All[goals].Compact));
+                Assert.Equal(5, m.Get(Record(Striker) + (uint)SeasonStat.All[goals].Record));
+                Assert.Equal(0, m.Get(Record(Striker) + (uint)SeasonStat.All[red].Record));
+            }
+        });
     }
 }

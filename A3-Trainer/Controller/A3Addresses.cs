@@ -169,6 +169,60 @@ namespace A3_Trainer.Controller
         internal const int ExitClause = 0x1C;    // byte, may leave on an offer while the contract runs (FUN_00442F85)
     }
 
+    /// <summary>
+    /// A season statistic of a player: one byte in the record and in the working copy (FUN_00637177), of
+    /// which <see cref="Mask"/> holds the value; the other bits are game state.
+    /// </summary>
+    internal sealed class SeasonStat
+    {
+        private SeasonStat(string caption, int record, int compact, int mask = 0xFF)
+        {
+            this.Caption = caption;
+            this.Record = record;
+            this.Compact = compact;
+            this.Mask = mask;
+        }
+
+        /// <summary>Caption as on the player info's season page.</summary>
+        internal string Caption { get; }
+        /// <summary>Offset in the record.</summary>
+        internal int Record { get; }
+        /// <summary>Offset in the working copy, -1 if only the record has it (the game reads those there directly).</summary>
+        internal int Compact { get; }
+        /// <summary>Bits of the byte that hold the value.</summary>
+        internal int Mask { get; }
+
+        /// <summary>The season page's values (FUN_00560D30), in its order.</summary>
+        internal static readonly SeasonStat[] All =
+        {
+            new SeasonStat("Tore", 0x23C, 0x3E),
+            new SeasonStat("Vorlagen", 0x247, 0x48),
+            new SeasonStat("Pokaltore", 0x23D, 0x3F),
+            new SeasonStat("EP-Tore", 0x23E, 0x40),
+            new SeasonStat("Elfmeter geschossen", 0x24B, 0x4C),
+            new SeasonStat("Elfmeter verwandelt", 0x24C, 0x4D),
+            new SeasonStat("Freistöße geschossen", 0x24D, 0x4E),
+            new SeasonStat("Freistöße verwandelt", 0x24E, 0x4F),
+            new SeasonStat("Jokertore", 0x248, 0x49),
+            new SeasonStat("Jokereinsätze", 0x254, 0x55),
+            new SeasonStat("Eigentore", 0x246, 0x47),
+            new SeasonStat("Einsätze", 0x253, 0x54),
+            new SeasonStat("Elf des Tages", 0x268, 0x63),
+            new SeasonStat("Länderspiele", 0x266, 0x61),
+            new SeasonStat("Gelb Liga", 0x22C, 0x32),
+            new SeasonStat("Gelb Pokal", 0x231, 0x37),
+            new SeasonStat("Gelb EP", 0x235, 0x39),
+            new SeasonStat("Gelb-Rot Liga", 0x22E, 0x34),
+            new SeasonStat("Gelb-Rot Pokal", 0x233, -1),
+            new SeasonStat("Gelb-Rot EP", 0x237, -1),
+            new SeasonStat("Rot Liga", 0x22D, 0x33),
+            new SeasonStat("Rot Pokal", 0x232, -1),
+            new SeasonStat("Rot EP", 0x236, -1),
+            new SeasonStat("Sperre (Wochen)", 0x22A, -1),
+            new SeasonStat("Sperre EP (Spiele)", 0x238, 0x3A, 0x1F),
+        };
+    }
+
     /// <summary>Offsets inside a CDatenSpieler record (0x354 bytes).</summary>
     internal static class RecordOffset
     {
