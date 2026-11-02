@@ -100,6 +100,13 @@ namespace A3_Trainer.Model
         /// <summary>A club's board (texts 1040-1045).</summary>
         internal static readonly string[] Boards = { "Pulverfass", "Schleudersitz", "nervös", "normal", "anspruchslos", "treu" };
 
+        /// <summary>A manager's competencies, in the order of the table and the game's page.</summary>
+        internal static readonly string[] Competencies =
+        {
+            "Verhandlungsgeschick", "Motivationsfähigkeit", "Trainingsgestaltung", "Autorität",
+            "Fremdsprachenkenntnisse", "Ausstrahlung", "Umgang mit jungen Spielern",
+        };
+
         /// <summary>Skin colours, bits 0-2 of the appearance byte.</summary>
         internal static readonly string[] SkinColors = { "hell", "dunkel", "schwarz", "asiatisch" };
 

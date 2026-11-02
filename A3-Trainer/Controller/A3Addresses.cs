@@ -120,13 +120,13 @@ namespace A3_Trainer.Controller
             new[] { 0x0A, 0x2A, 16 },       // last name
             new[] { 0x1E, 0x3E, 2 },        // club country
             new[] { 0x20, 0x40, 2 },        // club number
-            new[] { 0x22, 0x42, 2 },        // image level at +0x23
+            new[] { 0x22, 0x42, 2 },        // manager level at +0x23
             new[] { 0x3A, 0x146, 3 },       // popularity
             new[] { 0x50, 0x17C, 0x20 },    // contract
             new[] { 0x98, 0x138, 4 },       // private money
             new[] { 0x9C, 0x1A4, 6 },       // board trust
-            new[] { 0x17BC, 0x19CC, 0x1E }, // image flags at +0x17D9
-            new[] { 0x17FA, 0x54, 0xE0 },   // fan factors from +0x1804
+            new[] { 0x17BC, 0x19CC, 0x1E }, // level flags at +0x17D9
+            new[] { 0x17FA, 0x54, 0xE0 },   // competencies
         };
 
         // --- Fields of human manager 1.
@@ -151,12 +151,17 @@ namespace A3_Trainer.Controller
         internal const uint ManagerMediaPopularity = 0x01B99622;  // byte 0-100 (Beliebtheit bei den Medien)
         internal const uint ManagerPublicPopularity = 0x01B99623; // byte 0-100 (in der Öffentlichkeit)
         internal const uint ManagerFanPopularity = 0x01B99624;    // byte 0-100, base of the fans' view (FUN_006A5A7D)
-        // The fans see the base weighted by the manager's image (FUN_006A5A7D): (factor * 4 + 80) percent, the
-        // factor from a table picked by the image level (+0x23) and its flags (+0x17D9, FUN_006A61E5).
-        internal const uint ManagerImageLevel = 0x01B9960B;
-        internal const uint ManagerImageFlags = 0x01B9ADC1;
-        internal const uint ManagerFanFactors = 0x01B9ADEC;     // word every 0xE bytes, indexed by 0-15
-        internal const int ManagerFanFactorStride = 0xE;
+        // Manager level and competencies (page "Aktuelle Managerfähigkeiten", FUN_0048A7CD): the level in force is
+        // the stored one plus bonuses for the flags (FUN_006A61E5) and picks a row of the competency table, a word
+        // per competency (Tables.Competencies). The fans see their base weighted by the row's charisma
+        // (FUN_006A5A7D): (charisma * 4 + 80) percent.
+        internal const uint ManagerLevel = 0x01B9960B;            // byte
+        internal const uint ManagerLevelFlags = 0x01B9ADC1;
+        internal const uint ManagerCompetencies = 0x01B9ADE2;     // ManagerLevels rows of ManagerCompetencyRow bytes
+        internal const int ManagerCompetencyRow = 0xE;
+        internal const int ManagerLevels = 16;
+        internal const int ManagerCharisma = 5;                   // column of "Ausstrahlung"
+        internal const int ManagerDataBirthday = 0x4E;            // in the managers' data only (FUN_006A54FA): day, month, word year
         internal const uint ManagerBoardTrust = 0x01B99684;       // word, base of the board's trust; the game adds the next 4 bytes (FUN_007701B2)
         internal const uint SeasonStartMoney = 0x00A6C1C8;    // ClubCopySeasonStartMoney of the own club's copy (slot 0, fixed at 0x00A6BFB8)
 

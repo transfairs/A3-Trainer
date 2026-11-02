@@ -236,7 +236,7 @@ namespace A3_Trainer.Tests
                 TestHelpers.Click(club.DropDownItems.Cast<ToolStripItem>().Single(i => i.Text == "Eigener Verein"));
 
                 Assert.Equal("A3-Trainer :: Verein: 1.FV München", window.Text);
-                TabControl tabs = TestHelpers.Get<TabControl>(TestHelpers.Get<ClubPagesView>(window, "clubPages"), "tabs");
+                TabControl tabs = TestHelpers.Get<TabControl>(TestHelpers.Get<PagesView>(window, "clubPages"), "tabs");
                 Assert.Equal(new[] { "Verein", "Identität", "Stadion" }, tabs.TabPages.Cast<TabPage>().Select(p => p.Text));
                 StadiumView stadium = TestHelpers.Get<StadiumView>(window, "stadiumView");
                 Assert.Same(tabs.TabPages[2], stadium.Parent);

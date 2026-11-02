@@ -23,8 +23,10 @@ namespace A3_Trainer
         private readonly ClubView clubView;
         private readonly IdentityView identityView;
         private readonly StadiumView stadiumView;
-        private readonly ClubPagesView clubPages;
+        private readonly PagesView clubPages;
         private readonly ManagerView managerView;
+        private readonly PersonView personView;
+        private readonly PagesView managerPages;
         private readonly AboutView aboutView = new AboutView();
         private readonly Label waiting;
 
@@ -72,8 +74,10 @@ namespace A3_Trainer
             this.clubView = new ClubView(this.memory, this.game);
             this.identityView = new IdentityView(this.memory, this.game);
             this.stadiumView = new StadiumView(this.memory, this.game);
-            this.clubPages = new ClubPagesView(this.clubView, this.identityView, this.stadiumView);
+            this.clubPages = new PagesView().Add("Verein", this.clubView).Add("Identität", this.identityView).Add("Stadion", this.stadiumView);
             this.managerView = new ManagerView(this.memory, this.game);
+            this.personView = new PersonView(this.memory, this.game);
+            this.managerPages = new PagesView().Add("Manager", this.managerView).Add("Person", this.personView);
             this.waiting = new Label
             {
                 Text = "Warte auf Anstoss 3 …\n\nBitte das Spiel starten und einen Spielstand laden.\nUnterstützt wird Version 1.40.",
@@ -130,9 +134,11 @@ namespace A3_Trainer
                     this.stadiumView.RefreshValues();
                     break;
                 case Page.Manager:
-                    this.ShowScreen(this.managerView, $"Manager (Spieler {this.manager})");
+                    this.ShowScreen(this.managerPages, $"Manager (Spieler {this.manager})");
                     this.managerView.Manager = this.manager;
                     this.managerView.RefreshValues();
+                    this.personView.Manager = this.manager;
+                    this.personView.RefreshValues();
                     break;
                 case Page.Opponent:
                     ClubKey? opponent = this.game.NextOpponent(own.Value);

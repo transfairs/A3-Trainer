@@ -20,7 +20,7 @@ namespace A3_Trainer.Tests
             var window = new MainWindow();
             var game = new A3Game(m);
             TestHelpers.Set(window, "game", game);
-            foreach (string view in new[] { "playerView", "clubView", "identityView", "stadiumView", "managerView" })
+            foreach (string view in new[] { "playerView", "clubView", "identityView", "stadiumView", "managerView", "personView" })
                 TestHelpers.Set(TestHelpers.Get<object>(window, view), "game", game);
             if (attached)
                 TestHelpers.Get<ProcessMemory>(window, "memory").mProc.Process = Process.GetCurrentProcess();
@@ -59,11 +59,11 @@ namespace A3_Trainer.Tests
             using (MainWindow window = Window(WithOpponent()))
             {
                 TestHelpers.Click(MenuItem(window, "Verein", "Eigener Verein"));
-                Assert.IsType<ClubPagesView>(Shown(window));
+                Assert.IsType<PagesView>(Shown(window));
                 Assert.Equal("A3-Trainer :: Verein: 1.FV München", window.Text);
 
                 TestHelpers.Click(MenuItem(window, "Trainer", "Manager"));
-                Assert.IsType<ManagerView>(Shown(window));
+                Assert.Same(TestHelpers.Get<PagesView>(window, "managerPages"), Shown(window));
                 Assert.Equal("A3-Trainer :: Manager (Spieler 1)", window.Text);
 
                 TestHelpers.Click(MenuItem(window, "Spieler", "Nächster Gegner"));
@@ -140,7 +140,7 @@ namespace A3_Trainer.Tests
                 Assert.Equal("Nicht unterstützt", Shown(window).Text);
 
                 window.OnGameAttached();
-                Assert.IsType<ManagerView>(Shown(window));
+                Assert.Same(TestHelpers.Get<PagesView>(window, "managerPages"), Shown(window));
             }
         });
 

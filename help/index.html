@@ -283,12 +283,12 @@
             <p>Ist die Stadionseite im Spiel gerade offen, ändert der Trainer auch die Kopie, die sie beim Verlassen zurückschreibt. Die neuen Werte zeigt sie erst, wenn sie wieder geöffnet wird.</p>
           </fieldset>
           <fieldset class="groupbox">
-            <legend>Manager (<span class="menu-path">Trainer → Manager</span>)</legend>
+            <legend>Manager (<span class="menu-path">Trainer → Manager</span>, Reiter „Manager“)</legend>
             <dl class="field-list">
               <dt>Vorname, Nachname</dt><dd>Höchstens 9 bzw. 15 Zeichen; ein leeres Feld behält den alten Namen. Den Eintrag des Managers in der Trainerliste des Spiels benennt der Trainer mit um, wenn genau ein Eintrag den alten Namen trägt.</dd>
               <dt>Privates Vermögen (DM)</dt><dd>Das Privatvermögen des Managers.</dd>
               <dt>Vorstandsvertrauen (%)</dt><dd>Der Wert, den das Spiel unter „Persönliche Erfolge“ zeigt. Es rechnet eigene Zu- und Abschläge hinzu; der Trainer setzt den Grundwert so, dass die Summe stimmt. Daneben steht das Urteil des Vorstands wie im Spiel, vom „König“ bei 100 % bis „ein Wunder, noch da zu sein“ unter 55 %. Mit eigenen Vereinsanteilen zeigt das Spiel stets 100 %.</dd>
-              <dt>Beliebtheit</dt><dd>Bei den Medien und in der Öffentlichkeit 0 bis 100, mit der Stufe des Spiels daneben (Gottstatus über 95 bis Feindbild unter 20). Bei den Fans stellen Sie den Grundwert ein; das Spiel gewichtet ihn mit dem Image des Managers (80 bis 140 %). Die Stufe daneben ist die, die das Spiel anzeigt. Die Beliebtheit bei der Mannschaft ergibt sich aus den Spielern und ist hier nicht einstellbar.</dd>
+              <dt>Beliebtheit</dt><dd>Bei den Medien und in der Öffentlichkeit 0 bis 100, mit der Stufe des Spiels daneben (Gottstatus über 95 bis Feindbild unter 20). Bei den Fans stellen Sie den Grundwert ein; das Spiel gewichtet ihn mit der Ausstrahlung des Managers (80 bis 140 %, siehe Reiter „Person“). Die Stufe daneben ist die, die das Spiel anzeigt. Die Beliebtheit bei der Mannschaft ergibt sich aus den Spielern und ist hier nicht einstellbar.</dd>
             </dl>
           </fieldset>
           <fieldset class="groupbox">
@@ -300,6 +300,14 @@
               <dt>Laufzeit (Jahre)</dt><dd>Restliche Spielzeiten. Das Spiel zählt sie zum Saisonwechsel herunter; bei weniger als zwei Jahren verhandelt der Vorstand neu.</dd>
               <dt>Ausstieg bei Angebot möglich</dt><dd>Ohne diesen Haken kann der Manager ein Angebot eines anderen Vereins nicht annehmen, solange der Vertrag läuft.</dd>
               <dt>Option Verein auf Verlängerung</dt><dd>Der Verein darf den Vertrag einseitig verlängern.</dd>
+            </dl>
+          </fieldset>
+          <fieldset class="groupbox">
+            <legend>Person (<span class="menu-path">Trainer → Manager</span>, Reiter „Person“)</legend>
+            <dl class="field-list">
+              <dt>Geburtstag</dt><dd>Tag, Monat und Jahr; daneben das Alter, das das Spiel unter „Persönliche Erfolge“ zeigt. Ein Datum, das es nicht gibt, wird nicht gespeichert.</dd>
+              <dt>Managerlevel</dt><dd>Das Level des Managers, 0 bis 15. Manche Ereignisse heben oder senken das Level, mit dem das Spiel rechnet; weicht es ab, steht es daneben („im Spiel: Level …“).</dd>
+              <dt>Fähigkeiten</dt><dd>Verhandlungsgeschick, Motivationsfähigkeit, Trainingsgestaltung, Autorität, Fremdsprachenkenntnisse, Ausstrahlung und Umgang mit jungen Spielern, je 0 bis 15, wie unter „Aktuelle Managerfähigkeiten“. Das Spiel führt die Werte für jedes Level getrennt; der Trainer zeigt die des Levels, mit dem das Spiel rechnet. Wer das Level ändert, sieht die Werte des neuen Levels. Die Ausstrahlung bestimmt, wie stark die Fans den Manager mögen (80 bis 140 % des Grundwerts).</dd>
             </dl>
           </fieldset>
         </div>

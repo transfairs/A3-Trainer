@@ -278,7 +278,7 @@ namespace A3_Trainer.Tests
         });
 
         [Theory]
-        [InlineData(9, 0x00, 9)]     // image level as it is
+        [InlineData(9, 0x00, 9)]     // the stored level as it is
         [InlineData(5, 0x0C, 11)]    // +3 +3
         [InlineData(10, 0x80, 12)]   // +2, capped at 12
         [InlineData(13, 0x02, 12)]   // from 12 up only the -1 counts
@@ -287,11 +287,11 @@ namespace A3_Trainer.Tests
         {
             FakeGameMemory m = CareerWithMoney();
             m.Put(A3Addresses.ManagerFanPopularity, 60);
-            m.Put(A3Addresses.ManagerImageLevel, (byte)level);
-            m.Put(A3Addresses.ManagerImageFlags, (byte)flags);
-            m.Map(A3Addresses.ManagerFanFactors, 16 * A3Addresses.ManagerFanFactorStride);
+            m.Put(A3Addresses.ManagerLevel, (byte)level);
+            m.Put(A3Addresses.ManagerLevelFlags, (byte)flags);
+            m.Map(A3Addresses.ManagerCompetencies, A3Addresses.ManagerLevels * A3Addresses.ManagerCompetencyRow);
             for (int i = 0; i < 16; i++)
-                m.PutUInt16(A3Addresses.ManagerFanFactors + (uint)(i * A3Addresses.ManagerFanFactorStride), (ushort)(i == factorIndex ? 10 : 0));
+                m.PutUInt16(A3Addresses.ManagerCompetencies + (uint)(i * A3Addresses.ManagerCompetencyRow + A3Addresses.ManagerCharisma * 2), (ushort)(i == factorIndex ? 10 : 0));
             using (var view = new ManagerView(Attached(), new A3Game(m)))
             {
                 view.RefreshValues();

@@ -461,25 +461,59 @@ namespace A3_Trainer.Controller
             }
         }
 
-        // As FUN_006A61E5 and FUN_006A5A7D: the image level plus its flags picks the factor.
+        // As FUN_006A5A7D: the charisma of the level in force.
         private int FanWeight(int manager)
         {
-            int level = this.ReadByte(this.ManagerField(manager, A3Addresses.ManagerImageLevel));
-            int flags = this.ReadByte(this.ManagerField(manager, A3Addresses.ManagerImageFlags));
-            if (level < 12)
-            {
-                int[] bonus = { 0, -1, 3, 3, 1, 2, 1, 2 };   // flags 0x01 .. 0x80
-                for (int bit = 1; bit < 8; bit++)
-                    if ((flags & (1 << bit)) != 0)
-                        level += bonus[bit];
-                level = Math.Min(level, 12);
-            }
-            else if ((flags & 2) != 0)
-                level--;
-            level = Math.Min(Math.Max(level, 0), 15);
-            byte[] factor = this.memory.Read(this.ManagerField(manager, A3Addresses.ManagerFanFactors + (uint)(level * A3Addresses.ManagerFanFactorStride)), 2);
-            return (factor == null ? 0 : BitConverter.ToInt16(factor, 0)) * 4 + 80;
+            int level = ManagerPerson.InForce(this.ReadByte(this.ManagerField(manager, A3Addresses.ManagerLevel)),
+                                              this.ReadByte(this.ManagerField(manager, A3Addresses.ManagerLevelFlags)));
+            byte[] charisma = this.memory.Read(this.ManagerField(manager, CompetencyField(level, A3Addresses.ManagerCharisma)), 2);
+            return (charisma == null ? 0 : BitConverter.ToInt16(charisma, 0)) * 4 + 80;
         }
+
+        private static uint CompetencyField(int level, int competency) =>
+            A3Addresses.ManagerCompetencies + (uint)(level * A3Addresses.ManagerCompetencyRow + competency * 2);
+
+        /// <summary>Birthday, level and competencies of human manager <paramref name="manager"/> (1-4).</summary>
+        internal ManagerPerson ReadPerson(int manager)
+        {
+            byte[] birthday = this.memory.Read(this.ManagerBirthday(manager), 4);
+            byte[] table = this.memory.Read(this.ManagerField(manager, A3Addresses.ManagerCompetencies),
+                                            A3Addresses.ManagerLevels * A3Addresses.ManagerCompetencyRow);
+            if (birthday == null || table == null)
+                return null;
+            return new ManagerPerson
+            {
+                Manager = manager,
+                Birthday = new GameDate(BitConverter.ToInt16(birthday, 2), birthday[1], birthday[0]),
+                Level = this.ReadByte(this.ManagerField(manager, A3Addresses.ManagerLevel)),
+                LevelFlags = this.ReadByte(this.ManagerField(manager, A3Addresses.ManagerLevelFlags)),
+                Competencies = Enumerable.Range(0, A3Addresses.ManagerLevels)
+                    .Select(level => Enumerable.Range(0, Tables.Competencies.Length)
+                        .Select(c => (int)BitConverter.ToInt16(table, level * A3Addresses.ManagerCompetencyRow + c * 2)).ToArray())
+                    .ToArray(),
+            };
+        }
+
+        /// <summary>Writes the birthday, level and competencies that changed.</summary>
+        internal void SavePerson(ManagerPerson original, ManagerPerson edited)
+        {
+            int manager = edited.Manager;
+            if (!edited.Birthday.Equals(original.Birthday))
+            {
+                GameDate date = edited.Birthday;
+                byte[] year = BitConverter.GetBytes((short)date.Year);
+                this.memory.Write(this.ManagerBirthday(manager), new[] { (byte)date.Day, (byte)date.Month, year[0], year[1] });
+            }
+            if (edited.Level != original.Level)
+                this.WriteManagerField(manager, A3Addresses.ManagerLevel, new[] { (byte)edited.Level });
+            for (int level = 0; level < A3Addresses.ManagerLevels; level++)
+                for (int c = 0; c < Tables.Competencies.Length; c++)
+                    if (edited.Competencies[level][c] != original.Competencies[level][c])
+                        this.WriteManagerField(manager, CompetencyField(level, c), BitConverter.GetBytes((short)edited.Competencies[level][c]));
+        }
+
+        private uint ManagerBirthday(int manager) =>
+            A3Addresses.ManagerData + (uint)((manager - 1) * A3Addresses.ManagerDataStride + A3Addresses.ManagerDataBirthday);
 
         // The manager's name is text in the manager object. When the career started the game also entered it
         // in the name table for the trainer list; the one trainer entry with the old names follows the change.

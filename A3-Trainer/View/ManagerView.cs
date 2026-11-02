@@ -41,7 +41,7 @@ namespace A3_Trainer.View
         internal ManagerView(ProcessMemory memory, A3Game game) : base(memory)
         {
             this.game = game;
-            this.Size = new Size(630, 423);
+            this.Size = new Size(614, 389);
             this.Font = new Font("Microsoft Sans Serif", 8.25f);
             this.BuildLayout();
             A3Theme.Apply(this);
@@ -54,8 +54,8 @@ namespace A3_Trainer.View
 
         private void BuildLayout()
         {
-            var manager = new GroupBox { Text = "Manager", Bounds = new Rectangle(8, 8, 614, 222) };
-            int y = 22;
+            var manager = new GroupBox { Text = "Manager", Bounds = new Rectangle(8, 6, 598, 206) };
+            int y = 20;
             void ManagerRow(string caption, Control input, Label note = null)
             {
                 manager.Controls.Add(new Label { Text = caption, Bounds = new Rectangle(12, y + 3, 170, 18) });
@@ -63,10 +63,10 @@ namespace A3_Trainer.View
                 manager.Controls.Add(input);
                 if (note != null)
                 {
-                    note.SetBounds(360, y + 3, 250, 18);
+                    note.SetBounds(360, y + 3, 230, 18);
                     manager.Controls.Add(note);
                 }
-                y += 28;
+                y += 26;
             }
             ManagerRow("Vorname", this.firstName);
             ManagerRow("Nachname", this.lastName);
@@ -77,18 +77,18 @@ namespace A3_Trainer.View
             ManagerRow("bei den Fans (Grundwert)", this.fans, this.fansLevel);
             this.media.ValueChanged += (s, e) => this.mediaLevel.Text = Tables.Popularity((int)this.media.Value);
             this.publicView.ValueChanged += (s, e) => this.publicLevel.Text = Tables.Popularity((int)this.publicView.Value);
-            // The fans see the base weighted by the manager's image; the level is the one the game shows.
+            // The fans see the base weighted by the manager's charisma; the level is the one the game shows.
             this.fans.ValueChanged += (s, e) => this.fansLevel.Text = Tables.Popularity(this.shown?.ShownFans((int)this.fans.Value) ?? 0);
             this.boardTrust.ValueChanged += (s, e) => this.boardLevel.Text = Tables.BoardTrust((int)this.boardTrust.Value, this.shown?.Name ?? "");
             this.Controls.Add(manager);
 
             // Contract in two columns, as on the career score's contract page.
-            var contract = new GroupBox { Text = "Vertrag", Bounds = new Rectangle(8, 236, 614, 140) };
+            var contract = new GroupBox { Text = "Vertrag", Bounds = new Rectangle(8, 218, 598, 128) };
             int row = 0;
             void ContractRow(int column, string caption, Control input)
             {
-                int x = column == 0 ? 12 : 316;
-                int top = 22 + (row % 4) * 28;
+                int x = column == 0 ? 12 : 308;
+                int top = 20 + (row % 4) * 26;
                 contract.Controls.Add(new Label { Text = caption, Bounds = new Rectangle(x, top + 3, 130, 18) });
                 input.SetBounds(x + 135, top, 150, 21);
                 contract.Controls.Add(input);
@@ -100,16 +100,16 @@ namespace A3_Trainer.View
             ContractRow(0, "je Titel / Aufstieg (DM)", this.titleBonus);
             ContractRow(1, "Bonus bei Erreichen (DM)", this.goalBonus);
             ContractRow(1, "Laufzeit (Jahre)", this.contractYears);
-            this.exitClause.SetBounds(316, 22 + 2 * 28, 280, 21);
-            this.clubOption.SetBounds(316, 22 + 3 * 28, 280, 21);
+            this.exitClause.SetBounds(308, 20 + 2 * 26, 280, 21);
+            this.clubOption.SetBounds(308, 20 + 3 * 26, 280, 21);
             contract.Controls.AddRange(new Control[] { this.exitClause, this.clubOption });
             this.Controls.Add(contract);
 
-            this.save.SetBounds(8, 384, 110, 25);
+            this.save.SetBounds(8, 356, 110, 25);
             this.save.Click += (s, e) => this.Save();
-            this.reload.SetBounds(124, 384, 110, 25);
+            this.reload.SetBounds(124, 356, 110, 25);
             this.reload.Click += (s, e) => this.RefreshValues();
-            this.status.SetBounds(240, 388, 380, 20);
+            this.status.SetBounds(240, 360, 366, 20);
             this.Controls.AddRange(new Control[] { this.save, this.reload, this.status });
         }
 
