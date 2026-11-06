@@ -50,18 +50,19 @@ namespace A3_Trainer
             this.Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath);
 
             var players = new ToolStripMenuItem("Spieler");
-            players.DropDownItems.Add("Eigener Kader", null, (s, e) => this.Show(Page.Squad));
-            this.opponentItem = new ToolStripMenuItem("Nächster Gegner", null, (s, e) => this.Show(Page.Opponent));
+            players.DropDownItems.Add("Eigener Kader", null, (s, e) => this.Go(Page.Squad));
+            this.opponentItem = new ToolStripMenuItem("Nächster Gegner", null, (s, e) => this.Go(Page.Opponent));
             players.DropDownItems.Add(this.opponentItem);
-            players.DropDownItems.Add("Anderer Verein", null, (s, e) => this.Show(Page.Other));
+            players.DropDownItems.Add("Anderer Verein", null, (s, e) => this.Go(Page.Other));
             var club = new ToolStripMenuItem("Verein");
-            club.DropDownItems.Add("Eigener Verein", null, (s, e) => this.Show(Page.Club));
-            this.managerMenu.DropDownItems.Add("Manager", null, (s, e) => this.Show(Page.Manager));
+            club.DropDownItems.Add("Eigener Verein", null, (s, e) => this.Go(Page.Club));
+            this.managerMenu.DropDownItems.Add("Manager", null, (s, e) => this.Go(Page.Manager));
             this.managerMenu.DropDownOpening += (s, e) => this.ListManagers();
             var help = new ToolStripMenuItem("?");
             help.DropDownItems.Add("Onlinehilfe", null, (s, e) => this.OpenHelp());
             help.DropDownItems.Add("Über", null, (s, e) => this.ShowAbout());
             this.menu.Items.AddRange(new ToolStripItem[] { club, players, this.managerMenu, help });
+            this.AddNavigationButtons(this.menu);
             A3Theme.ApplyMenu(this.menu);
 
             this.Controls.Add(this.content);
@@ -98,6 +99,7 @@ namespace A3_Trainer
         {
             this.manager = this.game.ActiveManager();
             this.Show(this.page);
+            this.RecordNavigation(this.HistoryKey(this.page), this.Restorer(this.page));
         }
 
         /// <summary>Called by the observer when the game is gone.</summary>
@@ -111,6 +113,26 @@ namespace A3_Trainer
         internal void ShowStatus(string message)
         {
             this.waiting.Text = message;
+        }
+
+        // Shows a page from the menu and notes it in the back/forward history, together with the
+        // manager and the picked club it shows, so going back brings exactly that screen again.
+        private void Go(Page target) => this.Navigate(this.HistoryKey(target), this.Restorer(target));
+
+        private string HistoryKey(Page target) =>
+            target == Page.Other ? $"{target}/{this.manager}/{this.otherClub}" : $"{target}/{this.manager}";
+
+        private Action Restorer(Page target)
+        {
+            int shownManager = this.manager;
+            ClubKey? shownClub = this.otherClub;
+            return () =>
+            {
+                this.manager = shownManager;
+                if (target == Page.Other)
+                    this.otherClub = shownClub;
+                this.Show(target);
+            };
         }
 
         private void Show(Page target)
@@ -176,7 +198,7 @@ namespace A3_Trainer
                 this.managerMenu.DropDownItems.Add(new ToolStripMenuItem($"Spieler {number}{name}", null, (s, e) =>
                 {
                     this.manager = picked;
-                    this.Show(this.page == Page.Club || this.page == Page.Squad ? this.page : Page.Manager);
+                    this.Go(this.page == Page.Club || this.page == Page.Squad ? this.page : Page.Manager);
                 }) { Checked = number == this.manager });
             }
         }
@@ -187,6 +209,7 @@ namespace A3_Trainer
             this.page = Page.Other;
             this.otherClub = club;
             this.ShowScreen(this.playerView, "Verein: " + this.game.ClubName(club));
+            this.RecordNavigation(this.HistoryKey(Page.Other), this.Restorer(Page.Other));
         }
 
         private void ShowWaiting() => this.ShowPlaceholder(this.waiting);
@@ -212,6 +235,6 @@ namespace A3_Trainer
         }
 
         // Needs no running game, so it bypasses Show(Page) and leaves the remembered page alone.
-        private void ShowAbout() => this.ShowScreen(this.aboutView, "Über");
+        private void ShowAbout() => this.Navigate("About", () => this.ShowScreen(this.aboutView, "Über"));
     }
 }

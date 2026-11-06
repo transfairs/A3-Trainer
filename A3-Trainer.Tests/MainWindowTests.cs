@@ -80,6 +80,58 @@ namespace A3_Trainer.Tests
         });
 
         [Fact]
+        public void History_GoesBackAndForward_ThroughMenuButtonsAndAltArrows() => StaThread.Run(() =>
+        {
+            using (MainWindow window = Window(WithOpponent()))
+            {
+                ToolStripItem back = window.MainMenuStrip.Items[0];
+                ToolStripItem forward = window.MainMenuStrip.Items[1];
+                Assert.Equal("◀", back.Text);
+                Assert.False(back.Enabled);
+
+                window.OnGameAttached(); // the squad page is the first entry
+                TestHelpers.Click(MenuItem(window, "Verein", "Eigener Verein"));
+                TestHelpers.Click(MenuItem(window, "?", "Über"));
+                Assert.True(back.Enabled);
+                Assert.False(forward.Enabled);
+
+                TestHelpers.Click(back);
+                Assert.Equal("A3-Trainer :: Verein: 1.FV München", window.Text);
+                Assert.True(window.GoBack());
+                Assert.Equal("A3-Trainer :: Eigener Kader: 1.FV München", window.Text);
+                Assert.False(window.GoBack());
+
+                TestHelpers.Click(forward);
+                Assert.Equal("A3-Trainer :: Verein: 1.FV München", window.Text);
+                Message msg = default(Message);
+                Assert.True((bool)TestHelpers.Invoke(window, "ProcessCmdKey", msg, Keys.Alt | Keys.Right));
+                Assert.Equal("A3-Trainer :: Über", window.Text);
+
+                // A new page drops what lay ahead.
+                window.GoBack();
+                TestHelpers.Click(MenuItem(window, "Trainer", "Manager"));
+                Assert.False(window.CanGoForward);
+            }
+        });
+
+        [Fact]
+        public void History_KeepsTheClubPickedInThePlayerView() => StaThread.Run(() =>
+        {
+            using (MainWindow window = Window(WithOpponent()))
+            {
+                TestHelpers.Click(MenuItem(window, "Spieler", "Eigener Kader"));
+                TestHelpers.Invoke(window, "OnClubChosen", new A3_Trainer.Model.ClubKey(14, 10));
+                Assert.Equal("A3-Trainer :: Verein: Hamburger FC", window.Text);
+                TestHelpers.Click(MenuItem(window, "Verein", "Eigener Verein"));
+
+                window.GoBack();
+                Assert.Equal("A3-Trainer :: Verein: Hamburger FC", window.Text);
+                window.GoBack();
+                Assert.Equal("A3-Trainer :: Eigener Kader: 1.FV München", window.Text);
+            }
+        });
+
+        [Fact]
         public void Opponent_WhenNoneIsLoaded_SaysSo() => StaThread.Run(() =>
         {
             using (MainWindow window = Window(A3GameTests.Career()))

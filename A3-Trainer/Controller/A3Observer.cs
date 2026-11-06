@@ -34,8 +34,32 @@ namespace A3_Trainer.Controller
         protected override bool ShutDownRequested => this.window.ShutDown;
 
         // The game's main window is titled exactly "ANSTOSS 3"; TryAttach confirms the build.
+        // Under Wine/Proton the title can't be relied on: Wine Mono reports no window titles at all
+        // (MainWindowTitle is null), and a game in another Wine desktop has no main window from the
+        // trainer's side. So the game's process name counts as well.
         internal override IEnumerable<Process> GetGameCandidates() =>
-            Process.GetProcesses().Where(p => p.MainWindowTitle.StartsWith("ANSTOSS 3"));
+            Process.GetProcesses().Where(p => IsGameCandidate(SafeGet(() => p.ProcessName), SafeGet(() => p.MainWindowTitle)));
+
+        /// <summary>Process name of the game (without ".exe").</summary>
+        internal const string GameProcessName = "anstoss3";
+
+        /// <summary>Whether a process with this name and main window title (either may be null) may be the game.</summary>
+        internal static bool IsGameCandidate(string processName, string windowTitle) =>
+            (windowTitle != null && windowTitle.StartsWith("ANSTOSS 3")) ||
+            string.Equals(processName, GameProcessName, StringComparison.OrdinalIgnoreCase);
+
+        // Process properties throw for processes that exit meanwhile or can't be queried.
+        internal static string SafeGet(Func<string> get)
+        {
+            try
+            {
+                return get();
+            }
+            catch (Exception)
+            {
+                return null;
+            }
+        }
 
         protected override bool TryAttach(Process candidate)
         {

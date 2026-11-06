@@ -37,6 +37,23 @@ namespace A3_Trainer.Tests
             }
         });
 
+        [Theory]
+        [InlineData("anstoss3", null, true)]          // Wine Mono: no window titles
+        [InlineData("ANSTOSS3", "", true)]
+        [InlineData(null, "ANSTOSS 3", true)]
+        [InlineData("explorer", "ANSTOSS 3", true)]
+        [InlineData("explorer", "Explorer", false)]
+        [InlineData(null, null, false)]
+        public void Candidate_ByWindowTitleOrProcessName(string name, string title, bool expected) =>
+            Assert.Equal(expected, A3Observer.IsGameCandidate(name, title));
+
+        [Fact]
+        public void SafeGet_TurnsAFailedQueryIntoNull()
+        {
+            Assert.Equal("x", A3Observer.SafeGet(() => "x"));
+            Assert.Null(A3Observer.SafeGet(() => throw new InvalidOperationException("exited")));
+        }
+
         [Fact]
         public void TryAttach_FailsWhenTheProcessCantBeOpened() => StaThread.Run(() =>
         {
