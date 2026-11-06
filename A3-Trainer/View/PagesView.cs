@@ -19,6 +19,23 @@ namespace A3_Trainer.View
             A3Theme.Apply(this);
         }
 
+        /// <summary>
+        /// Puts <paramref name="controls"/> (e.g. a club choice) in the tab row, right of the tabs,
+        /// from <paramref name="x"/> on.
+        /// </summary>
+        internal PagesView AddHeader(int x, params Control[] controls)
+        {
+            foreach (Control control in controls)
+            {
+                control.Location = new Point(x, 2);
+                x += control.Width + 4;
+                this.Controls.Add(control);
+                control.BringToFront();
+            }
+            A3Theme.Apply(this);
+            return this;
+        }
+
         /// <summary>Adds <paramref name="view"/> on a tab named <paramref name="title"/>.</summary>
         internal PagesView Add(string title, UserControl view)
         {

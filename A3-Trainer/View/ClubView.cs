@@ -7,7 +7,7 @@ using System.Windows.Forms;
 
 namespace A3_Trainer.View
 {
-    /// <summary>A manager's club: name, city, money, sponsor income, image and standing with the association.</summary>
+    /// <summary>Any club: name, city, money, sponsor income, image and standing with the association.</summary>
     internal sealed class ClubView : TrainerView
     {
         private readonly A3Game game;
@@ -40,8 +40,8 @@ namespace A3_Trainer.View
 
         protected override string GameDisplayName => "Anstoss-3";
 
-        /// <summary>The human manager (1-4) whose data the page shows.</summary>
-        internal int Manager { get; set; } = 1;
+        /// <summary>The club the page shows; none clears it.</summary>
+        internal ClubKey? Club { get; set; }
 
         private void BuildLayout()
         {
@@ -83,7 +83,7 @@ namespace A3_Trainer.View
         /// <summary>Reads the values from the game (or clears the view if none is attached).</summary>
         internal void RefreshValues()
         {
-            this.shown = this.IsGameRunning(silent: true) ? this.game.ReadClubInfo(this.Manager) : null;
+            this.shown = this.Club.HasValue && this.IsGameRunning(silent: true) ? this.game.ReadClub(this.Club.Value) : null;
             this.save.Enabled = this.shown != null;
             if (this.shown == null)
             {
@@ -126,7 +126,7 @@ namespace A3_Trainer.View
             edited.Trouble = edited.Trouble & ~Tables.AssociationTroubleMask | (int)this.trouble.Value;
             try
             {
-                this.game.SaveClubInfo(this.shown, edited);
+                this.game.SaveClub(this.shown, edited);
                 Logger.Debug("Verein gespeichert");
                 this.RefreshValues();
                 this.status.Text = "Gespeichert";

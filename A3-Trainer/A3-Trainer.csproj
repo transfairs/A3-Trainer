@@ -84,6 +84,7 @@
     <Compile Include="View\AboutView.cs">
       <SubType>UserControl</SubType>
     </Compile>
+    <Compile Include="View\ClubPicker.cs" />
     <Compile Include="View\ClubView.cs">
       <SubType>UserControl</SubType>
     </Compile>

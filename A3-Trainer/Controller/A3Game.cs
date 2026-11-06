@@ -342,45 +342,56 @@ namespace A3_Trainer.Controller
             ClubKey? own = this.OwnClub(manager);
             if (!own.HasValue)
                 return null;
-            uint club = this.ClubAddress(own.Value).Value;
-            uint copy = this.ClubCopy(own.Value);
-            // The finance block of the loaded copy (what the game uses), else the record's, at the record's offsets.
-            uint finances = copy != 0 ? copy - (uint)A3Addresses.ClubCopyFinanceShift : club;
+            ClubInfo info = this.ReadClub(own.Value);
             byte[] trust = this.memory.Read(this.ManagerField(manager, A3Addresses.ManagerBoardTrust), 6) ?? new byte[6];
             uint contract = this.ManagerField(manager, A3Addresses.ManagerSalary);
 
+            info.Manager = manager;
+            info.ManagerFirstName = this.ReadString(this.ManagerField(manager, A3Addresses.ManagerFirstName), 10);
+            info.ManagerLastName = this.ReadString(this.ManagerField(manager, A3Addresses.ManagerLastName), 0x10);
+            info.ManagerSalary = (int)this.ReadUInt32(contract);
+            info.PointBonus = (int)this.ReadUInt32(contract + ContractOffset.PointBonus);
+            info.CupBonus = (int)this.ReadUInt32(contract + ContractOffset.CupBonus);
+            info.TitleBonus = (int)this.ReadUInt32(contract + ContractOffset.TitleBonus);
+            info.GoalBonus = (int)this.ReadUInt32(contract + ContractOffset.GoalBonus);
+            info.ClubOption = this.ReadByte(contract + ContractOffset.ClubOption) != 0;
+            info.ContractYears = this.ReadUInt16(contract + ContractOffset.Years);
+            info.ExitClause = this.ReadByte(contract + ContractOffset.ExitClause) != 0;
+            info.ManagerPrivateMoney = (int)this.ReadUInt32(this.ManagerField(manager, A3Addresses.ManagerPrivateMoney));
+            info.MediaPopularity = this.ReadByte(this.ManagerField(manager, A3Addresses.ManagerMediaPopularity));
+            info.PublicPopularity = this.ReadByte(this.ManagerField(manager, A3Addresses.ManagerPublicPopularity));
+            info.FanPopularity = this.ReadByte(this.ManagerField(manager, A3Addresses.ManagerFanPopularity));
+            info.FanWeight = this.FanWeight(manager);
+            info.BoardTrustBase = BitConverter.ToInt16(trust, 0);
+            info.BoardTrustBonus = trust[2] + trust[3] + (sbyte)trust[4] + (sbyte)trust[5];
+            return info;
+        }
+
+        /// <summary>The club data of any club (no manager data), or null if the key names no club.</summary>
+        internal ClubInfo ReadClub(ClubKey key)
+        {
+            uint? record = this.ClubAddress(key);
+            if (!record.HasValue)
+                return null;
+            uint club = record.Value;
+            uint copy = this.ClubCopy(key);
+            // The finance block of the loaded copy (what the game uses), else the record's, at the record's offsets.
+            uint finances = copy != 0 ? copy - (uint)A3Addresses.ClubCopyFinanceShift : club;
             return new ClubInfo
             {
-                Manager = manager,
-                Key = own.Value,
-                Name = this.ReadString(club + A3Addresses.ClubName, 0x14),
-                ShortName = this.ReadString(club + A3Addresses.ClubShortName, 4),
-                City = this.ReadString(club + A3Addresses.ClubCity, 0x14),
+                Manager = 0,
+                Key = key,
+                Name = this.ReadString(club + A3Addresses.ClubName, A3Addresses.ClubNameSize),
+                ShortName = this.ReadString(club + A3Addresses.ClubShortName, A3Addresses.ClubShortNameSize),
+                City = this.ReadString(club + A3Addresses.ClubCity, A3Addresses.ClubNameSize),
                 SeasonStartMoney = (int)this.ReadUInt32(finances + A3Addresses.ClubSeasonStartMoney),
                 HasAdsContract = this.ReadByte(finances + A3Addresses.ClubAdsContract) != 0,
                 Ads = (int)this.ReadUInt32(finances + A3Addresses.ClubAds),
                 HasOutfitter = this.ReadByte(finances + A3Addresses.ClubOutfitterContract) != 0,
                 Outfitter = (int)this.ReadUInt32(finances + A3Addresses.ClubOutfitter),
-                ManagerFirstName = this.ReadString(this.ManagerField(manager, A3Addresses.ManagerFirstName), 10),
-                ManagerLastName = this.ReadString(this.ManagerField(manager, A3Addresses.ManagerLastName), 0x10),
-                ManagerSalary = (int)this.ReadUInt32(contract),
-                PointBonus = (int)this.ReadUInt32(contract + ContractOffset.PointBonus),
-                CupBonus = (int)this.ReadUInt32(contract + ContractOffset.CupBonus),
-                TitleBonus = (int)this.ReadUInt32(contract + ContractOffset.TitleBonus),
-                GoalBonus = (int)this.ReadUInt32(contract + ContractOffset.GoalBonus),
-                ClubOption = this.ReadByte(contract + ContractOffset.ClubOption) != 0,
-                ContractYears = this.ReadUInt16(contract + ContractOffset.Years),
-                ExitClause = this.ReadByte(contract + ContractOffset.ExitClause) != 0,
-                ManagerPrivateMoney = (int)this.ReadUInt32(this.ManagerField(manager, A3Addresses.ManagerPrivateMoney)),
                 // The loaded club's working copy is what the game uses; both hold the same otherwise.
                 Image = this.ReadByte(copy != 0 ? copy + A3Addresses.ClubCopyImage : club + A3Addresses.ClubImage),
                 Trouble = this.ReadByte(copy != 0 ? copy + A3Addresses.ClubCopyTrouble : club + A3Addresses.ClubTrouble),
-                MediaPopularity = this.ReadByte(this.ManagerField(manager, A3Addresses.ManagerMediaPopularity)),
-                PublicPopularity = this.ReadByte(this.ManagerField(manager, A3Addresses.ManagerPublicPopularity)),
-                FanPopularity = this.ReadByte(this.ManagerField(manager, A3Addresses.ManagerFanPopularity)),
-                FanWeight = this.FanWeight(manager),
-                BoardTrustBase = BitConverter.ToInt16(trust, 0),
-                BoardTrustBonus = trust[2] + trust[3] + (sbyte)trust[4] + (sbyte)trust[5],
             };
         }
 
@@ -404,6 +415,18 @@ namespace A3_Trainer.Controller
             WriteManager(A3Addresses.ManagerFanPopularity, original.FanPopularity, edited.FanPopularity, 1);
             WriteManager(A3Addresses.ManagerBoardTrust, original.BoardTrustBase, edited.BoardTrustBase, 2);
 
+            this.SaveClub(original, edited);
+
+            void WriteManager(uint field, int was, int now, int size)
+            {
+                if (now != was)
+                    this.WriteManagerField(manager, field, size == 4 ? BitConverter.GetBytes(now) : size == 2 ? BitConverter.GetBytes((ushort)now) : new[] { (byte)now });
+            }
+        }
+
+        /// <summary>Writes the club values (not the manager's) that changed, for any club.</summary>
+        internal void SaveClub(ClubInfo original, ClubInfo edited)
+        {
             // The club's values live in its record and, while the game has it loaded, in the working copy.
             if (edited.Image == original.Image && edited.Trouble == original.Trouble && edited.SeasonStartMoney == original.SeasonStartMoney &&
                 edited.Ads == original.Ads && edited.Outfitter == original.Outfitter &&
@@ -452,12 +475,6 @@ namespace A3_Trainer.Controller
             {
                 if (now != was)
                     this.memory.Write(address, BitConverter.GetBytes(now));
-            }
-
-            void WriteManager(uint field, int was, int now, int size)
-            {
-                if (now != was)
-                    this.WriteManagerField(manager, field, size == 4 ? BitConverter.GetBytes(now) : size == 2 ? BitConverter.GetBytes((ushort)now) : new[] { (byte)now });
             }
         }
 

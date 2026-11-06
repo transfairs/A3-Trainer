@@ -108,8 +108,7 @@ namespace A3_Trainer.View
 
         private ClubKey? club;
         private ClubKey? frozenClub;
-        private List<ClubKey> clubs = new List<ClubKey>();
-        private bool fillingClubs;
+        private readonly ClubPicker picker;
         private List<Player> players = new List<Player>();
         private Player shown;
         private Player healed;
@@ -119,6 +118,8 @@ namespace A3_Trainer.View
         internal PlayerView(ProcessMemory memory, A3Game game) : base(memory)
         {
             this.game = game;
+            this.picker = new ClubPicker(this.countryBox, this.clubBox);
+            this.picker.Picked += this.ClubPicked;
             this.Size = new Size(630, 423);
             this.Font = new Font("Microsoft Sans Serif", 8.25f);
             this.BuildLayout();
@@ -157,8 +158,6 @@ namespace A3_Trainer.View
         {
             this.countryBox.SetBounds(4, 4, 96, 21);
             this.clubBox.SetBounds(104, 4, 136, 21);
-            this.countryBox.SelectedIndexChanged += (s, e) => this.CountryPicked();
-            this.clubBox.SelectedIndexChanged += (s, e) => this.ClubPicked();
             this.Controls.AddRange(new Control[] { this.countryBox, this.clubBox });
 
             this.list.SetBounds(4, 30, 236, 389);
@@ -591,80 +590,20 @@ namespace A3_Trainer.View
         // Countries and clubs as the game numbers them; the shown club is selected.
         private void FillClubs()
         {
-            this.fillingClubs = true;
-            try
-            {
-                this.countryBox.Items.Clear();
-                this.clubBox.Items.Clear();
-                this.clubs = new List<ClubKey>();
-                if (!this.club.HasValue || !this.IsGameRunning(silent: true))
-                    return;
+            bool running = this.club.HasValue && this.IsGameRunning(silent: true);
+            if (running)
                 this.FillCountries();
-                this.clubs = this.game.ReadClubs();
-                this.countryBox.Items.AddRange(this.clubs.Select(c => c.Country).Distinct()
-                    .Select(country => new Choice(country < this.nationality.Items.Count ? (string)this.nationality.Items[country] : country.ToString(), new ClubKey(country, 0)))
-                    .OrderBy(c => c.Text, StringComparer.CurrentCulture).Cast<object>().ToArray());
-                this.countryBox.SelectedItem = this.countryBox.Items.Cast<Choice>().FirstOrDefault(c => c.Club.Country == this.club.Value.Country);
-                this.FillClubBox(this.club.Value.Country);
-                this.transferCountry.Items.Clear();
-                this.transferCountry.Items.AddRange(this.countryBox.Items.Cast<object>().ToArray());
-            }
-            finally
-            {
-                this.fillingClubs = false;
-            }
+            this.picker.Fill(this.game, this.nationality.Items.Cast<string>().ToList(), running ? this.club : null);
+            this.transferCountry.Items.Clear();
+            this.transferCountry.Items.AddRange(this.picker.Countries.Cast<object>().ToArray());
         }
 
-        private void FillClubBox(int country)
+        private void ClubPicked(ClubKey club)
         {
-            this.clubBox.Items.Clear();
-            foreach (ClubKey key in this.clubs.Where(c => c.Country == country))
-                this.clubBox.Items.Add(new Choice(this.game.ClubName(key), key));
-            this.clubBox.SelectedItem = this.clubBox.Items.Cast<Choice>().FirstOrDefault(c => c.Club.Equals(this.club));
-        }
-
-        // Another country shows its first club.
-        private void CountryPicked()
-        {
-            if (this.fillingClubs || !(this.countryBox.SelectedItem is Choice country))
-                return;
-            this.fillingClubs = true;
-            try
-            {
-                this.FillClubBox(country.Club.Country);
-                if (this.clubBox.SelectedIndex < 0 && this.clubBox.Items.Count > 0)
-                    this.clubBox.SelectedIndex = 0;
-            }
-            finally
-            {
-                this.fillingClubs = false;
-            }
-            this.ClubPicked();
-        }
-
-        private void ClubPicked()
-        {
-            if (this.fillingClubs || !(this.clubBox.SelectedItem is Choice choice) || choice.Club.Equals(this.club))
-                return;
             this.StopFreezing();
-            this.club = choice.Club;
+            this.club = club;
             this.RefreshList();
-            this.ClubChosen?.Invoke(choice.Club);
-        }
-
-        /// <summary>An entry of the country or club selection.</summary>
-        private sealed class Choice
-        {
-            internal Choice(string text, ClubKey club)
-            {
-                this.Text = text;
-                this.Club = club;
-            }
-
-            internal string Text { get; }
-            internal ClubKey Club { get; }
-
-            public override string ToString() => this.Text;
+            this.ClubChosen?.Invoke(club);
         }
 
         private void SetTeam()
@@ -810,7 +749,7 @@ namespace A3_Trainer.View
             if (this.transferCountry.SelectedIndex < 0)
             {
                 this.transferNow.Checked = true;
-                this.transferCountry.SelectedItem = this.transferCountry.Items.Cast<Choice>().FirstOrDefault(c => c.Club.Country == player.ClubCountry);
+                this.transferCountry.SelectedItem = this.transferCountry.Items.Cast<ClubChoice>().FirstOrDefault(c => c.Club.Country == player.ClubCountry);
             }
             if (this.transferClub.SelectedIndex < 0 && this.transferClub.Items.Count > 0)
                 this.transferClub.SelectedIndex = 0;
@@ -823,16 +762,15 @@ namespace A3_Trainer.View
         private void FillTransferClubs()
         {
             this.transferClub.Items.Clear();
-            if (this.transferCountry.SelectedItem is Choice country)
-                foreach (ClubKey key in this.clubs.Where(c => c.Country == country.Club.Country))
-                    this.transferClub.Items.Add(new Choice(this.game.ClubName(key), key));
+            if (this.transferCountry.SelectedItem is ClubChoice country)
+                this.transferClub.Items.AddRange(this.picker.ClubsOf(country.Club.Country).Cast<object>().ToArray());
             if (this.transferClub.Items.Count > 0)
                 this.transferClub.SelectedIndex = 0;
         }
 
         private void RequestTransfer()
         {
-            if (this.shown == null || !(this.transferClub.SelectedItem is Choice target) || !this.IsGameRunning())
+            if (this.shown == null || !(this.transferClub.SelectedItem is ClubChoice target) || !this.IsGameRunning())
                 return;
             if (this.Transfers == null)
             {

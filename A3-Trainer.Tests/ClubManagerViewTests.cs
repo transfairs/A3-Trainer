@@ -1,4 +1,5 @@
 using A3_Trainer.Controller;
+using A3_Trainer.Model;
 using A3_Trainer.View;
 using AnstossTrainer.Shared;
 using AnstossTrainer.Shared.Tests;
@@ -42,7 +43,7 @@ namespace A3_Trainer.Tests
         public void ClubView_ShowsSavesAndReloadsTheClub() => StaThread.Run(() =>
         {
             FakeGameMemory m = CareerWithMoney();
-            using (var view = new ClubView(Attached(), new A3Game(m)))
+            using (var view = new ClubView(Attached(), new A3Game(m)) { Club = new ClubKey(14, 1) })
             {
                 view.RefreshValues();
                 Assert.Equal("1.FV München", TestHelpers.Get<TextBox>(view, "clubName").Text);
@@ -166,7 +167,7 @@ namespace A3_Trainer.Tests
             m.Put(copyFinances + A3Addresses.ClubAdsContract, 1);
             m.PutUInt32(copyFinances + A3Addresses.ClubAds, 1344000);
             m.PutUInt32(copyFinances + A3Addresses.ClubOutfitter, 7200000); // no outfitter contract
-            using (var view = new ClubView(Attached(), new A3Game(m)))
+            using (var view = new ClubView(Attached(), new A3Game(m)) { Club = new ClubKey(14, 1) })
             {
                 view.RefreshValues();
                 NumericUpDown ads = TestHelpers.Get<NumericUpDown>(view, "ads");
@@ -201,7 +202,7 @@ namespace A3_Trainer.Tests
             m.Put(club + A3Addresses.ClubImage, 20);                 // stale record
             m.Put(copy + A3Addresses.ClubCopyImage, 30);
             m.Put(copy + A3Addresses.ClubCopyTrouble, 0x86);         // trouble 6, a game state bit
-            using (var view = new ClubView(Attached(), new A3Game(m)))
+            using (var view = new ClubView(Attached(), new A3Game(m)) { Club = new ClubKey(14, 1) })
             {
                 view.RefreshValues();
                 NumericUpDown image = TestHelpers.Get<NumericUpDown>(view, "image");
@@ -231,7 +232,7 @@ namespace A3_Trainer.Tests
             uint club = A3Addresses.ClubArray + (uint)A3Addresses.ClubSize;
             m.Put(club + A3Addresses.ClubImage, 12);
             m.Put(club + A3Addresses.ClubTrouble, 25);
-            using (var view = new ClubView(Attached(), new A3Game(m)))
+            using (var view = new ClubView(Attached(), new A3Game(m)) { Club = new ClubKey(14, 1) })
             {
                 view.RefreshValues();
                 Assert.Equal("vollkommen verhaßt", TestHelpers.Get<Label>(view, "imageLevel").Text);
@@ -241,6 +242,37 @@ namespace A3_Trainer.Tests
                 Click(view, "save");
                 Assert.Equal(new byte[] { 40 }, m.WrittenAt(club + A3Addresses.ClubImage));
                 Assert.Null(m.WrittenAt(club + A3Addresses.ClubTrouble));
+            }
+        });
+
+        [Fact]
+        public void ClubView_AnyClub_ReadsAndWritesItsRecordOnly() => StaThread.Run(() =>
+        {
+            FakeGameMemory m = ClubSelectionTests.Clubs();
+            uint aarhus = A3Addresses.ClubArray + 220u * A3Addresses.ClubSize;
+            m.Put(aarhus + A3Addresses.ClubImage, 20);
+            m.PutUInt32(aarhus + A3Addresses.ClubSeasonStartMoney, 3000000);
+            using (var view = new ClubView(Attached(), new A3Game(m)) { Club = new ClubKey(13, 0) })
+            {
+                view.RefreshValues();
+                Assert.Equal("Aarhus IL", TestHelpers.Get<TextBox>(view, "clubName").Text);
+                Assert.Equal(3000000, TestHelpers.Get<NumericUpDown>(view, "seasonStartMoney").Value);
+
+                TestHelpers.Get<NumericUpDown>(view, "seasonStartMoney").Value = 5000000;
+                TestHelpers.Get<NumericUpDown>(view, "image").Value = 45;
+                Click(view, "save");
+                Assert.Equal(BitConverter.GetBytes(5000000), m.WrittenAt(aarhus + A3Addresses.ClubSeasonStartMoney));
+                Assert.Equal(new byte[] { 45 }, m.WrittenAt(aarhus + A3Addresses.ClubImage));
+                Assert.Null(m.WrittenAt(A3Addresses.ManagerSalary));
+                Assert.Equal("Gespeichert", TestHelpers.Get<Label>(view, "status").Text);
+
+                // A key that names no club, or none at all, shows nothing.
+                view.Club = new ClubKey(14, 50);
+                view.RefreshValues();
+                Assert.False(TestHelpers.Get<Button>(view, "save").Enabled);
+                view.Club = null;
+                view.RefreshValues();
+                Assert.Equal("", TestHelpers.Get<TextBox>(view, "clubName").Text);
             }
         });
 
@@ -328,7 +360,7 @@ namespace A3_Trainer.Tests
         {
             FakeGameMemory m = A3GameTests.WithNamePool(CareerWithMoney());
             uint club = A3Addresses.ClubArray + (uint)A3Addresses.ClubSize;
-            using (var view = new ClubView(Attached(), new A3Game(m)))
+            using (var view = new ClubView(Attached(), new A3Game(m)) { Club = new ClubKey(14, 1) })
             {
                 view.RefreshValues();
                 Assert.Equal(A3Addresses.ClubShortNameSize - 1, TestHelpers.Get<TextBox>(view, "clubShortName").MaxLength);
@@ -355,7 +387,7 @@ namespace A3_Trainer.Tests
         [Fact]
         public void Views_WithoutAGame_AreEmptyAndCantSave() => StaThread.Run(() =>
         {
-            using (var club = new ClubView(new ProcessMemory(), new A3Game(CareerWithMoney())))
+            using (var club = new ClubView(new ProcessMemory(), new A3Game(CareerWithMoney())) { Club = new ClubKey(14, 1) })
             using (var manager = new ManagerView(new ProcessMemory(), new A3Game(CareerWithMoney())))
             {
                 club.RefreshValues();
@@ -377,7 +409,7 @@ namespace A3_Trainer.Tests
         {
             FakeGameMemory m = CareerWithMoney();
             ProcessMemory memory = Attached();
-            using (var club = new ClubView(memory, new A3Game(m)))
+            using (var club = new ClubView(memory, new A3Game(m)) { Club = new ClubKey(14, 1) })
             using (var manager = new ManagerView(memory, new A3Game(m)))
             {
                 club.RefreshValues();
@@ -394,7 +426,7 @@ namespace A3_Trainer.Tests
         public void Views_WhenWritingFails_SayThatSavingFailed() => StaThread.Run(() =>
         {
             var game = new A3Game(new ReadOnlyGameMemory(CareerWithMoney()));
-            using (var club = new ClubView(Attached(), game))
+            using (var club = new ClubView(Attached(), game) { Club = new ClubKey(14, 1) })
             using (var manager = new ManagerView(Attached(), game))
             {
                 club.RefreshValues();

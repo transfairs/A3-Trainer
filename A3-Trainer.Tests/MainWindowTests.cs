@@ -132,6 +132,47 @@ namespace A3_Trainer.Tests
         });
 
         [Fact]
+        public void ClubPage_PicksAnyClub_AndAllTabsFollowIt() => StaThread.Run(() =>
+        {
+            using (MainWindow window = Window(ClubSelectionTests.Clubs()))
+            {
+                TestHelpers.Click(MenuItem(window, "Verein", "Anderer Verein")); // nothing picked yet: the own club
+                Assert.Equal("A3-Trainer :: Verein: 1.FV München", window.Text);
+                ComboBox countries = TestHelpers.Get<ComboBox>(window, "clubCountryBox");
+                ComboBox clubs = TestHelpers.Get<ComboBox>(window, "clubClubBox");
+                Assert.Equal("Deutschland", countries.Text);
+                Assert.Equal("1.FV München", clubs.Text);
+                Assert.Same(TestHelpers.Get<PagesView>(window, "clubPages"), countries.Parent);
+
+                clubs.SelectedIndex = 1;
+                var hamburg = new A3_Trainer.Model.ClubKey(14, 10);
+                Assert.Equal("A3-Trainer :: Verein: Hamburger FC", window.Text);
+                Assert.Equal(hamburg, TestHelpers.Get<ClubView>(window, "clubView").Club);
+                Assert.Equal(hamburg, TestHelpers.Get<IdentityView>(window, "identityView").Club);
+                Assert.Equal(hamburg, TestHelpers.Get<StadiumView>(window, "stadiumView").Club);
+                Assert.Equal("Hamburger FC", TestHelpers.Get<TextBox>(TestHelpers.Get<ClubView>(window, "clubView"), "clubName").Text);
+
+                countries.SelectedIndex = 0; // Dänemark
+                Assert.Equal("A3-Trainer :: Verein: Aarhus IL", window.Text);
+
+                // The own club comes back from the menu and the history, the picked one stays for "Anderer Verein".
+                TestHelpers.Click(MenuItem(window, "Verein", "Eigener Verein"));
+                Assert.Equal("1.FV München", clubs.Text);
+                window.GoBack();
+                Assert.Equal("A3-Trainer :: Verein: Aarhus IL", window.Text);
+                window.GoBack();
+                Assert.Equal("A3-Trainer :: Verein: Hamburger FC", window.Text);
+                TestHelpers.Click(MenuItem(window, "Verein", "Anderer Verein"));
+                Assert.Equal("A3-Trainer :: Verein: Hamburger FC", window.Text);
+
+                // The player page's choice carries over.
+                TestHelpers.Click(MenuItem(window, "Spieler", "Anderer Verein"));
+                Assert.Equal("A3-Trainer :: Verein: Hamburger FC", window.Text);
+                Assert.Equal(hamburg, TestHelpers.Get<A3_Trainer.Model.ClubKey?>(window, "otherClub"));
+            }
+        });
+
+        [Fact]
         public void Opponent_WhenNoneIsLoaded_SaysSo() => StaThread.Run(() =>
         {
             using (MainWindow window = Window(A3GameTests.Career()))

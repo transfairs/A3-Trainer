@@ -30,9 +30,13 @@ namespace A3_Trainer
         private readonly AboutView aboutView = new AboutView();
         private readonly Label waiting;
 
-        private enum Page { Squad, Opponent, Other, Club, Manager }
+        private enum Page { Squad, Opponent, Other, Club, OtherClub, Manager }
         private Page page = Page.Squad;
-        // The club last picked in the player view's club selection.
+        // The club choice in the tab row of the club page.
+        private readonly ComboBox clubCountryBox = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 110 };
+        private readonly ComboBox clubClubBox = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 140 };
+        private readonly ClubPicker clubPicker;
+        // The club last picked in the club selection of the player or the club page.
         private ClubKey? otherClub;
         // The human manager whose squad, club and data the pages show; follows the turn.
         private int manager = 1;
@@ -56,6 +60,7 @@ namespace A3_Trainer
             players.DropDownItems.Add("Anderer Verein", null, (s, e) => this.Go(Page.Other));
             var club = new ToolStripMenuItem("Verein");
             club.DropDownItems.Add("Eigener Verein", null, (s, e) => this.Go(Page.Club));
+            club.DropDownItems.Add("Anderer Verein", null, (s, e) => this.Go(Page.OtherClub));
             this.managerMenu.DropDownItems.Add("Manager", null, (s, e) => this.Go(Page.Manager));
             this.managerMenu.DropDownOpening += (s, e) => this.ListManagers();
             var help = new ToolStripMenuItem("?");
@@ -76,7 +81,10 @@ namespace A3_Trainer
             this.clubView = new ClubView(this.memory, this.game);
             this.identityView = new IdentityView(this.memory, this.game);
             this.stadiumView = new StadiumView(this.memory, this.game);
-            this.clubPages = new PagesView().Add("Verein", this.clubView).Add("Identität", this.identityView).Add("Stadion", this.stadiumView);
+            this.clubPicker = new ClubPicker(this.clubCountryBox, this.clubClubBox);
+            this.clubPicker.Picked += this.OnClubPagePicked;
+            this.clubPages = new PagesView().Add("Verein", this.clubView).Add("Identität", this.identityView).Add("Stadion", this.stadiumView)
+                .AddHeader(368, this.clubCountryBox, this.clubClubBox);
             this.managerView = new ManagerView(this.memory, this.game);
             this.personView = new PersonView(this.memory, this.game);
             this.managerPages = new PagesView().Add("Manager", this.managerView).Add("Person", this.personView);
@@ -120,7 +128,9 @@ namespace A3_Trainer
         private void Go(Page target) => this.Navigate(this.HistoryKey(target), this.Restorer(target));
 
         private string HistoryKey(Page target) =>
-            target == Page.Other ? $"{target}/{this.manager}/{this.otherClub}" : $"{target}/{this.manager}";
+            IsOther(target) ? $"{target}/{this.manager}/{this.otherClub}" : $"{target}/{this.manager}";
+
+        private static bool IsOther(Page target) => target == Page.Other || target == Page.OtherClub;
 
         private Action Restorer(Page target)
         {
@@ -129,7 +139,7 @@ namespace A3_Trainer
             return () =>
             {
                 this.manager = shownManager;
-                if (target == Page.Other)
+                if (IsOther(target))
                     this.otherClub = shownClub;
                 this.Show(target);
             };
@@ -148,13 +158,13 @@ namespace A3_Trainer
             switch (target)
             {
                 case Page.Club:
-                    this.ShowScreen(this.clubPages, "Verein: " + this.game.ClubName(own.Value));
-                    this.clubView.Manager = this.manager;
-                    this.clubView.RefreshValues();
-                    this.identityView.Club = own.Value;
-                    this.identityView.RefreshValues();
-                    this.stadiumView.Club = own.Value;
-                    this.stadiumView.RefreshValues();
+                    this.ShowClubPage(own.Value);
+                    this.clubPicker.Fill(this.game, this.game.ReadCountryNames(), own.Value);
+                    break;
+                case Page.OtherClub:
+                    ClubKey picked = this.OtherOrOwn(own.Value);
+                    this.ShowClubPage(picked);
+                    this.clubPicker.Fill(this.game, this.game.ReadCountryNames(), picked);
                     break;
                 case Page.Manager:
                     this.ShowScreen(this.managerPages, $"Manager (Spieler {this.manager})");
@@ -169,7 +179,7 @@ namespace A3_Trainer
                     this.playerView.ShowClub(opponent);
                     break;
                 case Page.Other:
-                    ClubKey other = this.otherClub.HasValue && this.game.ClubAddress(this.otherClub.Value).HasValue ? this.otherClub.Value : own.Value;
+                    ClubKey other = this.OtherOrOwn(own.Value);
                     this.ShowScreen(this.playerView, "Verein: " + this.game.ClubName(other));
                     this.playerView.ShowClub(other);
                     break;
@@ -201,6 +211,31 @@ namespace A3_Trainer
                     this.Go(this.page == Page.Club || this.page == Page.Squad ? this.page : Page.Manager);
                 }) { Checked = number == this.manager });
             }
+        }
+
+        // The club last picked, while the game still has it, else the own club.
+        private ClubKey OtherOrOwn(ClubKey own) =>
+            this.otherClub.HasValue && this.game.ClubAddress(this.otherClub.Value).HasValue ? this.otherClub.Value : own;
+
+        // The club page's tabs all show the same club.
+        private void ShowClubPage(ClubKey club)
+        {
+            this.ShowScreen(this.clubPages, "Verein: " + this.game.ClubName(club));
+            this.clubView.Club = club;
+            this.clubView.RefreshValues();
+            this.identityView.Club = club;
+            this.identityView.RefreshValues();
+            this.stadiumView.Club = club;
+            this.stadiumView.RefreshValues();
+        }
+
+        // A club picked on the club page: its tabs follow, the picker already shows it.
+        private void OnClubPagePicked(ClubKey club)
+        {
+            this.page = Page.OtherClub;
+            this.otherClub = club;
+            this.ShowClubPage(club);
+            this.RecordNavigation(this.HistoryKey(Page.OtherClub), this.Restorer(Page.OtherClub));
         }
 
         // A club picked in the player view: the view already shows it, only page and title follow.
