@@ -80,6 +80,10 @@ contract: salary, bonuses per point, cup round and title/promotion, the bonus fo
 exit clause on offers and the club's option to extend (written to the manager object and the data the game writes it back to).
 **Manager person** (`Trainer → Manager`, tab `Person`): birthday (the age follows), nerves, manager level and the seven
 competencies of the level in force (the game keeps a row per level and adds bonuses to the stored level).
+**Stocks** (`Trainer → Manager`, tab `Aktien`): the manager's depot as the game's "Persönliche Erfolge" lists it
+(stock, shares, purchase price, value). Positions can be changed, added for any stock on the market (clubs that are an
+AG and the companies) and removed, and the current price of a stock can be set. Holding more than half of the own
+club's shares gives the board's full trust in the game.
 **Several human managers** (hot seat, up to 4): the squad, club and manager pages follow the manager
 whose turn it is; with two or more, the `Trainer` menu lists them to look at another one.
 

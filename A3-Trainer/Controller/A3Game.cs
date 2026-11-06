@@ -926,6 +926,102 @@ namespace A3_Trainer.Controller
             }
         }
 
+        /// <summary>The stocks on the market, in the market's order (clubs and companies).</summary>
+        internal List<StockQuote> ReadStocks()
+        {
+            var stocks = new List<StockQuote>();
+            int count = (int)this.ReadUInt32(A3Addresses.StockMarket + A3Addresses.StockCount);
+            if (count <= 0 || count > 1000)
+                return stocks;
+            byte[] all = this.memory.Read(A3Addresses.StockMarket + A3Addresses.StockEntries, count * A3Addresses.StockSize);
+            if (all == null)
+                return stocks;
+            for (int index = 0; index < count; index++)
+            {
+                int at = index * A3Addresses.StockSize;
+                short country = BitConverter.ToInt16(all, at + A3Addresses.StockCountry);
+                int week = BitConverter.ToInt16(all, at + A3Addresses.StockWeek);
+                stocks.Add(new StockQuote
+                {
+                    Index = index,
+                    Name = Text.GetString(all, at, A3Addresses.StockNameSize).Split('\0')[0],
+                    Club = country < 0 ? (ClubKey?)null : new ClubKey(country, BitConverter.ToInt16(all, at + A3Addresses.StockClub)),
+                    Shares = BitConverter.ToInt32(all, at + A3Addresses.StockShares),
+                    Price = week >= 0 && week < A3Addresses.StockWeeks ? BitConverter.ToSingle(all, at + A3Addresses.StockHistory + week * 4) : 0,
+                });
+            }
+            return stocks;
+        }
+
+        /// <summary>Sets the current week's price of a stock.</summary>
+        internal void SetStockPrice(int stock, float price)
+        {
+            uint entry = A3Addresses.StockMarket + A3Addresses.StockEntries + (uint)(stock * A3Addresses.StockSize);
+            int week = this.ReadInt16(entry + A3Addresses.StockWeek);
+            if (week >= 0 && week < A3Addresses.StockWeeks)
+                this.memory.Write(entry + A3Addresses.StockHistory + (uint)(week * 4), BitConverter.GetBytes(price));
+        }
+
+        private static uint DepotOf(int manager) => A3Addresses.Depot + (uint)((manager - 1) * A3Addresses.DepotStride);
+
+        private static uint DepotSlot(int manager, int slot) =>
+            DepotOf(manager) + A3Addresses.DepotSlotsAt + (uint)(slot * A3Addresses.DepotSlotSize);
+
+        /// <summary>The positions in human manager <paramref name="manager"/>'s depot.</summary>
+        internal List<DepotPosition> ReadDepot(int manager)
+        {
+            var positions = new List<DepotPosition>();
+            byte[] depot = this.memory.Read(DepotOf(manager), A3Addresses.DepotStride);
+            if (depot == null)
+                return positions;
+            for (int slot = 0; slot < A3Addresses.DepotSlots; slot++)
+            {
+                if (depot[A3Addresses.DepotUsed + slot] == 0)
+                    continue;
+                int at = A3Addresses.DepotSlotsAt + slot * A3Addresses.DepotSlotSize;
+                positions.Add(new DepotPosition
+                {
+                    Slot = slot,
+                    Stock = BitConverter.ToInt32(depot, at),
+                    PurchasePrice = BitConverter.ToSingle(depot, at + 4),
+                    Shares = BitConverter.ToInt32(depot, at + 8),
+                });
+            }
+            return positions;
+        }
+
+        /// <summary>
+        /// Writes a position into its slot; a slot of -1 takes the last free one, as the game does. Returns the slot,
+        /// or -1 if the depot is full.
+        /// </summary>
+        internal int SavePosition(int manager, DepotPosition position)
+        {
+            int slot = position.Slot;
+            if (slot < 0)
+            {
+                byte[] used = this.memory.Read(DepotOf(manager) + A3Addresses.DepotUsed, A3Addresses.DepotSlots);
+                if (used == null)
+                    return -1;
+                slot = Enumerable.Range(0, A3Addresses.DepotSlots).Reverse().Where(i => used[i] == 0).DefaultIfEmpty(-1).First();
+                if (slot < 0)
+                    return -1;
+            }
+            var data = new byte[A3Addresses.DepotSlotSize];
+            BitConverter.GetBytes(position.Stock).CopyTo(data, 0);
+            BitConverter.GetBytes(position.PurchasePrice).CopyTo(data, 4);
+            BitConverter.GetBytes(position.Shares).CopyTo(data, 8);
+            this.memory.Write(DepotSlot(manager, slot), data);
+            this.memory.Write(DepotOf(manager) + A3Addresses.DepotUsed + (uint)slot, new byte[] { 1 });
+            return slot;
+        }
+
+        /// <summary>Empties a slot of the depot.</summary>
+        internal void RemovePosition(int manager, int slot)
+        {
+            this.memory.Write(DepotOf(manager) + A3Addresses.DepotUsed + (uint)slot, new byte[] { 0 });
+            this.memory.Write(DepotSlot(manager, slot), new byte[A3Addresses.DepotSlotSize]);
+        }
+
         private int ReadInt16(uint address)
         {
             byte[] data = this.memory.Read(address, 2);

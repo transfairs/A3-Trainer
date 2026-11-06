@@ -78,6 +78,7 @@
     <Compile Include="Model\ClubIdentity.cs" />
     <Compile Include="Model\ManagerPerson.cs" />
     <Compile Include="Model\Stadium.cs" />
+    <Compile Include="Model\Stocks.cs" />
     <Compile Include="Model\Tables.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -106,6 +107,9 @@
       <SubType>UserControl</SubType>
     </Compile>
     <Compile Include="View\PersonView.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="View\StocksView.cs">
       <SubType>UserControl</SubType>
     </Compile>
     <Compile Include="View\StadiumView.cs">

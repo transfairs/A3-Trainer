@@ -130,6 +130,33 @@ namespace A3_Trainer.Controller
         internal const uint OverdraftRate = 0x00B5CC84;
         internal const uint LoanRate = 0x00B5CC86;
 
+        // --- Stock market (object at StockMarket, FUN_00406201 lists or updates a club's stock): the number of stocks,
+        // then one entry each {char[] name, word country (-1 = a company), word club, int shares issued, word week
+        // (index of the current price in the history), word, int shares on offer, float trend, float max, float min,
+        // float[52] prices by week}. Only clubs that are an AG (record +0x924 bit 0) have one.
+        internal const uint StockMarket = 0x008BE408;
+        internal const int StockCount = 0x20;
+        internal const int StockEntries = 0x34;
+        internal const int StockSize = 0x108;
+        internal const int StockNameSize = 0x1C;
+        internal const int StockCountry = 0x1C;
+        internal const int StockClub = 0x1E;
+        internal const int StockShares = 0x20;
+        internal const int StockWeek = 0x24;
+        internal const int StockHistory = 0x38;
+        internal const int StockWeeks = 52;
+        internal const int ClubPublic = 0x924;     // record: bit 0 = the club is an AG (database import FUN_0068D411)
+
+        // Each human manager's depot (FUN_00406A26, FUN_0040689A; this = Depot + (manager - 1) * DepotStride): a "used"
+        // byte per slot from DepotUsed, the slots from DepotSlotsAt {int stock, float purchase price, int shares, int}.
+        // The game fills the slots from the last one.
+        internal const uint Depot = 0x008DC6E0;
+        internal const int DepotStride = 0x374;
+        internal const int DepotUsed = 0x20;
+        internal const int DepotSlotsAt = 0x54;
+        internal const int DepotSlots = 50;
+        internal const int DepotSlotSize = 0x10;
+
         // --- Human managers (hot seat, up to 4). The constants below are manager 1's fields; manager n's are
         // (n - 1) * ManagerStride further. The game works on these objects only while it holds them (reference
         // count above 0, FUN_006A426B) and writes them back to the managers' data on every release

@@ -28,6 +28,7 @@ namespace A3_Trainer
         private readonly PagesView clubPages;
         private readonly ManagerView managerView;
         private readonly PersonView personView;
+        private readonly StocksView stocksView;
         private readonly PagesView managerPages;
         private readonly AboutView aboutView = new AboutView();
         private readonly Label waiting;
@@ -91,7 +92,8 @@ namespace A3_Trainer
                 .AddHeader(368, this.clubCountryBox, this.clubClubBox);
             this.managerView = new ManagerView(this.memory, this.game);
             this.personView = new PersonView(this.memory, this.game);
-            this.managerPages = new PagesView().Add("Manager", this.managerView).Add("Person", this.personView);
+            this.stocksView = new StocksView(this.memory, this.game);
+            this.managerPages = new PagesView().Add("Manager", this.managerView).Add("Person", this.personView).Add("Aktien", this.stocksView);
             this.waiting = new Label
             {
                 Text = "Warte auf Anstoss 3 …\n\nBitte das Spiel starten und einen Spielstand laden.\nUnterstützt wird Version 1.40.",
@@ -176,6 +178,8 @@ namespace A3_Trainer
                     this.managerView.RefreshValues();
                     this.personView.Manager = this.manager;
                     this.personView.RefreshValues();
+                    this.stocksView.Manager = this.manager;
+                    this.stocksView.RefreshValues();
                     break;
                 case Page.Opponent:
                     ClubKey? opponent = this.game.NextOpponent(own.Value);
