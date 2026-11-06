@@ -71,6 +71,16 @@ namespace A3_Trainer.Controller
         internal const int ClubRival = 0x122;      // signed byte, number in the own country of the arch rival, -1 = none
         internal const int ClubBoard = 0x123;      // byte, Tables.Boards; club actions move it by one (FUN_005F4C42)
         internal const int ClubOwnCountry = 0x12D; // byte, the club's country
+        // Eternal table of the first division (dwords; database import FUN_0068D411, order as the statistics use it).
+        internal const int ClubEternalGoals = 0x87C;
+        internal const int ClubEternalConceded = 0x880;
+        internal const int ClubEternalGames = 0x884;
+        internal const int ClubEternalPoints = 0x888;
+        // President and opposition leader: {word first name index, word last name index, byte day, byte month,
+        // word year of birth}. When the opposition takes over, the game swaps both (FUN_0069B7DF). Only in the record.
+        internal const int ClubPresident = 0x8F0;
+        internal const int ClubOpposition = 0x8F8;
+        internal const int ClubFounded = 0x920;    // byte day, byte month, word year (FUN_0069D6E2)
 
         // --- Working copies of the loaded clubs (own club, next opponent; FUN_00639E63): 6 entries of
         // 12 bytes {used, country, number, ...; object pointer at +8}. The game writes the object back to

@@ -809,6 +809,74 @@ namespace A3_Trainer.Controller
                 this.memory.Write(copy + (uint)copyOffset, value);
         }
 
+        /// <summary>President, opposition leader, founding date and eternal table of any club, or null if the key names no club.</summary>
+        internal ClubBoard ReadBoard(ClubKey key)
+        {
+            uint? record = this.ClubAddress(key);
+            if (!record.HasValue)
+                return null;
+            uint club = record.Value;
+            return new ClubBoard
+            {
+                Key = key,
+                President = this.ReadBoardMember(club + A3Addresses.ClubPresident),
+                Opposition = this.ReadBoardMember(club + A3Addresses.ClubOpposition),
+                Founded = this.ReadDate(club + A3Addresses.ClubFounded),
+                Goals = (int)this.ReadUInt32(club + A3Addresses.ClubEternalGoals),
+                Conceded = (int)this.ReadUInt32(club + A3Addresses.ClubEternalConceded),
+                Games = (int)this.ReadUInt32(club + A3Addresses.ClubEternalGames),
+                Points = (int)this.ReadUInt32(club + A3Addresses.ClubEternalPoints),
+            };
+        }
+
+        /// <summary>Writes the board values that changed; they live in the club's record only.</summary>
+        internal void SaveBoard(ClubBoard original, ClubBoard edited)
+        {
+            uint club = this.ClubAddress(edited.Key).Value;
+            this.WriteBoardMember(club + A3Addresses.ClubPresident, original.President, edited.President);
+            this.WriteBoardMember(club + A3Addresses.ClubOpposition, original.Opposition, edited.Opposition);
+            if (!edited.Founded.Equals(original.Founded))
+                this.WriteDate(club + A3Addresses.ClubFounded, edited.Founded);
+            WriteDword(A3Addresses.ClubEternalGoals, original.Goals, edited.Goals);
+            WriteDword(A3Addresses.ClubEternalConceded, original.Conceded, edited.Conceded);
+            WriteDword(A3Addresses.ClubEternalGames, original.Games, edited.Games);
+            WriteDword(A3Addresses.ClubEternalPoints, original.Points, edited.Points);
+
+            void WriteDword(int offset, int was, int now)
+            {
+                if (now != was)
+                    this.memory.Write(club + (uint)offset, BitConverter.GetBytes(now));
+            }
+        }
+
+        private BoardMember ReadBoardMember(uint address) => new BoardMember
+        {
+            FirstName = this.ReadName(this.ReadUInt16(address)),
+            LastName = this.ReadName(this.ReadUInt16(address + 2)),
+            Birthday = this.ReadDate(address + 4),
+        };
+
+        // A changed name gets its index in the shared name table, which adds a new name the way the game does.
+        private void WriteBoardMember(uint address, BoardMember was, BoardMember now)
+        {
+            if (now.FirstName != was.FirstName)
+                this.WriteNameIndex(address, this.NameIndex(now.FirstName));
+            if (now.LastName != was.LastName)
+                this.WriteNameIndex(address + 2, this.NameIndex(now.LastName));
+            if (!now.Birthday.Equals(was.Birthday))
+                this.WriteDate(address + 4, now.Birthday);
+        }
+
+        // A date as {byte day, byte month, word year}.
+        private GameDate ReadDate(uint address)
+        {
+            byte[] date = this.memory.Read(address, 4) ?? new byte[4];
+            return new GameDate(BitConverter.ToUInt16(date, 2), date[1], date[0]);
+        }
+
+        private void WriteDate(uint address, GameDate date) =>
+            this.memory.Write(address, new[] { (byte)date.Day, (byte)date.Month, (byte)date.Year, (byte)(date.Year >> 8) });
+
         /// <summary>The clubs of a country by their number in it, with names.</summary>
         internal List<KeyValuePair<int, string>> CountryClubs(int country)
         {

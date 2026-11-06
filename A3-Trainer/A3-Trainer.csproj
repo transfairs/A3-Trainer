@@ -73,6 +73,7 @@
     <Compile Include="Model\ClubInfo.cs" />
     <Compile Include="Model\GameDate.cs" />
     <Compile Include="Model\Player.cs" />
+    <Compile Include="Model\ClubBoard.cs" />
     <Compile Include="Model\ClubIdentity.cs" />
     <Compile Include="Model\ManagerPerson.cs" />
     <Compile Include="Model\Stadium.cs" />
@@ -82,6 +83,9 @@
     <Compile Include="Properties\VersionInfo.cs" />
     <Compile Include="View\A3Theme.cs" />
     <Compile Include="View\AboutView.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="View\BoardView.cs">
       <SubType>UserControl</SubType>
     </Compile>
     <Compile Include="View\ClubPicker.cs" />
