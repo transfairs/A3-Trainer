@@ -809,6 +809,129 @@ namespace A3_Trainer.Controller
                 this.memory.Write(copy + (uint)copyOffset, value);
         }
 
+        // The finance blocks of a club at the record's offsets: the loaded copy's (what the game uses) first, then the record's.
+        private List<uint> FinanceBlocks(ClubKey key)
+        {
+            var blocks = new List<uint>();
+            uint? record = this.ClubAddress(key);
+            if (!record.HasValue)
+                return blocks;
+            uint copy = this.ClubCopy(key);
+            if (copy != 0)
+                blocks.Add(copy - (uint)A3Addresses.ClubCopyFinanceShift);
+            blocks.Add(record.Value);
+            return blocks;
+        }
+
+        /// <summary>Overdraft and loans of any club, or null if the key names no club.</summary>
+        internal ClubFinances ReadFinances(ClubKey key)
+        {
+            List<uint> blocks = this.FinanceBlocks(key);
+            if (blocks.Count == 0)
+                return null;
+            uint finances = blocks[0];
+            var result = new ClubFinances
+            {
+                Key = key,
+                Overdraft = this.ReadUInt16(finances + A3Addresses.ClubOverdraft) * A3Addresses.OverdraftUnit,
+            };
+            foreach (long loan in this.RunningLoans(finances))
+            {
+                result.LoanCount++;
+                result.LoanTotal += loan;
+            }
+            return result;
+        }
+
+        private IEnumerable<long> RunningLoans(uint finances)
+        {
+            byte[] loans = this.memory.Read(finances + A3Addresses.ClubLoans, A3Addresses.ClubLoanSlots * A3Addresses.ClubLoanSize);
+            if (loans == null)
+                yield break;
+            for (int slot = 0; slot < A3Addresses.ClubLoanSlots; slot++)
+            {
+                int at = slot * A3Addresses.ClubLoanSize;
+                if ((loans[at + A3Addresses.ClubLoanFlags] & 1) != 0)
+                    yield return BitConverter.ToInt64(loans, at);
+            }
+        }
+
+        /// <summary>Writes the overdraft if it changed, to the record and the loaded copy.</summary>
+        internal void SaveFinances(ClubFinances original, ClubFinances edited)
+        {
+            if (edited.Overdraft == original.Overdraft)
+                return;
+            byte[] value = BitConverter.GetBytes((ushort)(edited.Overdraft / A3Addresses.OverdraftUnit));
+            foreach (uint finances in this.FinanceBlocks(edited.Key))
+                this.memory.Write(finances + A3Addresses.ClubOverdraft, value);
+        }
+
+        /// <summary>
+        /// Ends the club's running loans without paying them back: the loans count as money in, so their sum moves to the
+        /// wealth at the start of the season and the bank balance stays as it was. Returns the DM forgiven.
+        /// </summary>
+        internal long ForgiveLoans(ClubKey key)
+        {
+            long forgiven = 0;
+            List<uint> blocks = this.FinanceBlocks(key);
+            for (int i = 0; i < blocks.Count; i++)
+            {
+                uint finances = blocks[i];
+                byte[] loans = this.memory.Read(finances + A3Addresses.ClubLoans, A3Addresses.ClubLoanSlots * A3Addresses.ClubLoanSize);
+                if (loans == null)
+                    continue;
+                long sum = 0;
+                for (int slot = 0; slot < A3Addresses.ClubLoanSlots; slot++)
+                {
+                    int at = slot * A3Addresses.ClubLoanSize;
+                    if ((loans[at + A3Addresses.ClubLoanFlags] & 1) == 0)
+                        continue;
+                    sum += BitConverter.ToInt64(loans, at);
+                    uint entry = finances + A3Addresses.ClubLoans + (uint)at;
+                    this.memory.Write(entry, new byte[8]);
+                    this.memory.Write(entry + A3Addresses.ClubLoanFlags, new byte[1]);
+                }
+                if (sum != 0)
+                {
+                    byte[] start = this.memory.Read(finances + A3Addresses.ClubSeasonStartMoney, 8) ?? new byte[8];
+                    this.memory.Write(finances + A3Addresses.ClubSeasonStartMoney, BitConverter.GetBytes(BitConverter.ToInt64(start, 0) + sum));
+                }
+                if (i == 0)
+                    forgiven = sum;
+            }
+            return forgiven;
+        }
+
+        /// <summary>The interest rates every club pays or gets.</summary>
+        internal InterestRates ReadRates() => new InterestRates
+        {
+            Interest = this.ReadInt16(A3Addresses.InterestRate),
+            Overdraft = this.ReadInt16(A3Addresses.OverdraftRate),
+            Savings = this.ReadInt16(A3Addresses.SavingsRate),
+            Loan = this.ReadInt16(A3Addresses.LoanRate),
+        };
+
+        /// <summary>Writes the interest rates that changed.</summary>
+        internal void SaveRates(InterestRates original, InterestRates edited)
+        {
+            Write(A3Addresses.InterestRate, original.Interest, edited.Interest);
+            Write(A3Addresses.OverdraftRate, original.Overdraft, edited.Overdraft);
+            Write(A3Addresses.SavingsRate, original.Savings, edited.Savings);
+            Write(A3Addresses.LoanRate, original.Loan, edited.Loan);
+
+            void Write(uint address, int was, int now)
+            {
+                if (now != was)
+                    this.memory.Write(address, BitConverter.GetBytes((short)now));
+            }
+        }
+
+        private int ReadInt16(uint address)
+        {
+            byte[] data = this.memory.Read(address, 2);
+            return data == null ? 0 : BitConverter.ToInt16(data, 0);
+        }
+
         /// <summary>President, opposition leader, founding date and eternal table of any club, or null if the key names no club.</summary>
         internal ClubBoard ReadBoard(ClubKey key)
         {

@@ -1,3 +1,4 @@
+using System;
 using System.Drawing;
 using System.Windows.Forms;
 
@@ -24,6 +25,16 @@ namespace A3_Trainer.View
         /// <summary>Dark text.</summary>
         internal static readonly Color Text = Color.FromArgb(0x39, 0x34, 0x39);
 
+        /// <summary>Background of a button that can't be clicked.</summary>
+        internal static readonly Color Disabled = Color.FromArgb(0xB4, 0xB4, 0xB4);
+
+        // A flat button keeps its colour when disabled; the grey shows it can't be clicked.
+        private static void ShowEnabled(object sender, EventArgs e)
+        {
+            var button = (Button)sender;
+            button.BackColor = button.Enabled ? Green : Disabled;
+        }
+
         /// <summary>Applies the look to a control tree (call after the controls are created).</summary>
         internal static void Apply(Control root)
         {
@@ -39,7 +50,9 @@ namespace A3_Trainer.View
             {
                 case Button button:
                     button.FlatStyle = FlatStyle.Flat;
-                    button.BackColor = Green;
+                    button.BackColor = button.Enabled ? Green : Disabled;
+                    button.EnabledChanged -= ShowEnabled;
+                    button.EnabledChanged += ShowEnabled;
                     button.FlatAppearance.BorderColor = GreenDark;
                     button.FlatAppearance.MouseOverBackColor = GreenLight;
                     button.FlatAppearance.MouseDownBackColor = GreenDark;

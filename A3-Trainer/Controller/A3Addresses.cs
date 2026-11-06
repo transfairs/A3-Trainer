@@ -111,6 +111,24 @@ namespace A3_Trainer.Controller
         internal const int ClubOutfitterContract = 0x829;
         internal const int ClubOutfitter = 0x82C;
         internal const int ClubCopyFinanceShift = ClubSeasonStartMoney - ClubCopySeasonStartMoney;
+        // Loans in that block: 8 slots of 0x18 bytes {qword DM, 3 words rates, byte rate in force, byte flags (bit 0 running,
+        // bit 1 taken by the bank itself), word, word last interest day, word end day}. The bank balance counts them as
+        // money in (FUN_0061FD97 via FUN_006488CA); the daily interest is FUN_006482A6.
+        internal const int ClubLoans = 0x590;
+        internal const int ClubLoanSlots = 8;
+        internal const int ClubLoanSize = 0x18;
+        internal const int ClubLoanFlags = 0x0F;
+        // Overdraft (Dispokredit) as a word in steps of OverdraftUnit DM (shown on the balance page in brackets).
+        internal const int ClubOverdraft = 0x768;
+        internal const int OverdraftUnit = 100000;
+
+        // --- Interest rates for every club, in hundredths of a percent (FUN_006482A6, moved by +-0.25 by FUN_006489C8):
+        // beyond the overdraft ("Zinssatz" on the balance page), on credit, within the overdraft ("Dispokredit"), and the
+        // base rate of new loans (FUN_00647D6E: less for longer terms; a loan keeps the rates it was taken with).
+        internal const uint InterestRate = 0x00B5CC80;
+        internal const uint SavingsRate = 0x00B5CC82;
+        internal const uint OverdraftRate = 0x00B5CC84;
+        internal const uint LoanRate = 0x00B5CC86;
 
         // --- Human managers (hot seat, up to 4). The constants below are manager 1's fields; manager n's are
         // (n - 1) * ManagerStride further. The game works on these objects only while it holds them (reference

@@ -66,6 +66,10 @@ trouble with the association (standing from "ausgezeichnet" to "verzockt").
 and condition per tribune, scoreboard and comfort (undersoil heating, heated seats, retractable pitch, seat cushions,
 luxury boxes, floodlight); the capacity follows the places. While the game's stadium page is open, its copy is
 changed as well, since the page writes it back when it is left.
+**Club finances** (tab `Finanzen`): the overdraft (shown in brackets on the game's balance page) and the running
+loans, which can be forgiven: they end and their sum moves to the wealth at the start of the season, so the bank
+balance stays and only the debt is gone. The interest rates every club pays or gets: beyond the overdraft, within it,
+on credit, and the base rate of new loans (shorter for longer terms in the game; a loan keeps the rates it was taken with).
 **Club board** (tab `Präsidium`): president and opposition leader (first and last name, birthday; the game swaps
 both when the opposition takes over), founding date and the eternal table of the first division (games, points, goals,
 goals conceded).

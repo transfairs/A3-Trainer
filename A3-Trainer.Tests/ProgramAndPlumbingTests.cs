@@ -102,6 +102,21 @@ namespace A3_Trainer.Tests
         }
 
         [Fact]
+        public void Theme_GreysOutDisabledButtons() => StaThread.Run(() =>
+        {
+            using (var button = new Button { Enabled = false })
+            {
+                A3Theme.Apply(button);
+                Assert.Equal(A3Theme.Disabled, button.BackColor);
+                button.Enabled = true;
+                Assert.Equal(A3Theme.Green, button.BackColor);
+                A3Theme.Apply(button); // applying again keeps one handler
+                button.Enabled = false;
+                Assert.Equal(A3Theme.Disabled, button.BackColor);
+            }
+        });
+
+        [Fact]
         public void Theme_DrawsHeadersItemsAndTabs() => StaThread.Run(() =>
         {
             using (var bitmap = new Bitmap(200, 40))
