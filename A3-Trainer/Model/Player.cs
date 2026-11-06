@@ -47,6 +47,8 @@ namespace A3_Trainer.Model
         internal bool CaptainRetired { get; set; }
         /// <summary>National team byte (Controller.StatusFlag.NationalTeamRetired; the other bits are game state).</summary>
         internal int NationalTeam { get; set; }
+        /// <summary>Whether the player is on the transfer list (a bit of <see cref="NationalTeam"/>).</summary>
+        internal bool OnTransferList => (this.NationalTeam & Controller.StatusFlag.OnTransferList) != 0;
 
         /// <summary>Relationship byte: bits 0-1 Tables.Relationships, bits 2-4 Tables.RelationshipStates, higher bits game state.</summary>
         internal int Relationship { get; set; }
@@ -74,6 +76,10 @@ namespace A3_Trainer.Model
         internal int Strength { get; set; }
         /// <summary>Main position (1 TO to 10 ST, see Tables.Positions).</summary>
         internal int Position { get; set; }
+        /// <summary>Youth team (see <see cref="Tables.Team"/>), 0 for a player of the first team.</summary>
+        internal int YouthTeam { get; set; }
+        /// <summary>Whether the player is in one of the club's youth teams.</summary>
+        internal bool IsYouth => this.YouthTeam != 0;
         /// <summary>First secondary position, 0 = none.</summary>
         internal int SidePosition1 { get; set; }
         /// <summary>Second secondary position, 0 = none.</summary>

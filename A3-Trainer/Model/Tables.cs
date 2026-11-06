@@ -179,6 +179,10 @@ namespace A3_Trainer.Model
         internal static string[] SkillsFor(int position) => position == Goalkeeper ? GoalkeeperSkills : FieldSkills;
 
         /// <summary>Position name for a stored value, "?" for values outside the table.</summary>
+        /// <summary>The team a player plays in, from the record's youth byte (11/10/9 = A-/B-/C-Jugend, 0 = first team).</summary>
+        internal static string Team(int youthTeam) =>
+            youthTeam == 0 ? "1. Mannschaft" : youthTeam == 11 ? "A-Jugend" : youthTeam == 10 ? "B-Jugend" : youthTeam == 9 ? "C-Jugend" : "Jugend (" + youthTeam + ")";
+
         internal static string PositionName(int value) => value >= 0 && value < Positions.Length ? Positions[value] : "?";
     }
 }

@@ -274,6 +274,8 @@ namespace A3_Trainer.Controller
             byte[] appearance = this.memory.Read(record + RecordOffset.Appearance, 1);
             foreach (MemoryWrite write in PlayerCodec.Changes(original, edited, this.BaseYear(), foot != null ? foot[0] : 0, appearance != null ? appearance[0] : 0))
                 this.memory.Write(write.Address, write.Data);
+            if (edited.OnTransferList != original.OnTransferList)
+                this.SetTransferListed(edited, edited.OnTransferList);
 
             // Names are indices into the shared name table and only exist in the record. A first or
             // last name can't be empty; an empty artist name removes it.
@@ -926,6 +928,56 @@ namespace A3_Trainer.Controller
             }
         }
 
+        /// <summary>The players on the transfer list, in its order.</summary>
+        internal List<int> TransferListPlayers()
+        {
+            var players = new List<int>();
+            int count = this.ReadInt16(A3Addresses.TransferList + A3Addresses.TransferListCount);
+            if (count <= 0 || count > A3Addresses.TransferListMax)
+                return players;
+            byte[] entries = this.memory.Read(A3Addresses.TransferList + A3Addresses.TransferListEntries, count * A3Addresses.TransferListEntrySize);
+            if (entries != null)
+                for (int i = 0; i < count; i++)
+                    players.Add(BitConverter.ToInt16(entries, i * A3Addresses.TransferListEntrySize));
+            return players;
+        }
+
+        // Adds the player to the transfer list as FUN_00758B34 does (offered for sale from today) or takes him off it,
+        // closing the gap. The potential and form values the game computes for sorting are approximated.
+        private void SetTransferListed(Player player, bool listed)
+        {
+            List<int> players = this.TransferListPlayers();
+            int at = players.IndexOf(player.Index);
+            uint list = A3Addresses.TransferList;
+            uint entries = list + A3Addresses.TransferListEntries;
+            int size = A3Addresses.TransferListEntrySize;
+            if (listed && at < 0 && players.Count < A3Addresses.TransferListMax)
+            {
+                var entry = new byte[size];
+                BitConverter.GetBytes((short)player.Index).CopyTo(entry, 0);
+                entry[2] = (byte)player.ClubCountry;
+                BitConverter.GetBytes((short)player.ClubNumber).CopyTo(entry, 4);
+                entry[6] = (byte)player.Position;
+                entry[7] = (byte)player.Strength;
+                entry[8] = (byte)player.Strength;
+                BitConverter.GetBytes((short)this.ReadInt16(A3Addresses.DayCounter)).CopyTo(entry, 0xA);
+                entry[0xC] = 1;
+                entry[0xD] = 3;
+                BitConverter.GetBytes((short)100).CopyTo(entry, 0xE);
+                this.memory.Write(entries + (uint)(players.Count * size), entry);
+                this.memory.Write(list + A3Addresses.TransferListCount, BitConverter.GetBytes((short)(players.Count + 1)));
+            }
+            else if (!listed && at >= 0)
+            {
+                byte[] all = this.memory.Read(entries, players.Count * size);
+                var moved = new byte[players.Count * size];
+                Array.Copy(all, 0, moved, 0, at * size);
+                Array.Copy(all, (at + 1) * size, moved, at * size, (players.Count - at - 1) * size);
+                this.memory.Write(entries, moved);
+                this.memory.Write(list + A3Addresses.TransferListCount, BitConverter.GetBytes((short)(players.Count - 1)));
+            }
+        }
+
         /// <summary>The stocks on the market, in the market's order (clubs and companies).</summary>
         internal List<StockQuote> ReadStocks()
         {
@@ -1095,6 +1147,19 @@ namespace A3_Trainer.Controller
 
         private void WriteDate(uint address, GameDate date) =>
             this.memory.Write(address, new[] { (byte)date.Day, (byte)date.Month, (byte)date.Year, (byte)(date.Year >> 8) });
+
+        /// <summary>The amateur team of <paramref name="club"/> (a club of its own in the same country), or null if it has none.</summary>
+        internal ClubKey? AmateurClub(ClubKey club)
+        {
+            uint? record = this.ClubAddress(club);
+            if (!record.HasValue)
+                return null;
+            int number = this.ReadByte(record.Value + A3Addresses.ClubAmateurs);
+            if (number == 0xFF)
+                return null;
+            var amateurs = new ClubKey(club.Country, number);
+            return this.ClubAddress(amateurs).HasValue ? amateurs : (ClubKey?)null;
+        }
 
         /// <summary>The clubs of a country by their number in it, with names.</summary>
         internal List<KeyValuePair<int, string>> CountryClubs(int country)

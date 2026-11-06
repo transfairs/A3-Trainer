@@ -27,6 +27,7 @@ namespace A3_Trainer.View
         private readonly NumericUpDown birthMonth = Number(0, 12);
         private readonly NumericUpDown birthYear = Number(0, 3000);
         private readonly Label ageValue = new Label();
+        private readonly Label teamValue = new Label();
         private readonly Label notLoaded = new Label { Text = "Spieler nicht geladen" };
         private readonly ComboBox nationality = Combo();
         private readonly ComboBox secondNationality = Combo();
@@ -90,6 +91,7 @@ namespace A3_Trainer.View
         private readonly ComboBox transferClub = Combo();
         private readonly NumericUpDown transferFee = Number(0, 2000000);
         private readonly CheckBox transferNow = new CheckBox { Text = "sofort (sonst zum Saisonende)" };
+        private readonly CheckBox transferListed = new CheckBox { Text = "Auf der Transferliste (mit Speichern)" };
         private readonly Button transferRequest = new Button { Text = "Wechsel anfordern" };
         private readonly Label transferStatus = new Label();
         private string transferNote = "";
@@ -250,7 +252,10 @@ namespace A3_Trainer.View
             group.Controls.Add(this.ageValue);
             y = Row(group, y, "Talent", this.talent, 100);
             y = Row(group, y, "Starker Fuß", this.foot, 100);
-            Row(group, y, "Rückennummer", this.shirt, 60);
+            y = Row(group, y, "Rückennummer", this.shirt, 60);
+            group.Controls.Add(Caption("Mannschaft", 200, y - 23, 70));
+            this.teamValue.SetBounds(275, y - 23, 80, 18);
+            group.Controls.Add(this.teamValue);
 
             this.notLoaded.SetBounds(10, 306, 350, 18);
             page.Controls.Add(this.notLoaded);
@@ -290,6 +295,9 @@ namespace A3_Trainer.View
             };
             return page;
         }
+
+        /// <summary>List colour of youth players (injured ones stay dark red).</summary>
+        internal static readonly Color YouthColor = Color.FromArgb(0x1F, 0x4E, 0x9A);
 
         private static ComboBox Combo() => new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList };
 
@@ -528,6 +536,8 @@ namespace A3_Trainer.View
                        "Kader, Vertrag beim neuen Verein, Ablöse und Meldungen wie bei seinen eigenen Wechseln.",
                 Bounds = new Rectangle(10, 228, 352, 60),
             });
+            this.transferListed.SetBounds(14, 292, 350, 18);
+            page.Controls.Add(this.transferListed);
             this.transferCountry.SelectedIndexChanged += (s, e) => this.FillTransferClubs();
             this.transferRequest.Click += (s, e) => this.RequestTransfer();
             return page;
@@ -562,6 +572,8 @@ namespace A3_Trainer.View
                         player.Strength.ToString(),
                         this.AgeText(player),
                     }) { Tag = player };
+                    if (player.IsYouth)
+                        item.ForeColor = YouthColor;
                     if (player.IsInjured)
                         item.ForeColor = Color.DarkRed;
                     this.list.Items.Add(item);
@@ -675,6 +687,7 @@ namespace A3_Trainer.View
             {
                 this.ClearAllFields(this.tabs, new HashSet<Control> { this.teamGroup, this.transferGroup });
                 this.ageValue.Text = "";
+                this.teamValue.Text = "";
                 this.notLoaded.Visible = false;
                 this.injuryValue.Text = "";
                 this.morale.Text = "";
@@ -689,6 +702,7 @@ namespace A3_Trainer.View
             this.birthMonth.Value = player.BirthDate.IsValid ? player.BirthDate.Month : 0;
             SetNumber(this.birthYear, player.BirthDate.IsValid ? player.BirthDate.Year : 0);
             this.ageValue.Text = this.AgeText(player);
+            this.teamValue.Text = Tables.Team(player.YouthTeam);
             this.nationality.SelectedIndex = Clamp(player.Nationality, this.nationality.Items.Count);
             this.secondNationality.SelectedIndex = Clamp(player.SecondNationality, this.secondNationality.Items.Count);
             this.artistNameValue.Text = player.ArtistName;
@@ -702,6 +716,7 @@ namespace A3_Trainer.View
             this.homegrownForeigner.Checked = player.HomegrownForeigner;
             this.nationalPlayer.Checked = player.NationalPlayer;
             this.nationalTeamRetired.Checked = (player.NationalTeam & StatusFlag.NationalTeamRetired) != 0;
+            this.transferListed.Checked = player.OnTransferList;
             this.captainRetired.Checked = player.CaptainRetired;
             int audience = Audience(player); // normal, Liebling, Haßfigur
             for (int i = 0; i < this.audienceRadios.Length; i++)
@@ -950,6 +965,9 @@ namespace A3_Trainer.View
             edited.NationalTeam = this.nationalTeamRetired.Checked
                 ? edited.NationalTeam | StatusFlag.NationalTeamRetired
                 : edited.NationalTeam & ~StatusFlag.NationalTeamRetired;
+            edited.NationalTeam = this.transferListed.Checked
+                ? edited.NationalTeam | StatusFlag.OnTransferList
+                : edited.NationalTeam & ~StatusFlag.OnTransferList;
             int[] sides =this.sideChecks.Where(c => c.Checked).Select(c => (int)c.Tag).ToArray();
             edited.SidePosition1 = sides.Length > 0 ? sides[0] : 0;
             edited.SidePosition2 = sides.Length > 1 ? sides[1] : 0;

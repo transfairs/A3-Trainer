@@ -33,7 +33,7 @@ namespace A3_Trainer
         private readonly AboutView aboutView = new AboutView();
         private readonly Label waiting;
 
-        private enum Page { Squad, Opponent, Other, Club, OtherClub, Manager }
+        private enum Page { Squad, Opponent, Amateurs, Other, Club, OtherClub, Manager }
         private Page page = Page.Squad;
         // The club choice in the tab row of the club page.
         private readonly ComboBox clubCountryBox = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 110 };
@@ -60,6 +60,7 @@ namespace A3_Trainer
             players.DropDownItems.Add("Eigener Kader", null, (s, e) => this.Go(Page.Squad));
             this.opponentItem = new ToolStripMenuItem("Nächster Gegner", null, (s, e) => this.Go(Page.Opponent));
             players.DropDownItems.Add(this.opponentItem);
+            players.DropDownItems.Add("Amateure", null, (s, e) => this.Go(Page.Amateurs));
             players.DropDownItems.Add("Anderer Verein", null, (s, e) => this.Go(Page.Other));
             var club = new ToolStripMenuItem("Verein");
             club.DropDownItems.Add("Eigener Verein", null, (s, e) => this.Go(Page.Club));
@@ -185,6 +186,11 @@ namespace A3_Trainer
                     ClubKey? opponent = this.game.NextOpponent(own.Value);
                     this.ShowScreen(this.playerView, opponent.HasValue ? "Nächster Gegner: " + this.game.ClubName(opponent.Value) : "Nächster Gegner (keiner geladen)");
                     this.playerView.ShowClub(opponent);
+                    break;
+                case Page.Amateurs:
+                    ClubKey? amateurs = this.game.AmateurClub(own.Value);
+                    this.ShowScreen(this.playerView, amateurs.HasValue ? "Amateure: " + this.game.ClubName(amateurs.Value) : "Amateure (keine Amateurmannschaft)");
+                    this.playerView.ShowClub(amateurs);
                     break;
                 case Page.Other:
                     ClubKey other = this.OtherOrOwn(own.Value);

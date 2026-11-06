@@ -145,7 +145,18 @@ namespace A3_Trainer.Controller
         internal const int StockWeek = 0x24;
         internal const int StockHistory = 0x38;
         internal const int StockWeeks = 52;
+        internal const int ClubAmateurs = 0x873;   // record: number in the country of the club's amateur team, 255 = none
         internal const int ClubPublic = 0x924;     // record: bit 0 = the club is an AG (database import FUN_0068D411)
+
+        // The transfer list (object; FUN_00758B34 adds a player, FUN_007589BD/FUN_00758A1F copy it for the save game): the
+        // number of entries, then up to 400 entries {word player, byte country, byte, word club, byte position, byte
+        // strength, byte potential (FUN_006FF516), byte, word day listed, byte kind (1 = for sale), byte, word form value
+        // (FUN_00708B80), int, int, word}. Listed players also carry StatusFlag.OnTransferList.
+        internal const uint TransferList = 0x01C49278;
+        internal const int TransferListCount = 0x20;
+        internal const int TransferListEntries = 0x28;
+        internal const int TransferListEntrySize = 0x1C;
+        internal const int TransferListMax = 400;
 
         // Each human manager's depot (FUN_00406A26, FUN_0040689A; this = Depot + (manager - 1) * DepotStride): a "used"
         // byte per slot from DepotUsed, the slots from DepotSlotsAt {int stock, float purchase price, int shares, int}.
@@ -382,6 +393,7 @@ namespace A3_Trainer.Controller
     internal static class RecordOffset
     {
         internal const int Used = 0x20;           // dword, 0 = empty slot
+        internal const int YouthTeam = 0x32;      // byte: 0 = no youth player, 11/10/9 = A-/B-/C-Jugend (as the youth page lists them)
         // The current club, as the game writes it back from the working copy (FUN_00637177) and lists the squads;
         // the bytes at +0x30 keep an older club after a transfer.
         internal const int ClubCountry = 0x220;
@@ -459,6 +471,7 @@ namespace A3_Trainer.Controller
         internal const int NationalPlayer = 0x80;     // Nationalspieler (no naturalisation any more)
         // In RecordOffset.NationalTeam / CompactOffset.NationalTeam.
         internal const int NationalTeamRetired = 0x02; // Aus Nationalmannschaft zurückgetreten
+        internal const int OnTransferList = 0x01;      // marks a player of the transfer list (A3Addresses.TransferList)
     }
 
     /// <summary>Bits of the second flags dword (record +0x1B4); the others are game state.</summary>

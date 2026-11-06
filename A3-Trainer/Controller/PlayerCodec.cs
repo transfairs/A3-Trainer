@@ -76,6 +76,7 @@ namespace A3_Trainer.Controller
                 Index = index,
                 ClubCountry = Byte(RecordOffset.ClubCountry),
                 ClubNumber = Byte(RecordOffset.ClubNumber),
+                YouthTeam = Byte(RecordOffset.YouthTeam),
                 BirthDate = new GameDate(Word(RecordOffset.BirthYear), Byte(RecordOffset.BirthMonth), Byte(RecordOffset.BirthDay)),
                 Nationality = Byte(RecordOffset.Nationality),
                 SecondNationality = Byte(RecordOffset.SecondNationality),
