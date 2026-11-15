@@ -156,5 +156,30 @@ namespace A3_Trainer.Tests
                 Assert.False(TestHelpers.Get<Button>(view, "save").Enabled);
             }
         });
+    
+        [Fact]
+        public void PersonView_SwitchesDismissalsForEveryManager() => StaThread.Run(() =>
+        {
+            FakeGameMemory m = WithPerson();
+            m.Map(A3Addresses.Dismissals, 1);
+            m.Put(A3Addresses.Dismissals, 1);
+            using (var view = new PersonView(Attached(), new A3Game(m)) { Manager = 1 })
+            {
+                view.RefreshValues();
+                CheckBox dismissals = TestHelpers.Get<CheckBox>(view, "dismissals");
+                Assert.True(dismissals.Checked);
+
+                TestHelpers.Click(TestHelpers.Get<Button>(view, "save"));
+                Assert.Null(m.WrittenAt(A3Addresses.Dismissals));     // unchanged: not written
+
+                dismissals.Checked = false;
+                TestHelpers.Click(TestHelpers.Get<Button>(view, "save"));
+                Assert.Equal(new byte[] { 0 }, m.WrittenAt(A3Addresses.Dismissals));
+                Assert.False(dismissals.Checked);
+                Assert.False(new A3Game(m).ReadDismissals());
+                new A3Game(m).SaveDismissals(true);
+                Assert.True(new A3Game(m).ReadDismissals());
+            }
+        });
     }
 }

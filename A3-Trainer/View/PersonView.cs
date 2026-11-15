@@ -19,6 +19,8 @@ namespace A3_Trainer.View
         private readonly NumericUpDown birthMonth = new NumericUpDown { Minimum = 0, Maximum = 12 };
         private readonly NumericUpDown birthYear = new NumericUpDown { Minimum = 0, Maximum = 3000 };
         private readonly Label age = new Label();
+        private readonly CheckBox dismissals = new CheckBox { Text = "Entlassungen (für alle Manager)" };
+        private bool shownDismissals;
         private readonly NumericUpDown nerves = new NumericUpDown { Minimum = 0, Maximum = 100 };
         private readonly NumericUpDown level = new NumericUpDown { Minimum = 0, Maximum = A3Addresses.ManagerLevels - 1 };
         private readonly Label levelInForce = new Label();
@@ -64,6 +66,8 @@ namespace A3_Trainer.View
             person.Controls.Add(new Label { Text = "Nervenkostüm", Bounds = new Rectangle(380, 25, 110, 18) });
             this.nerves.SetBounds(496, 22, 60, 21);
             person.Controls.Add(this.nerves);
+            this.dismissals.SetBounds(380, 52, 210, 20);
+            person.Controls.Add(this.dismissals);
             foreach (NumericUpDown part in new[] { this.birthDay, this.birthMonth, this.birthYear })
                 part.ValueChanged += (s, e) => this.age.Text = this.AgeText();
             this.Controls.Add(person);
@@ -115,6 +119,7 @@ namespace A3_Trainer.View
             SetNumber(this.birthMonth, birthday.IsValid ? birthday.Month : 0);
             SetNumber(this.birthYear, birthday.IsValid ? birthday.Year : 0);
             this.age.Text = this.AgeText();
+            this.dismissals.Checked = this.shownDismissals = this.game.ReadDismissals();
             SetNumber(this.nerves, this.shown.Nerves);
             SetNumber(this.level, this.shown.Level);
             this.ShowRow();
@@ -179,6 +184,8 @@ namespace A3_Trainer.View
             try
             {
                 this.game.SavePerson(this.shown, edited);
+                if (this.dismissals.Checked != this.shownDismissals)
+                    this.game.SaveDismissals(this.dismissals.Checked);
                 Logger.Debug("Manager (Person) gespeichert");
                 this.RefreshValues();
                 this.status.Text = "Gespeichert";

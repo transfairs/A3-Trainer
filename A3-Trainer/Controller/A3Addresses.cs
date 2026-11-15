@@ -129,6 +129,9 @@ namespace A3_Trainer.Controller
         internal const uint SavingsRate = 0x00B5CC82;
         internal const uint OverdraftRate = 0x00B5CC84;
         internal const uint LoanRate = 0x00B5CC86;
+        // Byte, the new game's option "mit Entlassungen" (FUN_00787D4C); with 0 the board never dismisses a manager
+        // (below 81 % trust, FUN_0075133E) and the game says so.
+        internal const uint Dismissals = 0x00B5D158;
 
         // --- Stock market (object at StockMarket, FUN_00406201 lists or updates a club's stock): the number of stocks,
         // then one entry each {char[] name, word country (-1 = a company), word club, int shares issued, word week

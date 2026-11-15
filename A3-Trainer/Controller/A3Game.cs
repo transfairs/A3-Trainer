@@ -1074,6 +1074,12 @@ namespace A3_Trainer.Controller
             this.memory.Write(DepotSlot(manager, slot), new byte[A3Addresses.DepotSlotSize]);
         }
 
+        /// <summary>Whether boards can dismiss managers (the new game's option "mit Entlassungen").</summary>
+        internal bool ReadDismissals() => this.ReadByte(A3Addresses.Dismissals) != 0;
+
+        /// <summary>Switches dismissals on or off for every manager.</summary>
+        internal void SaveDismissals(bool on) => this.memory.Write(A3Addresses.Dismissals, new[] { (byte)(on ? 1 : 0) });
+
         private int ReadInt16(uint address)
         {
             byte[] data = this.memory.Read(address, 2);
