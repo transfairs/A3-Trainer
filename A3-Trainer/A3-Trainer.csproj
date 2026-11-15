@@ -76,6 +76,7 @@
     <Compile Include="Model\ClubBoard.cs" />
     <Compile Include="Model\ClubFinances.cs" />
     <Compile Include="Model\ClubIdentity.cs" />
+    <Compile Include="Model\ManagerCareer.cs" />
     <Compile Include="Model\ManagerPerson.cs" />
     <Compile Include="Model\Stadium.cs" />
     <Compile Include="Model\Stocks.cs" />
@@ -88,6 +89,9 @@
       <SubType>UserControl</SubType>
     </Compile>
     <Compile Include="View\BoardView.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="View\CareerView.cs">
       <SubType>UserControl</SubType>
     </Compile>
     <Compile Include="View\ClubPicker.cs" />

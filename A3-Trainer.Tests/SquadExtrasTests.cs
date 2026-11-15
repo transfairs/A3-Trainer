@@ -157,7 +157,7 @@ namespace A3_Trainer.Tests
             {
                 var game = new A3Game(m);
                 TestHelpers.Set(window, "game", game);
-                foreach (string view in new[] { "playerView", "clubView", "identityView", "stadiumView", "boardView", "financesView", "managerView", "personView", "stocksView" })
+                foreach (string view in new[] { "playerView", "clubView", "identityView", "stadiumView", "boardView", "financesView", "managerView", "personView", "careerView", "stocksView" })
                     TestHelpers.Set(TestHelpers.Get<object>(window, view), "game", game);
                 TestHelpers.Get<ProcessMemory>(window, "memory").mProc.Process = Process.GetCurrentProcess();
                 ToolStripItem amateurs = window.MainMenuStrip.Items.Cast<ToolStripMenuItem>().Single(i => i.Text == "Spieler")

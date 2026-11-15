@@ -1074,6 +1074,67 @@ namespace A3_Trainer.Controller
             this.memory.Write(DepotSlot(manager, slot), new byte[A3Addresses.DepotSlotSize]);
         }
 
+        private static uint CareerOf(int manager) => A3Addresses.ManagerCareer + (uint)((manager - 1) * A3Addresses.ManagerCareerStride);
+
+        private static uint ManagerDataOf(int manager) => A3Addresses.ManagerData + (uint)((manager - 1) * A3Addresses.ManagerDataStride);
+
+        /// <summary>Titles, stations, years and games of human manager <paramref name="manager"/>.</summary>
+        internal ManagerCareer ReadCareer(int manager)
+        {
+            uint career = CareerOf(manager);
+            uint data = ManagerDataOf(manager);
+            byte[] games = this.memory.Read(data + A3Addresses.ManagerDataLeagueGames, 0x14) ?? new byte[0x14];
+            var result = new ManagerCareer
+            {
+                Manager = manager,
+                Titles = A3Addresses.CareerTitles.Select(t => this.ReadInt16(career + (uint)t.Key)).ToArray(),
+                Dismissed = this.ReadInt16(career + A3Addresses.CareerDismissed),
+                Resigned = this.ReadInt16(career + A3Addresses.CareerResigned),
+                Stations = this.ReadByte(career + A3Addresses.CareerStations),
+                Years = this.ReadInt16(this.ManagerField(manager, A3Addresses.ManagerYears)),
+            };
+            result.Games[0] = BitConverter.ToInt32(games, 0);
+            result.Wins[0] = BitConverter.ToInt32(games, 4);
+            for (int i = 1; i < 4; i++)
+            {
+                result.Games[i] = BitConverter.ToInt16(games, 8 + (i - 1) * 4);
+                result.Wins[i] = BitConverter.ToInt16(games, 10 + (i - 1) * 4);
+            }
+            return result;
+        }
+
+        /// <summary>Writes the career values that changed.</summary>
+        internal void SaveCareer(ManagerCareer original, ManagerCareer edited)
+        {
+            uint career = CareerOf(edited.Manager);
+            uint data = ManagerDataOf(edited.Manager);
+            for (int i = 0; i < A3Addresses.CareerTitles.Length; i++)
+                Word(career + (uint)A3Addresses.CareerTitles[i].Key, original.Titles[i], edited.Titles[i]);
+            Word(career + A3Addresses.CareerDismissed, original.Dismissed, edited.Dismissed);
+            Word(career + A3Addresses.CareerResigned, original.Resigned, edited.Resigned);
+            if (edited.Years != original.Years)
+                this.WriteManagerField(edited.Manager, A3Addresses.ManagerYears, BitConverter.GetBytes((short)edited.Years));
+            Dword(data + A3Addresses.ManagerDataLeagueGames, original.Games[0], edited.Games[0]);
+            Dword(data + A3Addresses.ManagerDataLeagueGames + 4, original.Wins[0], edited.Wins[0]);
+            for (int i = 1; i < 4; i++)
+            {
+                Word(data + A3Addresses.ManagerDataCupGames + (uint)((i - 1) * 4), original.Games[i], edited.Games[i]);
+                Word(data + A3Addresses.ManagerDataCupGames + (uint)((i - 1) * 4 + 2), original.Wins[i], edited.Wins[i]);
+            }
+
+            void Word(uint address, int was, int now)
+            {
+                if (now != was)
+                    this.memory.Write(address, BitConverter.GetBytes((short)now));
+            }
+
+            void Dword(uint address, int was, int now)
+            {
+                if (now != was)
+                    this.memory.Write(address, BitConverter.GetBytes(now));
+            }
+        }
+
         /// <summary>Whether boards can dismiss managers (the new game's option "mit Entlassungen").</summary>
         internal bool ReadDismissals() => this.ReadByte(A3Addresses.Dismissals) != 0;
 

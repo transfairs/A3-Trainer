@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 namespace A3_Trainer.Controller
 {
     /// <summary>
@@ -161,6 +163,39 @@ namespace A3_Trainer.Controller
         internal const int TransferListEntrySize = 0x1C;
         internal const int TransferListMax = 400;
 
+        // Each human manager's career ("Persönliche Erfolge -> Trainererfolge", FUN_00582203 via FUN_006311DA/FUN_006313F8):
+        // one record per manager from ManagerCareer, ManagerCareerStride apart. Words of titles and honours (CareerTitles),
+        // then the list of titles, dismissals, resignations, the number of stations (byte) and the stations.
+        internal const uint ManagerCareer = 0x00A4DE78;
+        internal const int ManagerCareerStride = 0x874;
+        internal const int CareerDismissed = 0x1BA;
+        internal const int CareerResigned = 0x1BC;
+        internal const int CareerStations = 0x1C2;
+        /// <summary>Offset and caption of each title counter in the career record, in the page's order.</summary>
+        internal static readonly KeyValuePair<int, string>[] CareerTitles =
+        {
+            new KeyValuePair<int, string>(0x00, "Meisterschaften"),
+            new KeyValuePair<int, string>(0x02, "Pokalsiege"),
+            new KeyValuePair<int, string>(0x04, "Finalteilnahmen"),
+            new KeyValuePair<int, string>(0x06, "Liga-/Supercupsiege"),
+            new KeyValuePair<int, string>(0x08, "EU-Meisterpokal-Siege"),
+            new KeyValuePair<int, string>(0x0A, "Finalteilnahmen CL"),
+            new KeyValuePair<int, string>(0x0C, "Europapokale"),
+            new KeyValuePair<int, string>(0x0E, "Finalteilnahmen EP"),
+            new KeyValuePair<int, string>(0x12, "Europäische Supercups"),
+            new KeyValuePair<int, string>(0x14, "Weltpokale"),
+            new KeyValuePair<int, string>(0x1A, "Europameisterschaften"),
+            new KeyValuePair<int, string>(0x1C, "Finalteilnahmen EM"),
+            new KeyValuePair<int, string>(0x1E, "Weltmeisterschaften"),
+            new KeyValuePair<int, string>(0x20, "Finalteilnahmen WM"),
+            new KeyValuePair<int, string>(0x22, "Trainer des Monats"),
+            new KeyValuePair<int, string>(0x24, "Manager des Jahres"),
+        };
+        // Games and wins as trainer in the managers' data (FUN_006A5E3D and the next ones): league as two dwords, then
+        // cup, European cup and internationals as word pairs.
+        internal const int ManagerDataLeagueGames = 0x23C;
+        internal const int ManagerDataCupGames = 0x244;
+
         // Each human manager's depot (FUN_00406A26, FUN_0040689A; this = Depot + (manager - 1) * DepotStride): a "used"
         // byte per slot from DepotUsed, the slots from DepotSlotsAt {int stock, float purchase price, int shares, int}.
         // The game fills the slots from the last one.
@@ -191,6 +226,7 @@ namespace A3_Trainer.Controller
             new[] { 0x20, 0x40, 2 },        // club number
             new[] { 0x22, 0x42, 2 },        // manager level at +0x23
             new[] { 0x32, 0x13E, 2 },       // nerves
+            new[] { 0x38, 0x144, 2 },       // manager years
             new[] { 0x3A, 0x146, 3 },       // popularity
             new[] { 0x50, 0x17C, 0x20 },    // contract
             new[] { 0x98, 0x138, 4 },       // private money
@@ -231,6 +267,7 @@ namespace A3_Trainer.Controller
         internal const int ManagerCompetencyRow = 0xE;
         internal const int ManagerLevels = 16;
         internal const int ManagerCharisma = 5;                   // column of "Ausstrahlung"
+        internal const uint ManagerYears = 0x01B99620;            // word, "Managerjahre" on the career page (FUN_00582203)
         internal const uint ManagerNerves = 0x01B9961A;           // word 0-100, "Nervenkostüm"; starts at 100 (FUN_006A3B61), daily changes in FUN_006AF8FD
         internal const int ManagerDataBirthday = 0x4E;           // in the managers' data only (FUN_006A54FA): day, month, word year
         internal const uint ManagerBoardTrust = 0x01B99684;       // word, base of the board's trust; the game adds the next 4 bytes (FUN_007701B2)

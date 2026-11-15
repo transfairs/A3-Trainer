@@ -85,6 +85,10 @@ exit clause on offers and the club's option to extend (written to the manager ob
 **Manager person** (`Trainer → Manager`, tab `Person`): birthday (the age follows), nerves, manager level and the seven
 competencies of the level in force (the game keeps a row per level and adds bonuses to the stored level). The tab also switches dismissals on or off for every manager (the new game's option "mit Entlassungen"; without
 it the board never dismisses a manager).
+**Career** (`Trainer → Manager`, tab `Karriere`): what the game's "Trainererfolge" page shows: titles and honours
+(championships, cups, European cups, finals, European and world titles, trainer of the month, manager of the year),
+manager years, dismissals and resignations, and games and wins as trainer per competition; the number of stations is
+shown.
 **Stocks** (`Trainer → Manager`, tab `Aktien`): the manager's depot as the game's "Persönliche Erfolge" lists it
 (stock, shares, purchase price, value). Positions can be changed, added for any stock on the market (clubs that are an
 AG and the companies) and removed, and the current price of a stock can be set. Holding more than half of the own
