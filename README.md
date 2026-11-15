@@ -96,6 +96,9 @@ club's shares gives the board's full trust in the game.
 **Several human managers** (hot seat, up to 4): the squad, club and manager pages follow the manager
 whose turn it is; with two or more, the `Trainer` menu lists them to look at another one.
 
+**Help** (`? → Hilfe`): the online help, built into the trainer from the same page, so both say the same;
+`? → Über` shows version, links and the log folder.
+
 **Cheat Engine table** `A3-Trainer.ct` (included in every release): manager, wealth at the start
 of the season and base year as fixed entries. The script „Kader (eigener Verein und nächster
 Gegner)“ reads both squads when activated and creates the trainer's fields for every player

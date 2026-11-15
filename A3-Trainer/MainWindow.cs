@@ -31,7 +31,7 @@ namespace A3_Trainer
         private readonly StocksView stocksView;
         private readonly CareerView careerView;
         private readonly PagesView managerPages;
-        private readonly AboutView aboutView = new AboutView();
+        private readonly HelpView helpView = new HelpView();
         private readonly Label waiting;
 
         private enum Page { Squad, Opponent, Amateurs, Other, Club, OtherClub, Manager }
@@ -50,6 +50,7 @@ namespace A3_Trainer
         internal MainWindow()
         {
             this.Text = "A3-Trainer";
+            this.ShowDialogBox = dialog => dialog.ShowDialog(this);
             this.Font = new Font("Microsoft Sans Serif", 8.25f);
             this.AutoScaleMode = AutoScaleMode.Font;
             this.AutoScaleDimensions = new SizeF(6F, 13F);
@@ -69,6 +70,7 @@ namespace A3_Trainer
             this.managerMenu.DropDownItems.Add("Manager", null, (s, e) => this.Go(Page.Manager));
             this.managerMenu.DropDownOpening += (s, e) => this.ListManagers();
             var help = new ToolStripMenuItem("?");
+            help.DropDownItems.Add("Hilfe", null, (s, e) => this.ShowHelp());
             help.DropDownItems.Add("Onlinehilfe", null, (s, e) => this.OpenHelp());
             help.DropDownItems.Add("Über", null, (s, e) => this.ShowAbout());
             this.menu.Items.AddRange(new ToolStripItem[] { club, players, this.managerMenu, help });
@@ -291,7 +293,21 @@ namespace A3_Trainer
             }
         }
 
-        // Needs no running game, so it bypasses Show(Page) and leaves the remembered page alone.
-        private void ShowAbout() => this.Navigate("About", () => this.ShowScreen(this.aboutView, "Über"));
+        // The help needs no running game either; it is built from the online help when first shown.
+        private void ShowHelp() => this.Navigate("Help", () =>
+        {
+            this.helpView.EnsureHelpLoaded();
+            this.ShowScreen(this.helpView, "Hilfe");
+        });
+
+        /// <summary>Shows a dialog modally over the window; tests replace it so no dialog blocks them.</summary>
+        internal Func<Form, DialogResult> ShowDialogBox;
+
+        // A dialog, so the page shown stays and nothing goes into the history.
+        private void ShowAbout()
+        {
+            using (var about = new AboutDialog())
+                this.ShowDialogBox(about);
+        }
     }
 }

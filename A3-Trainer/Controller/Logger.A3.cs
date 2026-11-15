@@ -6,7 +6,10 @@ namespace AnstossTrainer.Shared
     // with the environment variable A3TRAINER_DEBUG=1 until the trainer gets a settings page.
     internal static partial class Logger
     {
-        static partial void GetAppFolderName(ref string name) => name = "A3-Trainer";
+        /// <summary>Name of the log folder under %LocalAppData%.</summary>
+        internal const string AppFolder = "A3-Trainer";
+
+        static partial void GetAppFolderName(ref string name) => name = AppFolder;
 
         static partial void GetDebugEnabled(ref bool enabled) =>
             enabled = Environment.GetEnvironmentVariable("A3TRAINER_DEBUG") == "1";

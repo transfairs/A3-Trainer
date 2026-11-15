@@ -118,7 +118,7 @@ namespace A3_Trainer.View
             using (var back = new SolidBrush(selected ? Green : Panel))
                 e.Graphics.FillRectangle(back, e.Bounds);
             TextRenderer.DrawText(e.Graphics, tabs.TabPages[e.Index].Text, tabs.Font, e.Bounds, Text,
-                TextFormatFlags.VerticalCenter | TextFormatFlags.HorizontalCenter);
+                TextFormatFlags.VerticalCenter | TextFormatFlags.HorizontalCenter | TextFormatFlags.NoPrefix);
         }
 
         /// <summary>Green menu bar with green highlights, matching the game.</summary>

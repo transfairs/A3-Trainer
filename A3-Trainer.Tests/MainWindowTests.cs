@@ -73,9 +73,17 @@ namespace A3_Trainer.Tests
                 TestHelpers.Click(MenuItem(window, "Spieler", "Eigener Kader"));
                 Assert.Equal("A3-Trainer :: Eigener Kader: 1.FV München", window.Text);
 
+                TestHelpers.Click(MenuItem(window, "?", "Hilfe"));
+                Assert.IsType<HelpView>(Shown(window));
+                Assert.Equal("A3-Trainer :: Hilfe", window.Text);
+                Assert.True(TestHelpers.Get<TabControl>(Shown(window), "pages").TabCount > 0);
+
+                // About is a dialog over the page shown.
+                Form shownDialog = null;
+                window.ShowDialogBox = dialog => { shownDialog = dialog; return DialogResult.OK; };
                 TestHelpers.Click(MenuItem(window, "?", "Über"));
-                Assert.IsType<AboutView>(Shown(window));
-                Assert.Equal("A3-Trainer :: Über", window.Text);
+                Assert.IsType<AboutDialog>(shownDialog);
+                Assert.Equal("A3-Trainer :: Hilfe", window.Text);
             }
         });
 
@@ -91,7 +99,7 @@ namespace A3_Trainer.Tests
 
                 window.OnGameAttached(); // the squad page is the first entry
                 TestHelpers.Click(MenuItem(window, "Verein", "Eigener Verein"));
-                TestHelpers.Click(MenuItem(window, "?", "Über"));
+                TestHelpers.Click(MenuItem(window, "?", "Hilfe"));
                 Assert.True(back.Enabled);
                 Assert.False(forward.Enabled);
 
@@ -105,7 +113,7 @@ namespace A3_Trainer.Tests
                 Assert.Equal("A3-Trainer :: Verein: 1.FV München", window.Text);
                 Message msg = default(Message);
                 Assert.True((bool)TestHelpers.Invoke(window, "ProcessCmdKey", msg, Keys.Alt | Keys.Right));
-                Assert.Equal("A3-Trainer :: Über", window.Text);
+                Assert.Equal("A3-Trainer :: Hilfe", window.Text);
 
                 // A new page drops what lay ahead.
                 window.GoBack();
