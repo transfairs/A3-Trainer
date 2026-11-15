@@ -14,7 +14,7 @@ namespace A3_Trainer.Tests
         {
             HelpDocument help = HelpDocument.FromResource();
 
-            Assert.Equal(new[] { "Erste Schritte", "Spieler", "Verein & Manager", "Fehlerbehebung / FAQ" },
+            Assert.Equal(new[] { "Erste Schritte", "Spieler", "Verein & Manager", "Spielmechaniken", "Fehlerbehebung / FAQ" },
                 help.Pages.Select(p => p.Title));
             HelpDocument.Page players = help.Pages.Single(p => p.Title == "Spieler");
             Assert.Contains("Wechsel", players.Sections.Select(s => s.Key));
@@ -73,7 +73,7 @@ namespace A3_Trainer.Tests
                 view.EnsureHelpLoaded();
                 view.EnsureHelpLoaded();
                 TabControl main = TestHelpers.Get<TabControl>(view, "pages");
-                Assert.Equal(4, main.TabPages.Count);
+                Assert.Equal(5, main.TabPages.Count);
                 TabPage players = main.TabPages.Cast<TabPage>().Single(t => t.Text == "Spieler");
                 TabControl sections = Assert.IsType<TabControl>(Assert.Single(players.Controls.Cast<Control>()));
                 Assert.Contains("Wechsel", sections.TabPages.Cast<TabPage>().Select(t => t.Text));

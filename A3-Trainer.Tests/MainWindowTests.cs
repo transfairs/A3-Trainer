@@ -181,6 +181,38 @@ namespace A3_Trainer.Tests
         });
 
         [Fact]
+        public void Mechanics_InterviewEffects_SwitchTheTimerAndLabelWhileTheGameRuns() => StaThread.Run(() =>
+        {
+            FakeGameMemory m = InterviewEffectsTests.WithInterview(out uint[] slots);
+            using (MainWindow window = Window(m, attached: false))
+            {
+                var effects = new InterviewEffects(m, new TransferInjectorTests.FakeCode(m));
+                TestHelpers.Set(window, "interviewEffects", effects);
+                var item = (ToolStripMenuItem)MenuItem(window, "Spielmechaniken", "Interviews: Wirkung der Antworten zeigen");
+                Timer timer = TestHelpers.Get<Timer>(window, "mechanicsTimer");
+                uint original = m.ReadUInt32(slots[0]);
+
+                item.Checked = true;                   // no game yet: only the timer runs
+                Assert.True(timer.Enabled);
+                TestHelpers.Invoke(window, "TickMechanics");
+                Assert.Equal(original, m.ReadUInt32(slots[0]));
+
+                TestHelpers.Get<ProcessMemory>(window, "memory").mProc.Process = Process.GetCurrentProcess();
+                TestHelpers.Invoke(window, "TickMechanics");
+                Assert.NotEqual(original, m.ReadUInt32(slots[0]));
+
+                item.Checked = false;
+                Assert.False(timer.Enabled);
+                Assert.Equal(original, m.ReadUInt32(slots[0]));
+
+                TestHelpers.Get<ProcessMemory>(window, "memory").mProc.Process = null;
+                item.Checked = true;
+                item.Checked = false;
+                window.OnGameLost();
+            }
+        });
+
+        [Fact]
         public void Opponent_WhenNoneIsLoaded_SaysSo() => StaThread.Run(() =>
         {
             using (MainWindow window = Window(A3GameTests.Career()))

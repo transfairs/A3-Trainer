@@ -32,6 +32,9 @@ namespace A3_Trainer
         private readonly CareerView careerView;
         private readonly PagesView managerPages;
         private readonly HelpView helpView = new HelpView();
+        private readonly InterviewEffects interviewEffects;
+        private readonly ToolStripMenuItem interviewItem = new ToolStripMenuItem("Interviews: Wirkung der Antworten zeigen") { CheckOnClick = true };
+        private readonly Timer mechanicsTimer = new Timer { Interval = 250 };
         private readonly Label waiting;
 
         private enum Page { Squad, Opponent, Amateurs, Other, Club, OtherClub, Manager }
@@ -69,11 +72,13 @@ namespace A3_Trainer
             club.DropDownItems.Add("Anderer Verein", null, (s, e) => this.Go(Page.OtherClub));
             this.managerMenu.DropDownItems.Add("Manager", null, (s, e) => this.Go(Page.Manager));
             this.managerMenu.DropDownOpening += (s, e) => this.ListManagers();
+            var mechanics = new ToolStripMenuItem("Spielmechaniken");
+            mechanics.DropDownItems.Add(this.interviewItem);
             var help = new ToolStripMenuItem("?");
             help.DropDownItems.Add("Hilfe", null, (s, e) => this.ShowHelp());
             help.DropDownItems.Add("Onlinehilfe", null, (s, e) => this.OpenHelp());
             help.DropDownItems.Add("Über", null, (s, e) => this.ShowAbout());
-            this.menu.Items.AddRange(new ToolStripItem[] { club, players, this.managerMenu, help });
+            this.menu.Items.AddRange(new ToolStripItem[] { club, players, this.managerMenu, mechanics, help });
             this.AddNavigationButtons(this.menu);
             A3Theme.ApplyMenu(this.menu);
 
@@ -84,6 +89,10 @@ namespace A3_Trainer
             var live = new LiveGameMemory(this.memory);
             this.game = new A3Game(live);
             this.playerView = new PlayerView(this.memory, this.game) { Transfers = new TransferInjector(live, live) };
+            this.interviewEffects = new InterviewEffects(live, live);
+            this.interviewItem.CheckedChanged += (s, e) => this.SwitchInterviewEffects(this.interviewItem.Checked);
+            this.mechanicsTimer.Tick += (s, e) => this.TickMechanics();
+            this.Disposed += (s, e) => this.mechanicsTimer.Dispose();
             this.playerView.ClubChosen += this.OnClubChosen;
             this.clubView = new ClubView(this.memory, this.game);
             this.identityView = new IdentityView(this.memory, this.game);
@@ -125,6 +134,7 @@ namespace A3_Trainer
         internal void OnGameLost()
         {
             this.playerView.StopFreezing();
+            this.interviewEffects.Reset();
             this.ShowWaiting();
         }
 
@@ -299,6 +309,32 @@ namespace A3_Trainer
             this.helpView.EnsureHelpLoaded();
             this.ShowScreen(this.helpView, "Hilfe");
         });
+
+        // Game mechanics work only while the game runs; nothing of it goes into the save game.
+        private void SwitchInterviewEffects(bool on)
+        {
+            if (this.memory.mProc.Process != null)
+                this.interviewEffects.SetEnabled(on);
+            else if (!on)
+                this.interviewEffects.Reset();
+            this.mechanicsTimer.Enabled = on;
+        }
+
+        private void TickMechanics()
+        {
+            if (this.memory.mProc.Process == null)
+                return;
+            if (!this.interviewEffects.Enabled)
+                this.interviewEffects.SetEnabled(true);
+            try
+            {
+                this.interviewEffects.Tick();
+            }
+            catch (Exception ex)
+            {
+                Logger.Error("Interview-Wirkungen konnten nicht angezeigt werden", ex);
+            }
+        }
 
         /// <summary>Shows a dialog modally over the window; tests replace it so no dialog blocks them.</summary>
         internal Func<Form, DialogResult> ShowDialogBox;

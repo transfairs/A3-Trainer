@@ -64,6 +64,7 @@
     <Compile Include="Controller\A3Game.cs" />
     <Compile Include="Controller\A3Observer.cs" />
     <Compile Include="Controller\GameMemory.cs" />
+    <Compile Include="Controller\InterviewEffects.cs" />
     <Compile Include="Controller\Logger.A3.cs" />
     <Compile Include="Controller\PlayerCodec.cs" />
     <Compile Include="Controller\TransferInjector.cs" />

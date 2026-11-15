@@ -96,6 +96,10 @@ club's shares gives the board's full trust in the game.
 **Several human managers** (hot seat, up to 4): the squad, club and manager pages follow the manager
 whose turn it is; with two or more, the `Trainer` menu lists them to look at another one.
 
+**Game mechanics** (`Spielmechaniken`, only while trainer and game run; nothing of it goes into a save game):
+`Interviews: Wirkung der Antworten zeigen` appends each interview answer's effects to its text in the game, e.g.
+" [Fans -5, Vorstand -2]" (public, media, fans, board, reporter, team, a player).
+
 **Help** (`? → Hilfe`): the online help, built into the trainer from the same page, so both say the same;
 `? → Über` shows version, links and the log folder.
 

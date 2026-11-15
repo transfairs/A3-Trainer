@@ -134,6 +134,8 @@ namespace A3_Trainer.Controller
         // Byte, the new game's option "mit Entlassungen" (FUN_00787D4C); with 0 the board never dismisses a manager
         // (below 81 % trust, FUN_0075133E) and the game says so.
         internal const uint Dismissals = 0x00B5D158;
+        // Pointer to the questions of the running interview (texte\interv.saq, FUN_0065F0B8), 0 outside interviews.
+        internal const uint InterviewBuffer = 0x00B62898;
 
         // --- Stock market (object at StockMarket, FUN_00406201 lists or updates a club's stock): the number of stocks,
         // then one entry each {char[] name, word country (-1 = a company), word club, int shares issued, word week
