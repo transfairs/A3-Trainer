@@ -134,7 +134,7 @@ namespace A3_Trainer.Tests
                 _ = list.Handle;
                 view.ShowClub(new ClubKey(14, 1));
                 ListViewItem youth = list.Items.Cast<ListViewItem>().Single(i => ((Player)i.Tag).Index == 352);
-                Assert.Equal(PlayerView.YouthBackColor, youth.BackColor);
+                Assert.Equal(PlayerView.YouthColor, youth.ForeColor);
 
                 youth.Selected = true;
                 Assert.Equal("A-Jugend", TestHelpers.Get<Label>(view, "teamValue").Text);

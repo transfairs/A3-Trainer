@@ -296,11 +296,8 @@ namespace A3_Trainer.View
             return page;
         }
 
-        /// <summary>
-        /// Row background of youth players. A pale tint keeps the text (black, dark red when injured) at full
-        /// contrast; a text colour can't differ enough from both the background and the other players.
-        /// </summary>
-        internal static readonly Color YouthBackColor = Color.FromArgb(0xD6, 0xE6, 0xF7);
+        /// <summary>Text colour of youth players: the theme's dark green (injured ones stay dark red).</summary>
+        internal static readonly Color YouthColor = A3Theme.GreenDark;
 
         private static ComboBox Combo() => new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList };
 
@@ -576,7 +573,7 @@ namespace A3_Trainer.View
                         this.AgeText(player),
                     }) { Tag = player };
                     if (player.IsYouth)
-                        item.BackColor = YouthBackColor;
+                        item.ForeColor = YouthColor;
                     if (player.IsInjured)
                         item.ForeColor = Color.DarkRed;
                     this.list.Items.Add(item);
