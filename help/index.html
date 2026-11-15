@@ -90,11 +90,12 @@
                 <figcaption>Verein und Manager: Vermögen des Vereins und des Managers</figcaption>
               </figure>
             </div>
+            <p>Die Pfeile ◀ ▶ links im Menü (oder <kbd>Alt</kbd>+<kbd>←</kbd> / <kbd>Alt</kbd>+<kbd>→</kbd>) springen zu den zuletzt gezeigten Seiten zurück und wieder vor. Diese Hilfe steckt auch im Trainer: <span class="menu-path">? → Hilfe</span>.</p>
           </fieldset>
 
           <div class="toc-grid">
             <a class="toc-card" href="#spieler" data-jump="spieler"><h3>Spieler</h3><p>Kader, nächsten Gegner und jeden anderen Verein bearbeiten: Daten, Positionen, Fähigkeiten, Eigenschaften, Vertrag, Privatleben, Wechsel.</p></a>
-            <a class="toc-card" href="#verein" data-jump="verein"><h3>Verein &amp; Manager</h3><p>Vereinsdaten, Vermögen, Ansehen und Vertrag des Managers.</p></a>
+            <a class="toc-card" href="#verein" data-jump="verein"><h3>Verein &amp; Manager</h3><p>Jeder Verein: Daten, Identität, Stadion, Finanzen und Präsidium; der Manager: Vertrag, Person, Karriere und Aktien.</p></a>
             <a class="toc-card" href="#faq" data-jump="faq"><h3>Fehlerbehebung</h3><p>Häufige Fragen, bekannte Grenzen und die Logdatei.</p></a>
           </div>
         </div>
@@ -104,7 +105,7 @@
       <section class="panel" id="panel-spieler">
         <div class="panel-header">
           <h1>Spieler</h1>
-          <p class="lead">Erreichbar über das Menü <span class="menu-path">Spieler</span>. Links steht die Spielerliste (verletzte Spieler in Rot), rechts der gewählte Spieler in elf Registerkarten: die meisten angeordnet wie im Spieleditor von Anstoss 3, „Saison“ und „Privat“ wie in der Spielerinfo, dazu „Wechsel“.</p>
+          <p class="lead">Erreichbar über das Menü <span class="menu-path">Spieler</span>. Links steht die Spielerliste (Jugendspieler in Grün, verletzte Spieler in Rot), rechts der gewählte Spieler in elf Registerkarten: die meisten angeordnet wie im Spieleditor von Anstoss 3, „Saison“ und „Privat“ wie in der Spielerinfo, dazu „Wechsel“.</p>
         </div>
         <div class="subtabs">
           <button data-sub="uebersicht" class="active">Übersicht</button>
@@ -121,6 +122,8 @@
             <dl class="field-list">
               <dt>Eigener Kader</dt><dd>Alle Spieler Ihres Vereins. Menü: <span class="menu-path">Spieler → Eigener Kader</span>.</dd>
               <dt>Nächster Gegner</dt><dd>Der Kader des Vereins, den das Spiel als nächsten Gegner geladen hat. Menü: <span class="menu-path">Spieler → Nächster Gegner</span>.</dd>
+              <dt>Amateure</dt><dd>Die Amateurmannschaft Ihres Vereins, im Spiel ein eigener Verein wie „1.FV München (A)“. Menü: <span class="menu-path">Spieler → Amateure</span>.</dd>
+              <dt>Jugendspieler</dt><dd>Gehören zum Kader ihres Vereins und lassen sich wie alle Spieler bearbeiten. Die Liste zeigt sie in Grün, „Daten 1“ nennt ihre Mannschaft (A-, B- oder C-Jugend).</dd>
               <dt>Jeder andere Verein</dt><dd>Über der Spielerliste wählen Sie Land und Verein aus; die Liste zeigt dann dessen Kader. Menü: <span class="menu-path">Spieler → Anderer Verein</span> öffnet den zuletzt gewählten Verein.</dd>
             </dl>
           </fieldset>
@@ -252,6 +255,7 @@
               <dt>sofort</dt><dd>Der Spieler wechselt gleich. Ohne Haken trägt das Spiel den Wechsel für das Saisonende ein.</dd>
               <dt>Wechsel anfordern</dt><dd>Der Wechsel geschieht beim nächsten <strong>Tagesabschluss</strong>. Eine neue Anforderung ersetzt eine noch nicht ausgeführte. Nach dem Tagesabschluss meldet die Registerkarte beim nächsten <span class="btn-tag">Neu laden</span>, ob er geklappt hat.</dd>
             </dl>
+            <p><strong>Auf der Transferliste:</strong> Mit diesem Haken und <span class="btn-tag">Speichern</span> bietet das Spiel den Spieler zum Kauf an wie bei seinen eigenen Einträgen; ohne Haken nimmt es ihn von der Liste.</p>
             <p>Den Vertrag beim neuen Verein (Gehalt, Prämien, Laufzeit von mindestens 2 Jahren) bestimmt das Spiel wie bei seinen eigenen Wechseln; ändern lässt er sich danach auf der Registerkarte „Vertrag“. Abgelehnt wird der Wechsel, wenn der Kader des neuen Vereins schon 35 Spieler hat oder der Spieler zum Zeitpunkt des Tagesabschlusses nicht mehr beim alten Verein ist. Leihen sind noch nicht möglich.</p>
           </fieldset>
         </div>
@@ -270,6 +274,7 @@
         <div class="subpanel active" data-sub="only">
           <fieldset class="groupbox">
             <legend>Verein (<span class="menu-path">Verein → Eigener Verein</span>)</legend>
+            <p>Mit <span class="menu-path">Verein → Anderer Verein</span> oder über die Auswahl von Land und Verein rechts neben den Reitern zeigt die Seite jeden anderen Verein; alle Reiter folgen dem gewählten Verein. <span class="menu-path">Eigener Verein</span> springt zurück.</p>
             <dl class="field-list">
               <dt>Name, Kurzname, Stadt</dt><dd>Name und Stadt höchstens 19, Kurzname höchstens 3 Zeichen (so viel Platz hat das Spiel dafür). Ein leeres Feld behält den alten Text.</dd>
               <dt>Vermögen Saisonbeginn (DM)</dt><dd>Das Vermögen des Vereins zu Beginn der Saison. Das Bankguthaben im Spiel ist dieser Wert plus der Gewinn der laufenden Saison. Wer mehr Geld haben möchte, erhöht diesen Wert.</dd>
@@ -298,6 +303,22 @@
             <p>Ist die Stadionseite im Spiel gerade offen, ändert der Trainer auch die Kopie, die sie beim Verlassen zurückschreibt. Die neuen Werte zeigt sie erst, wenn sie wieder geöffnet wird.</p>
           </fieldset>
           <fieldset class="groupbox">
+            <legend>Finanzen (<span class="menu-path">Verein → Eigener Verein</span>, Reiter „Finanzen“)</legend>
+            <dl class="field-list">
+              <dt>Dispokredit (Mio DM)</dt><dd>Der Rahmen, den die Bilanz des Spiels in Klammern unter dem Dispokredit zeigt, in Schritten von 0,1 Mio DM.</dd>
+              <dt>Kredite / Kredite erlassen</dt><dd>Anzahl und Summe der laufenden Kredite. „Kredite erlassen“ beendet sie ohne Rückzahlung: Ihre Summe geht auf das Vermögen zu Saisonbeginn, das Bankguthaben bleibt also gleich, nur die Schuld ist weg.</dd>
+              <dt>Zinsen (für alle Vereine)</dt><dd>Zinssatz über den Dispokredit hinaus, Dispozins, Guthabenzins und der Kreditzins für neue Kredite (bei längerer Laufzeit gibt das Spiel etwas weniger). Ein laufender Kredit behält seine Sätze.</dd>
+            </dl>
+          </fieldset>
+          <fieldset class="groupbox">
+            <legend>Präsidium (<span class="menu-path">Verein → Eigener Verein</span>, Reiter „Präsidium“)</legend>
+            <dl class="field-list">
+              <dt>Präsident, Oppositionsführer</dt><dd>Vorname, Nachname und Geburtstag, daneben das Alter. Übernimmt die Opposition den Verein, tauscht das Spiel die beiden.</dd>
+              <dt>Gegründet am</dt><dd>Das Gründungsdatum des Vereins.</dd>
+              <dt>Ewige Tabelle 1. Liga</dt><dd>Spiele, Punkte, Tore und Gegentore.</dd>
+            </dl>
+          </fieldset>
+          <fieldset class="groupbox">
             <legend>Manager (<span class="menu-path">Trainer → Manager</span>, Reiter „Manager“)</legend>
             <dl class="field-list">
               <dt>Vorname, Nachname</dt><dd>Höchstens 9 bzw. 15 Zeichen; ein leeres Feld behält den alten Namen. Den Eintrag des Managers in der Trainerliste des Spiels benennt der Trainer mit um, wenn genau ein Eintrag den alten Namen trägt.</dd>
@@ -321,10 +342,23 @@
             <legend>Person (<span class="menu-path">Trainer → Manager</span>, Reiter „Person“)</legend>
             <dl class="field-list">
               <dt>Geburtstag</dt><dd>Tag, Monat und Jahr; daneben das Alter, das das Spiel unter „Persönliche Erfolge“ zeigt. Ein Datum, das es nicht gibt, wird nicht gespeichert.</dd>
+              <dt>Entlassungen (für alle Manager)</dt><dd>Die Option „mit Entlassungen“ vom Spielstart. Ohne Haken entlässt kein Vorstand mehr einen Manager.</dd>
               <dt>Nervenkostüm</dt><dd>0 bis 100, wie unter „Persönliche Erfolge“. Es beginnt bei 100 und ändert sich im Spiel von Tag zu Tag.</dd>
               <dt>Managerlevel</dt><dd>Das Level des Managers, 0 bis 15. Manche Ereignisse heben oder senken das Level, mit dem das Spiel rechnet; weicht es ab, steht es daneben („im Spiel: Level …“).</dd>
               <dt>Fähigkeiten</dt><dd>Verhandlungsgeschick, Motivationsfähigkeit, Trainingsgestaltung, Autorität, Fremdsprachenkenntnisse, Ausstrahlung und Umgang mit jungen Spielern, je 0 bis 15, wie unter „Aktuelle Managerfähigkeiten“. Das Spiel führt die Werte für jedes Level getrennt; der Trainer zeigt die des Levels, mit dem das Spiel rechnet. Wer das Level ändert, sieht die Werte des neuen Levels. Die Ausstrahlung bestimmt, wie stark die Fans den Manager mögen (80 bis 140 % des Grundwerts).</dd>
             </dl>
+          </fieldset>
+          <fieldset class="groupbox">
+            <legend>Karriere (<span class="menu-path">Trainer → Manager</span>, Reiter „Karriere“)</legend>
+            <dl class="field-list">
+              <dt>Titel und Ehrungen</dt><dd>Meisterschaften, Pokalsiege, Finalteilnahmen, Liga-/Supercupsiege, Europapokale mit ihren Finalteilnahmen, Europa- und Weltmeisterschaften, Trainer des Monats und Manager des Jahres, wie unter „Persönliche Erfolge → Trainererfolge“.</dd>
+              <dt>Laufbahn</dt><dd>Managerjahre, wie oft der Manager entlassen wurde und wie oft er selbst gegangen ist; die Zahl der Stationen wird nur angezeigt.</dd>
+              <dt>Spiele als Trainer</dt><dd>Spiele und Siege in Liga, Pokal, Europapokal und Länderspielen. Daraus rechnet das Spiel „Spiele gewonnen“. Mehr Siege als Spiele werden nicht gespeichert.</dd>
+            </dl>
+          </fieldset>
+          <fieldset class="groupbox">
+            <legend>Aktien (<span class="menu-path">Trainer → Manager</span>, Reiter „Aktien“)</legend>
+            <p>Das Depot des Managers wie unter „Persönliche Erfolge“: Aktie, Anzahl, Kaufkurs, aktueller Kurs und Wert. Eine Position lässt sich ändern, für jede Aktie des Markts (Vereine, die eine AG sind, und Firmen) neu ins Depot legen oder entfernen; daneben steht, welcher Anteil der Aktien das ist. „Kurs setzen“ ändert den aktuellen Kurs einer Aktie. Wer mehr als die Hälfte der Aktien seines eigenen Vereins hält, hat das volle Vertrauen des Vorstands.</p>
           </fieldset>
         </div>
       </section>
