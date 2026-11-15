@@ -55,7 +55,7 @@ cup and European goals, penalties and free kicks, substitute goals and appearanc
 team of the day, caps, yellow, yellow-red and red cards per competition, a ban in weeks and the European ban.
 For the whole team, condition and freshness can be set at once or frozen: the trainer then writes
 them back every second for the club it was switched on for.
-Youth players are part of their club's squad and are edited like any player; the list shows them in blue and
+Youth players are part of their club's squad and are edited like any player; the list shows them on a pale blue row and
 `Daten 1` names their team (A-, B- or C-Jugend). `Spieler → Amateure` opens the own club's amateur team, a club of its
 own in the game. A player can be put on the transfer list or taken off it (tab `Wechsel`, saved with the player); the
 game then offers him for sale as with its own listings.
