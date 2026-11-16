@@ -149,6 +149,7 @@ namespace A3_Trainer.Controller
         internal const uint SavingsRate = 0x00B5CC82;
         internal const uint OverdraftRate = 0x00B5CC84;
         internal const uint LoanRate = 0x00B5CC86;
+        internal const uint DepositRate = 0x00B5CC8A;   // Tagesgeld: the first partner's index grows by a quarter of it each quarter
         // The current index of every investment partner (dwords, 1000 at the start), shared by all clubs.
         internal const uint InvestmentIndices = 0x00B5CC8C;
         // Day and month of the current date (words); an investment keeps the day of its quarter (FUN_00676A74).

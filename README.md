@@ -73,7 +73,8 @@ changed as well, since the page writes it back when it is left.
 **Club finances** (tab `Finanzen`): the overdraft (shown in brackets on the game's balance page) and the running
 loans, which can be forgiven: they end and their sum moves to the wealth at the start of the season, so the bank
 balance stays and only the debt is gone. The interest rates every club pays or gets: beyond the overdraft, within it,
-on credit, and the base rate of new loans (shorter for longer terms in the game; a loan keeps the rates it was taken with).
+on credit, the base rate of new loans (shorter for longer terms in the game; a loan keeps the rates it was taken with)
+and the overnight deposit rate of the investments. The game sets new rates every season.
 **Club investments** (tab `Anlagen`): the running investments with amount paid in, value and gain. A value can be
 set (the game books the gain when the investment is sold), a new investment made like in the game's investment
 dialog, and the index of every investment partner set (it moves the value of every club's investments with that

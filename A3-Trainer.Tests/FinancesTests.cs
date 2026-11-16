@@ -41,11 +41,12 @@ namespace A3_Trainer.Tests
                 m.Put(Loan(finances, 5) + A3Addresses.ClubLoanFlags, 1);
             }
             m.PutUInt16(Hamburg + A3Addresses.ClubOverdraft, 123);
-            m.Map(A3Addresses.InterestRate, 8);
+            m.Map(A3Addresses.InterestRate, 12);
             m.Put(A3Addresses.InterestRate, BitConverter.GetBytes((short)1150));
             m.Put(A3Addresses.SavingsRate, BitConverter.GetBytes((short)75));
             m.Put(A3Addresses.OverdraftRate, BitConverter.GetBytes((short)950));
             m.Put(A3Addresses.LoanRate, BitConverter.GetBytes((short)900));
+            m.Put(A3Addresses.DepositRate, BitConverter.GetBytes((short)450));
             return m;
         }
 
@@ -121,7 +122,7 @@ namespace A3_Trainer.Tests
             FakeGameMemory m = WithFinances();
             var game = new A3Game(m);
             InterestRates rates = game.ReadRates();
-            Assert.Equal(new[] { 1150, 950, 75, 900 }, new[] { rates.Interest, rates.Overdraft, rates.Savings, rates.Loan });
+            Assert.Equal(new[] { 1150, 950, 75, 900, 450 }, new[] { rates.Interest, rates.Overdraft, rates.Savings, rates.Loan, rates.Deposit });
 
             InterestRates edited = rates.Clone();
             edited.Savings = 500;
@@ -143,14 +144,17 @@ namespace A3_Trainer.Tests
                 Assert.Equal("2 über 5.000.000 DM", Field<Label>(view, "loans").Text);
                 Assert.Equal(11.5m, Field<NumericUpDown>(view, "interest").Value);
                 Assert.Equal(0.75m, Field<NumericUpDown>(view, "savings").Value);
+                Assert.Equal(4.5m, Field<NumericUpDown>(view, "depositRate").Value);
 
                 Field<NumericUpDown>(view, "overdraft").Value = 40.04m;  // whole 100,000s
                 Field<NumericUpDown>(view, "interest").Value = 10m;
+                Field<NumericUpDown>(view, "depositRate").Value = 5.25m;
                 TestHelpers.Click(Field<Button>(view, "save"));
                 Assert.Equal("Gespeichert", Field<Label>(view, "status").Text);
                 Assert.Equal(new byte[] { 0x90, 0x01 }, m.WrittenAt(Munich + A3Addresses.ClubOverdraft));
                 Assert.Equal(BitConverter.GetBytes((short)1000), m.WrittenAt(A3Addresses.InterestRate));
                 Assert.Null(m.WrittenAt(A3Addresses.OverdraftRate));
+                Assert.Equal(BitConverter.GetBytes((short)525), m.WrittenAt(A3Addresses.DepositRate));
 
                 TestHelpers.Click(Field<Button>(view, "forgive"));
                 Assert.Equal("5.000.000 DM Kredite erlassen", Field<Label>(view, "status").Text);

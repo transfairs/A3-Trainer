@@ -27,6 +27,8 @@ namespace A3_Trainer.Model
         internal int Savings { get; set; }
         /// <summary>Base rate of new loans.</summary>
         internal int Loan { get; set; }
+        /// <summary>On the overnight deposit (Tagesgeld) investment.</summary>
+        internal int Deposit { get; set; }
 
         /// <summary>A copy to edit.</summary>
         internal InterestRates Clone() => (InterestRates)this.MemberwiseClone();

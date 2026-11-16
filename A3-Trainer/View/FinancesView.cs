@@ -26,6 +26,7 @@ namespace A3_Trainer.View
         private readonly NumericUpDown overdraftRate = Rate();
         private readonly NumericUpDown savings = Rate();
         private readonly NumericUpDown loanRate = Rate();
+        private readonly NumericUpDown depositRate = Rate();
         private readonly Button save = new Button { Text = "Speichern" };
         private readonly Button reload = new Button { Text = "Neu laden" };
         private readonly Label status = new Label();
@@ -70,19 +71,20 @@ namespace A3_Trainer.View
             account.Controls.AddRange(new Control[] { this.loans, this.forgive });
             this.Controls.Add(account);
 
-            var interestRates = new GroupBox { Text = "Zinsen (für alle Vereine, in %)", Bounds = new Rectangle(8, 104, 598, 146) };
+            var interestRates = new GroupBox { Text = "Zinsen (für alle Vereine, in %)", Bounds = new Rectangle(8, 104, 598, 176) };
             y = 22;
             Row(interestRates, "Zinssatz", this.interest, "über den Dispokredit hinaus");
             Row(interestRates, "Dispozins", this.overdraftRate, "innerhalb des Dispokredits (Bilanz: Dispokredit)");
             Row(interestRates, "Guthabenzins", this.savings, "auf ein Guthaben");
             Row(interestRates, "Kreditzins", this.loanRate, "für neue Kredite, längere Laufzeit weniger");
+            Row(interestRates, "Tagesgeldzins", this.depositRate, "für Tagesgeld bei Sorgenfrei & Sohn (Anlagen)");
             this.Controls.Add(interestRates);
 
-            this.save.SetBounds(8, 258, 110, 25);
+            this.save.SetBounds(8, 288, 110, 25);
             this.save.Click += (s, e) => this.Save();
-            this.reload.SetBounds(124, 258, 110, 25);
+            this.reload.SetBounds(124, 288, 110, 25);
             this.reload.Click += (s, e) => this.RefreshValues();
-            this.status.SetBounds(240, 262, 366, 20);
+            this.status.SetBounds(240, 292, 366, 20);
             this.Controls.AddRange(new Control[] { this.save, this.reload, this.status });
         }
 
@@ -109,6 +111,7 @@ namespace A3_Trainer.View
             SetValue(this.overdraftRate, this.rates.Overdraft / 100m);
             SetValue(this.savings, this.rates.Savings / 100m);
             SetValue(this.loanRate, this.rates.Loan / 100m);
+            SetValue(this.depositRate, this.rates.Deposit / 100m);
             this.status.Text = "";
         }
 
@@ -124,6 +127,7 @@ namespace A3_Trainer.View
             newRates.Overdraft = Hundredths(this.overdraftRate);
             newRates.Savings = Hundredths(this.savings);
             newRates.Loan = Hundredths(this.loanRate);
+            newRates.Deposit = Hundredths(this.depositRate);
             try
             {
                 this.game.SaveFinances(this.shown, edited);

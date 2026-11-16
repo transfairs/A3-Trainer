@@ -1015,6 +1015,7 @@ namespace A3_Trainer.Controller
             Overdraft = this.ReadInt16(A3Addresses.OverdraftRate),
             Savings = this.ReadInt16(A3Addresses.SavingsRate),
             Loan = this.ReadInt16(A3Addresses.LoanRate),
+            Deposit = this.ReadInt16(A3Addresses.DepositRate),
         };
 
         /// <summary>Writes the interest rates that changed.</summary>
@@ -1024,6 +1025,7 @@ namespace A3_Trainer.Controller
             Write(A3Addresses.OverdraftRate, original.Overdraft, edited.Overdraft);
             Write(A3Addresses.SavingsRate, original.Savings, edited.Savings);
             Write(A3Addresses.LoanRate, original.Loan, edited.Loan);
+            Write(A3Addresses.DepositRate, original.Deposit, edited.Deposit);
 
             void Write(uint address, int was, int now)
             {
