@@ -48,7 +48,7 @@ namespace A3_Trainer.Controller
             (windowTitle != null && windowTitle.StartsWith("ANSTOSS 3")) ||
             string.Equals(processName, GameProcessName, StringComparison.OrdinalIgnoreCase);
 
-        // Process properties throw for processes that exit meanwhile or can't be queried.
+        /// <summary>The value <paramref name="get"/> reads, or null if it throws (a process that exited meanwhile or can't be queried).</summary>
         internal static string SafeGet(Func<string> get)
         {
             try

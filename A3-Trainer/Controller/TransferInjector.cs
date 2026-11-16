@@ -55,6 +55,7 @@ namespace A3_Trainer.Controller
         {
             /// <summary>The CALL rel32 of the day's transfer market that are redirected.</summary>
             internal uint[] MarketCallSites;
+            /// <summary>The game functions the stub calls: the transfer market and the player, club, contract and move helpers.</summary>
             internal uint Market, FetchPlayer, ReleasePlayer, FetchClub, ReleaseClub, BuildContract, Move;
         }
 
@@ -71,6 +72,7 @@ namespace A3_Trainer.Controller
             Move = TransferCode.Move,
         };
 
+        /// <summary>Marks the start of an installed stub, so a trainer started later finds it again.</summary>
         internal static readonly byte[] Signature = Encoding.ASCII.GetBytes("A3XFER01");
         internal const int FlagOffset = 0x08;
         internal const int OutcomeOffset = 0x0C;

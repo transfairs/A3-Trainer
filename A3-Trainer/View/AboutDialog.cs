@@ -101,7 +101,7 @@ namespace A3_Trainer.View
             this.Controls.Add(link);
         }
 
-        // A folder is created first: the log folder only exists once something was logged.
+        /// <summary>Opens a link target; a folder is created first, since the log folder only exists once something was logged.</summary>
         internal void OpenLink(string target)
         {
             if (string.IsNullOrEmpty(target))
