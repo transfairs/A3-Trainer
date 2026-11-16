@@ -86,6 +86,9 @@ namespace A3_Trainer.Tests
                 .Where(f => f.IsLiteral && f.FieldType == typeof(uint))
                 .Select(f => (uint)f.GetRawConstantValue())
                 .ToHashSet();
+            // The index of every investment partner, a dword each.
+            for (int partner = 0; partner < Tables.InvestmentPartners.Length; partner++)
+                known.Add(A3Addresses.InvestmentIndices + (uint)(partner * 4));
 
             List<string> addresses = Table.Descendants("Address").Select(a => a.Value).ToList();
             Assert.NotEmpty(addresses);

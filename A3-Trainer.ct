@@ -358,6 +358,41 @@ while memrec.Count &gt; 0 do memrec.Child[0].destroy() end
           <VariableType>2 Bytes</VariableType>
           <Address>anstoss3.exe+1799608</Address>
         </CheatEntry>
+        <CheatEntry>
+          <ID>12</ID>
+          <Description>"Beliebtheit bei den Medien (0-100)"</Description>
+          <ShowAsSigned>0</ShowAsSigned>
+          <VariableType>Byte</VariableType>
+          <Address>anstoss3.exe+1799622</Address>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>13</ID>
+          <Description>"Beliebtheit in der Öffentlichkeit (0-100)"</Description>
+          <ShowAsSigned>0</ShowAsSigned>
+          <VariableType>Byte</VariableType>
+          <Address>anstoss3.exe+1799623</Address>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>14</ID>
+          <Description>"Beliebtheit bei den Fans (0-100)"</Description>
+          <ShowAsSigned>0</ShowAsSigned>
+          <VariableType>Byte</VariableType>
+          <Address>anstoss3.exe+1799624</Address>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>15</ID>
+          <Description>"Nervenkostüm (0-100)"</Description>
+          <ShowAsSigned>0</ShowAsSigned>
+          <VariableType>2 Bytes</VariableType>
+          <Address>anstoss3.exe+179961A</Address>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>16</ID>
+          <Description>"Managerlevel (gespeichert, ohne Boni)"</Description>
+          <ShowAsSigned>0</ShowAsSigned>
+          <VariableType>Byte</VariableType>
+          <Address>anstoss3.exe+179960B</Address>
+        </CheatEntry>
       </CheatEntries>
     </CheatEntry>
     <CheatEntry>
@@ -387,6 +422,99 @@ while memrec.Count &gt; 0 do memrec.Child[0].destroy() end
           <ShowAsSigned>0</ShowAsSigned>
           <VariableType>2 Bytes</VariableType>
           <Address>anstoss3.exe+75CBCA</Address>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>17</ID>
+          <Description>"Entlassungen (1 = an, 0 = aus)"</Description>
+          <ShowAsSigned>0</ShowAsSigned>
+          <VariableType>Byte</VariableType>
+          <Address>anstoss3.exe+75D158</Address>
+        </CheatEntry>
+      </CheatEntries>
+    </CheatEntry>
+    <CheatEntry>
+      <ID>18</ID>
+      <Description>"Zinsen (alle Vereine, in 1/100 %)"</Description>
+      <Options>moAllowManualCollapseAndExpand</Options>
+      <GroupHeader>1</GroupHeader>
+      <CheatEntries>
+        <CheatEntry>
+          <ID>19</ID>
+          <Description>"Zinssatz"</Description>
+          <ShowAsSigned>1</ShowAsSigned>
+          <VariableType>2 Bytes</VariableType>
+          <Address>anstoss3.exe+75CC80</Address>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>20</ID>
+          <Description>"Guthabenzins"</Description>
+          <ShowAsSigned>1</ShowAsSigned>
+          <VariableType>2 Bytes</VariableType>
+          <Address>anstoss3.exe+75CC82</Address>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>21</ID>
+          <Description>"Dispozins"</Description>
+          <ShowAsSigned>1</ShowAsSigned>
+          <VariableType>2 Bytes</VariableType>
+          <Address>anstoss3.exe+75CC84</Address>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>22</ID>
+          <Description>"Kreditzins"</Description>
+          <ShowAsSigned>1</ShowAsSigned>
+          <VariableType>2 Bytes</VariableType>
+          <Address>anstoss3.exe+75CC86</Address>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>23</ID>
+          <Description>"Tagesgeldzins"</Description>
+          <ShowAsSigned>1</ShowAsSigned>
+          <VariableType>2 Bytes</VariableType>
+          <Address>anstoss3.exe+75CC8A</Address>
+        </CheatEntry>
+      </CheatEntries>
+    </CheatEntry>
+    <CheatEntry>
+      <ID>24</ID>
+      <Description>"Kursindex der Anlagepartner (alle Vereine, 1000 = Start)"</Description>
+      <Options>moAllowManualCollapseAndExpand</Options>
+      <GroupHeader>1</GroupHeader>
+      <CheatEntries>
+        <CheatEntry>
+          <ID>25</ID>
+          <Description>"Sorgenfrei &amp; Sohn (Tagesgeld)"</Description>
+          <ShowAsSigned>0</ShowAsSigned>
+          <VariableType>4 Bytes</VariableType>
+          <Address>anstoss3.exe+75CC8C</Address>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>26</ID>
+          <Description>"Kostol &amp; Any"</Description>
+          <ShowAsSigned>0</ShowAsSigned>
+          <VariableType>4 Bytes</VariableType>
+          <Address>anstoss3.exe+75CC90</Address>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>27</ID>
+          <Description>"Windig &amp; Schnellweg"</Description>
+          <ShowAsSigned>0</ShowAsSigned>
+          <VariableType>4 Bytes</VariableType>
+          <Address>anstoss3.exe+75CC94</Address>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>28</ID>
+          <Description>"Dipl.-Kfm. Sorglos"</Description>
+          <ShowAsSigned>0</ShowAsSigned>
+          <VariableType>4 Bytes</VariableType>
+          <Address>anstoss3.exe+75CC98</Address>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>29</ID>
+          <Description>"Mme Véronique"</Description>
+          <ShowAsSigned>0</ShowAsSigned>
+          <VariableType>4 Bytes</VariableType>
+          <Address>anstoss3.exe+75CC9C</Address>
         </CheatEntry>
       </CheatEntries>
     </CheatEntry>
