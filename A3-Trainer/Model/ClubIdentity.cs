@@ -9,6 +9,16 @@ namespace A3_Trainer.Model
         internal string FanName { get; set; }
         /// <summary>Index into <see cref="Tables.FanCrowds"/>.</summary>
         internal int FanCrowd { get; set; }
+        /// <summary>Index into <see cref="Tables.FanCrowds"/>: the best fan crowd the club can reach.</summary>
+        internal int MaxFanCrowd { get; set; }
+        /// <summary>Index into <see cref="Tables.Hooligans"/>.</summary>
+        internal int Hooligans { get; set; }
+        /// <summary>Index into <see cref="Tables.FinancialPowers"/>.</summary>
+        internal int FinancialPower { get; set; }
+        /// <summary>Whether the club's city is a media city.</summary>
+        internal bool MediaCity { get; set; }
+        /// <summary>Index into <see cref="Tables.Regions"/>.</summary>
+        internal int Region { get; set; }
         /// <summary>Index into <see cref="Tables.FanTypes"/>.</summary>
         internal int FanType { get; set; }
         /// <summary>Index into <see cref="Tables.Boards"/>.</summary>

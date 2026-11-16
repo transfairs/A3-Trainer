@@ -91,6 +91,15 @@ namespace A3_Trainer.Model
         /// <summary>A club's fan crowd (texts 1033-1039).</summary>
         internal static readonly string[] FanCrowds = { "wahre Horden", "sehr hoch", "hoch", "Durchschnitt", "bescheiden", "ärmlich", "Fans?" };
 
+        /// <summary>A club's financial power, as the game's club editor names it.</summary>
+        internal static readonly string[] FinancialPowers = { "minimal", "schlecht", "wenig", "solide", "gut", "reich", "gesegnet" };
+
+        /// <summary>A club's hooligans, as the game's club editor names them.</summary>
+        internal static readonly string[] Hooligans = { "nicht vorhanden", "wenige und feige", "ein paar – aber kräftige", "viele und schlimme" };
+
+        /// <summary>The region of a club, as the game's club editor names it.</summary>
+        internal static readonly string[] Regions = { "Nord", "Süd" };
+
         /// <summary>The kind of a club's fans (texts 3513-3520 via table 0x00880D8C).</summary>
         internal static readonly string[] FanTypes =
         {

@@ -77,8 +77,9 @@ on credit, and the base rate of new loans (shorter for longer terms in the game;
 **Club board** (tab `Präsidium`): president and opposition leader (first and last name, birthday; the game swaps
 both when the opposition takes over), founding date and the eternal table of the first division (games, points, goals,
 goals conceded).
-**Club identity** (`Verein → Eigener Verein`, tab `Identität`): fan name, number and kind of fans, board, fan
-friendship (kept mutual) and arch rival among the clubs of the same country.
+**Club identity** (`Verein → Eigener Verein`, tab `Identität`): fan name, number and kind of fans, the maximum
+fan crowd, hooligans, board, financial power, region (north/south), media city, fan friendship (kept mutual) and arch
+rival among the clubs of the same country.
 **Manager**: name, private wealth, board trust, popularity with the media, the public and the fans;
 contract: salary, bonuses per point, cup round and title/promotion, the bonus for reaching the season goal, years left, the
 exit clause on offers and the club's option to extend (written to the manager object and the data the game writes it back to).

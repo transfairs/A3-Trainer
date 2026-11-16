@@ -34,6 +34,8 @@ namespace A3_Trainer.Tests
             m.Put(Club(20) + A3Addresses.ClubOwnCountry, 15);
             m.Put(Club(1) + A3Addresses.ClubFanName, Encoding.ASCII.GetBytes("Bayern\0"));
             m.Put(Club(1) + A3Addresses.ClubFanCrowd, 3, 0);      // stale record
+            m.Put(Club(1) + A3Addresses.ClubFinancialPower, 5, 0, 2, 1);   // reich, max. wahre Horden, stale hooligans, media city
+            m.Put(Club(1) + A3Addresses.ClubPublic, 3, 0, 0, 0);           // AG and south
             m.Put(Club(2) + A3Addresses.ClubFriend, 1);
             m.Put(Club(3) + A3Addresses.ClubFriend, 10);
             m.Put(Club(10) + A3Addresses.ClubFriend, 3);
@@ -44,6 +46,7 @@ namespace A3_Trainer.Tests
             m.Map(Copy, 0x1390);
             m.Put(Copy + A3Addresses.ClubCopyFanCrowd, 0, 2);
             m.Put(Copy + A3Addresses.ClubCopyFriend, 2, 3, 2);
+            m.Put(Copy + A3Addresses.ClubCopyHooligans, 3, 1);
             return m;
         }
 
@@ -66,10 +69,17 @@ namespace A3_Trainer.Tests
             Assert.Equal(2, munich.Board);
             Assert.Equal(2, munich.Friend);
             Assert.Equal(3, munich.Rival);
+            Assert.Equal(5, munich.FinancialPower);
+            Assert.Equal(0, munich.MaxFanCrowd);
+            Assert.Equal(3, munich.Hooligans);
+            Assert.True(munich.MediaCity);
+            Assert.Equal(1, munich.Region);
 
             ClubIdentity hamburg = game.ReadIdentity(new ClubKey(14, 10));
             Assert.Equal(3, hamburg.Friend);
             Assert.Equal(-1, hamburg.Rival);
+            Assert.False(hamburg.MediaCity);
+            Assert.Equal(0, hamburg.Region);
             Assert.Null(game.ReadIdentity(new ClubKey(14, 5)));
         }
 
@@ -104,6 +114,8 @@ namespace A3_Trainer.Tests
             Assert.Equal("Münchner", game.ReadIdentity(new ClubKey(14, 1)).FanName);
             Assert.Null(m.WrittenAt(Club(1) + A3Addresses.ClubRival));
             Assert.Null(m.WrittenAt(Club(1) + A3Addresses.ClubFanCrowd));
+            Assert.Null(m.WrittenAt(Club(1) + A3Addresses.ClubPublic));
+            Assert.Null(m.WrittenAt(Club(1) + A3Addresses.ClubHooligans));
 
             // Ending it clears both sides.
             original = game.ReadIdentity(new ClubKey(14, 1));
@@ -112,6 +124,35 @@ namespace A3_Trainer.Tests
             game.SaveIdentity(original, edited);
             Assert.Equal(0xFF, m.Get(Club(1) + A3Addresses.ClubFriend));
             Assert.Equal(0xFF, m.Get(Club(3) + A3Addresses.ClubFriend));
+        }
+
+        [Fact]
+        public void SaveIdentity_WritesTheClubEditorValues()
+        {
+            FakeGameMemory m = WithIdentities();
+            var game = new A3Game(m);
+            ClubIdentity original = game.ReadIdentity(new ClubKey(14, 1));
+            ClubIdentity edited = original.Clone();
+            edited.FinancialPower = 1;
+            edited.MaxFanCrowd = 2;
+            edited.Hooligans = 0;
+            edited.MediaCity = false;
+            edited.Region = 0;
+
+            game.SaveIdentity(original, edited);
+
+            Assert.Equal(1, m.Get(Club(1) + A3Addresses.ClubFinancialPower));
+            Assert.Equal(2, m.Get(Club(1) + A3Addresses.ClubMaxFanCrowd));
+            Assert.Equal(0, m.Get(Club(1) + A3Addresses.ClubHooligans));
+            Assert.Equal(0, m.Get(Copy + A3Addresses.ClubCopyHooligans));
+            Assert.Equal(0, m.Get(Copy + A3Addresses.ClubCopyMediaCity));
+            Assert.Equal(1, m.Get(Club(1) + A3Addresses.ClubPublic));      // the AG stays
+
+            original = game.ReadIdentity(new ClubKey(14, 1));
+            edited = original.Clone();
+            edited.Region = 1;
+            game.SaveIdentity(original, edited);
+            Assert.Equal(3, m.Get(Club(1) + A3Addresses.ClubPublic));
         }
 
         [Fact]
@@ -130,10 +171,20 @@ namespace A3_Trainer.Tests
                 Assert.Equal(new[] { "–", "Fortuna Frankfurt", "Preußen Dortmund", "Hamburger FC" }, friend.Items.Cast<string>());
                 Assert.Equal("Fortuna Frankfurt", friend.Text);
                 Assert.Equal("Preußen Dortmund", rival.Text);
+                Assert.Equal("reich", TestHelpers.Get<ComboBox>(view, "financialPower").Text);
+                Assert.Equal("viele und schlimme", TestHelpers.Get<ComboBox>(view, "hooligans").Text);
+                Assert.Equal("wahre Horden", TestHelpers.Get<ComboBox>(view, "maxFanCrowd").Text);
+                Assert.Equal("Süd", TestHelpers.Get<ComboBox>(view, "region").Text);
+                Assert.True(TestHelpers.Get<CheckBox>(view, "mediaCity").Checked);
 
                 rival.SelectedIndex = 3;
                 TestHelpers.Get<ComboBox>(view, "board").SelectedIndex = 5;
                 TestHelpers.Get<TextBox>(view, "fanName").Text = " ";
+                TestHelpers.Get<ComboBox>(view, "maxFanCrowd").SelectedIndex = 3;   // below the current crowd
+                TestHelpers.Get<ComboBox>(view, "financialPower").SelectedIndex = 6;
+                TestHelpers.Get<ComboBox>(view, "hooligans").SelectedIndex = 1;
+                TestHelpers.Get<ComboBox>(view, "region").SelectedIndex = 0;
+                TestHelpers.Get<CheckBox>(view, "mediaCity").Checked = false;
                 TestHelpers.Click(TestHelpers.Get<Button>(view, "save"));
 
                 Assert.Equal("Gespeichert", TestHelpers.Get<Label>(view, "status").Text);
@@ -141,6 +192,13 @@ namespace A3_Trainer.Tests
                 Assert.Equal(5, m.Get(Club(1) + A3Addresses.ClubBoard));
                 Assert.Equal("Bayern", TestHelpers.Get<TextBox>(view, "fanName").Text);   // an emptied name stays
                 Assert.Null(m.WrittenAt(Copy + A3Addresses.ClubCopyFriend));   // friendship untouched
+                Assert.Equal(3, m.Get(Club(1) + A3Addresses.ClubMaxFanCrowd));
+                Assert.Equal(3, m.Get(Copy + A3Addresses.ClubCopyFanCrowd));      // lowered to the maximum
+                Assert.Equal(6, m.Get(Club(1) + A3Addresses.ClubFinancialPower));
+                Assert.Equal(1, m.Get(Copy + A3Addresses.ClubCopyHooligans));
+                Assert.Equal(0, m.Get(Copy + A3Addresses.ClubCopyMediaCity));
+                Assert.Equal(1, m.Get(Club(1) + A3Addresses.ClubPublic));
+                Assert.Equal("Durchschnitt", TestHelpers.Get<ComboBox>(view, "fanCrowd").Text);
             }
         });
 

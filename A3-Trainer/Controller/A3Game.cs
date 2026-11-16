@@ -748,6 +748,11 @@ namespace A3_Trainer.Controller
                 FanName = this.ReadString(club.Value + A3Addresses.ClubFanName, A3Addresses.ClubFanNameSize),
                 FanCrowd = Value(A3Addresses.ClubFanCrowd, A3Addresses.ClubCopyFanCrowd),
                 FanType = Value(A3Addresses.ClubFanType, A3Addresses.ClubCopyFanType),
+                MaxFanCrowd = this.ReadByte(club.Value + A3Addresses.ClubMaxFanCrowd),
+                Hooligans = Value(A3Addresses.ClubHooligans, A3Addresses.ClubCopyHooligans),
+                FinancialPower = this.ReadByte(club.Value + A3Addresses.ClubFinancialPower),
+                MediaCity = Value(A3Addresses.ClubMediaCity, A3Addresses.ClubCopyMediaCity) != 0,
+                Region = (this.ReadUInt32(club.Value + A3Addresses.ClubPublic) & A3Addresses.ClubRegionSouth) != 0 ? 1 : 0,
                 Board = Value(A3Addresses.ClubBoard, A3Addresses.ClubCopyBoard),
                 Friend = (sbyte)Value(A3Addresses.ClubFriend, A3Addresses.ClubCopyFriend),
                 Rival = (sbyte)Value(A3Addresses.ClubRival, A3Addresses.ClubCopyRival),
@@ -767,6 +772,21 @@ namespace A3_Trainer.Controller
             this.WriteClubField(edited.Key, A3Addresses.ClubFanType, A3Addresses.ClubCopyFanType, original.FanType, edited.FanType);
             this.WriteClubField(edited.Key, A3Addresses.ClubBoard, A3Addresses.ClubCopyBoard, original.Board, edited.Board);
             this.WriteClubField(edited.Key, A3Addresses.ClubRival, A3Addresses.ClubCopyRival, original.Rival, edited.Rival);
+            this.WriteClubField(edited.Key, A3Addresses.ClubHooligans, A3Addresses.ClubCopyHooligans, original.Hooligans, edited.Hooligans);
+            this.WriteClubField(edited.Key, A3Addresses.ClubMediaCity, A3Addresses.ClubCopyMediaCity,
+                original.MediaCity ? 1 : 0, edited.MediaCity ? 1 : 0);
+            // Only in the record: the working copy has no place for these.
+            if (edited.MaxFanCrowd != original.MaxFanCrowd)
+                this.memory.Write(club + A3Addresses.ClubMaxFanCrowd, new[] { (byte)edited.MaxFanCrowd });
+            if (edited.FinancialPower != original.FinancialPower)
+                this.memory.Write(club + A3Addresses.ClubFinancialPower, new[] { (byte)edited.FinancialPower });
+            if (edited.Region != original.Region)
+            {
+                uint flags = this.ReadUInt32(club + A3Addresses.ClubPublic) & ~(uint)A3Addresses.ClubRegionSouth;
+                if (edited.Region == 1)
+                    flags |= A3Addresses.ClubRegionSouth;
+                this.memory.Write(club + A3Addresses.ClubPublic, BitConverter.GetBytes(flags));
+            }
             if (edited.Friend == original.Friend)
                 return;
 

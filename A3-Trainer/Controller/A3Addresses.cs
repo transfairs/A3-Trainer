@@ -73,6 +73,11 @@ namespace A3_Trainer.Controller
         internal const int ClubRival = 0x122;      // signed byte, number in the own country of the arch rival, -1 = none
         internal const int ClubBoard = 0x123;      // byte, Tables.Boards; club actions move it by one (FUN_005F4C42)
         internal const int ClubOwnCountry = 0x12D; // byte, the club's country
+        internal const int ClubFinancialPower = 0x875; // byte, Tables.FinancialPowers; base of the club's spending (FUN_0069D1E4)
+        internal const int ClubMaxFanCrowd = 0x876;    // byte, Tables.FanCrowds; the fan crowd never gets better than this
+        internal const int ClubHooligans = 0x877;      // byte, Tables.Hooligans
+        internal const int ClubMediaCity = 0x878;      // byte, 1 = the club's city is a media city (more trouble with the press)
+        internal const int ClubRegionSouth = 2;        // bit of ClubPublic: the club belongs to the south (editor "Nord/Süd")
         // Eternal table of the first division (dwords; database import FUN_0068D411, order as the statistics use it).
         internal const int ClubEternalGoals = 0x87C;
         internal const int ClubEternalConceded = 0x880;
@@ -99,6 +104,8 @@ namespace A3_Trainer.Controller
         internal const int ClubCopyFriend = 0xF3;
         internal const int ClubCopyRival = 0xF4;
         internal const int ClubCopyBoard = 0xF5;
+        internal const int ClubCopyHooligans = 0xF0;
+        internal const int ClubCopyMediaCity = 0xF1;
         internal const int ClubCopyNumber = 0x103;   // byte, number in the country
         internal const int ClubCopyCountry = 0x104;  // byte
         // Finances: 250 dwords from the record's +0x488, the copy's +0x210 (FUN_0063C908); the first is the wealth at
@@ -153,7 +160,7 @@ namespace A3_Trainer.Controller
         internal const int StockHistory = 0x38;
         internal const int StockWeeks = 52;
         internal const int ClubAmateurs = 0x873;   // record: number in the country of the club's amateur team, 255 = none
-        internal const int ClubPublic = 0x924;     // record: bit 0 = the club is an AG (database import FUN_0068D411)
+        internal const int ClubPublic = 0x924;     // record: bit 0 = the club is an AG, bit 1 = south (database import FUN_0068D411)
 
         // The transfer list (object; FUN_00758B34 adds a player, FUN_007589BD/FUN_00758A1F copy it for the save game): the
         // number of entries, then up to 400 entries {word player, byte country, byte, word club, byte position, byte
