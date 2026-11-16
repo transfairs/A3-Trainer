@@ -11,6 +11,8 @@ namespace A3_Trainer.Model
         internal int LoanCount { get; set; }
         /// <summary>DM owed for the running loans.</summary>
         internal long LoanTotal { get; set; }
+        /// <summary>Whether the club is an AG (a stock company with shares on the market).</summary>
+        internal bool IsPublic { get; set; }
 
         /// <summary>A copy to edit.</summary>
         internal ClubFinances Clone() => (ClubFinances)this.MemberwiseClone();

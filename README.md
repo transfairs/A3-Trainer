@@ -75,6 +75,9 @@ loans, which can be forgiven: they end and their sum moves to the wealth at the 
 balance stays and only the debt is gone. The interest rates every club pays or gets: beyond the overdraft, within it,
 on credit, the base rate of new loans (shorter for longer terms in the game; a loan keeps the rates it was taken with)
 and the overnight deposit rate of the investments. The game sets new rates every season.
+The tab also shows the club's legal form and floats a club on the stock market ("Zur AG machen") with the given
+shares and issue price, as the game's own flotation does (without booking its proceeds); the game moves the price
+from the next week on.
 **Club investments** (tab `Anlagen`): the running investments with amount paid in, value and gain. A value can be
 set (the game books the gain when the investment is sold), a new investment made like in the game's investment
 dialog, and the index of every investment partner set (it moves the value of every club's investments with that

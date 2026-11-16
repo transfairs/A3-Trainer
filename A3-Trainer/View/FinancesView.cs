@@ -22,6 +22,10 @@ namespace A3_Trainer.View
         };
         private readonly Label loans = new Label();
         private readonly Button forgive = new Button { Text = "Kredite erlassen" };
+        private readonly Label legalForm = new Label();
+        private readonly NumericUpDown shares = new NumericUpDown { Minimum = 1, Maximum = int.MaxValue, Value = 1000000, ThousandsSeparator = true, Increment = 100000 };
+        private readonly NumericUpDown price = new NumericUpDown { Minimum = 1, Maximum = 100000, Value = 100, DecimalPlaces = 2 };
+        private readonly Button flotation = new Button { Text = "Zur AG machen" };
         private readonly NumericUpDown interest = Rate();
         private readonly NumericUpDown overdraftRate = Rate();
         private readonly NumericUpDown savings = Rate();
@@ -58,20 +62,29 @@ namespace A3_Trainer.View
                 input.SetBounds(210, y, 100, 21);
                 group.Controls.Add(input);
                 if (note != null)
-                    group.Controls.Add(new Label { Text = note, Bounds = new Rectangle(318, y + 3, 270, 18) });
+                    group.Controls.Add(new Label { Text = note, Bounds = new Rectangle(318, y + 3, 270, 18), UseMnemonic = false });
                 y += 30;
             }
 
-            var account = new GroupBox { Text = "Konto", Bounds = new Rectangle(8, 6, 598, 92) };
+            var account = new GroupBox { Text = "Konto", Bounds = new Rectangle(8, 6, 598, 152) };
             Row(account, "Dispokredit (Mio DM)", this.overdraft, "auf der Bilanz in Klammern");
             account.Controls.Add(new Label { Text = "Kredite", Bounds = new Rectangle(12, y + 3, 190, 18) });
             this.loans.SetBounds(210, y + 3, 230, 18);
             this.forgive.SetBounds(446, y - 2, 140, 25);
             this.forgive.Click += (s, e) => this.Forgive();
-            account.Controls.AddRange(new Control[] { this.loans, this.forgive });
+            y += 30;
+            account.Controls.Add(new Label { Text = "Rechtsform", Bounds = new Rectangle(12, y + 3, 190, 18) });
+            this.legalForm.SetBounds(210, y + 3, 230, 18);
+            y += 30;
+            account.Controls.Add(new Label { Text = "Aktien / Ausgabekurs (DM)", Bounds = new Rectangle(12, y + 3, 190, 18) });
+            this.shares.SetBounds(210, y, 100, 21);
+            this.price.SetBounds(318, y, 80, 21);
+            this.flotation.SetBounds(446, y - 2, 140, 25);
+            this.flotation.Click += (s, e) => this.Float();
+            account.Controls.AddRange(new Control[] { this.loans, this.forgive, this.legalForm, this.shares, this.price, this.flotation });
             this.Controls.Add(account);
 
-            var interestRates = new GroupBox { Text = "Zinsen (für alle Vereine, in %)", Bounds = new Rectangle(8, 104, 598, 176) };
+            var interestRates = new GroupBox { Text = "Zinsen (für alle Vereine, in %)", Bounds = new Rectangle(8, 164, 598, 176) };
             y = 22;
             Row(interestRates, "Zinssatz", this.interest, "über den Dispokredit hinaus");
             Row(interestRates, "Dispozins", this.overdraftRate, "innerhalb des Dispokredits (Bilanz: Dispokredit)");
@@ -80,11 +93,11 @@ namespace A3_Trainer.View
             Row(interestRates, "Tagesgeldzins", this.depositRate, "für Tagesgeld bei Sorgenfrei & Sohn (Anlagen)");
             this.Controls.Add(interestRates);
 
-            this.save.SetBounds(8, 288, 110, 25);
+            this.save.SetBounds(8, 348, 110, 25);
             this.save.Click += (s, e) => this.Save();
-            this.reload.SetBounds(124, 288, 110, 25);
+            this.reload.SetBounds(124, 348, 110, 25);
             this.reload.Click += (s, e) => this.RefreshValues();
-            this.status.SetBounds(240, 292, 366, 20);
+            this.status.SetBounds(240, 352, 366, 20);
             this.Controls.AddRange(new Control[] { this.save, this.reload, this.status });
         }
 
@@ -92,11 +105,11 @@ namespace A3_Trainer.View
         internal void RefreshValues()
         {
             this.shown = this.IsGameRunning(silent: true) ? this.game.ReadFinances(this.Club) : null;
-            this.save.Enabled = this.forgive.Enabled = this.shown != null;
+            this.save.Enabled = this.forgive.Enabled = this.flotation.Enabled = this.shown != null;
             if (this.shown == null)
             {
                 this.ClearAllFields(this);
-                this.loans.Text = "";
+                this.loans.Text = this.legalForm.Text = "";
                 this.status.Text = "Kein Verein gefunden";
                 return;
             }
@@ -107,6 +120,8 @@ namespace A3_Trainer.View
                 ? "keine"
                 : string.Format(CultureInfo.GetCultureInfo("de-DE"), "{0} über {1:N0} DM", this.shown.LoanCount, this.shown.LoanTotal);
             this.forgive.Enabled = this.shown.LoanCount > 0;
+            this.legalForm.Text = this.shown.IsPublic ? "Aktiengesellschaft" : "Verein";
+            this.flotation.Enabled = this.shares.Enabled = this.price.Enabled = !this.shown.IsPublic;
             SetValue(this.interest, this.rates.Interest / 100m);
             SetValue(this.overdraftRate, this.rates.Overdraft / 100m);
             SetValue(this.savings, this.rates.Savings / 100m);
@@ -158,6 +173,24 @@ namespace A3_Trainer.View
             {
                 Logger.Error("Kredite konnten nicht erlassen werden", ex);
                 this.status.Text = "Fehler beim Erlassen";
+            }
+        }
+
+        private void Float()
+        {
+            if (this.shown == null || this.shown.IsPublic || !this.IsGameRunning())
+                return;
+            try
+            {
+                bool done = this.game.MakePublic(this.Club, (int)this.shares.Value, (float)this.price.Value);
+                Logger.Debug($"Börsengang {(done ? "erfolgt" : "nicht möglich")} ({this.Club})");
+                this.RefreshValues();
+                this.status.Text = done ? "Der Verein ist jetzt eine AG" : "Kein Platz mehr im Aktienmarkt";
+            }
+            catch (Exception ex)
+            {
+                Logger.Error("Börsengang fehlgeschlagen", ex);
+                this.status.Text = "Fehler beim Börsengang";
             }
         }
 

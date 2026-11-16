@@ -184,5 +184,104 @@ namespace A3_Trainer.Tests
                 Assert.Equal("Fehler beim Erlassen", Field<Label>(view, "status").Text);
             }
         });
+
+        private static uint Stock(int index) => A3Addresses.StockMarket + A3Addresses.StockEntries + (uint)(index * A3Addresses.StockSize);
+
+        // The market holds Leverkusen's stock and room for more; Hamburg is already an AG.
+        private static FakeGameMemory WithMarket()
+        {
+            FakeGameMemory m = WithFinances();
+            m.Map(A3Addresses.StockMarket, A3Addresses.StockEntries + 10 * A3Addresses.StockSize);
+            m.PutUInt32(A3Addresses.StockMarket + A3Addresses.StockCount, 1);
+            m.Put(Stock(0) + A3Addresses.StockCountry, BitConverter.GetBytes((short)14));
+            m.Put(Stock(0) + A3Addresses.StockClub, BitConverter.GetBytes((short)4));
+            m.PutUInt32(Munich + A3Addresses.ClubPublic, 2);    // south, no AG
+            m.PutUInt32(Hamburg + A3Addresses.ClubPublic, 1);
+            return m;
+        }
+
+        [Fact]
+        public void MakePublic_ListsTheStock_AndMarksTheClub()
+        {
+            FakeGameMemory m = WithMarket();
+            var game = new A3Game(m);
+            Assert.False(game.ReadFinances(new ClubKey(14, 1)).IsPublic);
+            Assert.True(game.ReadFinances(new ClubKey(14, 10)).IsPublic);
+
+            Assert.True(game.MakePublic(new ClubKey(14, 1), 2000000, 150.5f));
+
+            Assert.Equal(2u, m.ReadUInt32(A3Addresses.StockMarket + A3Addresses.StockCount));
+            Assert.Equal(3u, m.ReadUInt32(Munich + A3Addresses.ClubPublic));
+            Assert.True(game.ReadFinances(new ClubKey(14, 1)).IsPublic);
+            StockQuote stock = game.ReadStocks()[1];
+            Assert.Equal("1.FV München", stock.Name);
+            Assert.Equal(new ClubKey(14, 1), stock.Club);
+            Assert.Equal(2000000, stock.Shares);
+            Assert.Equal(150.5f, stock.Price);
+            byte[] entry = m.Read(Stock(1), A3Addresses.StockSize);
+            Assert.Equal(A3Addresses.StockNewWeek, BitConverter.ToInt16(entry, A3Addresses.StockWeek));
+            Assert.Equal(A3Addresses.StockNewOnOffer, BitConverter.ToInt32(entry, A3Addresses.StockOnOffer));
+            Assert.Equal(150.5f, BitConverter.ToSingle(entry, A3Addresses.StockMax));
+            Assert.Equal(150.5f, BitConverter.ToSingle(entry, A3Addresses.StockMin));
+            Assert.Equal(150.5f, BitConverter.ToSingle(entry, A3Addresses.StockHistory));
+
+            // Already an AG, no club: nothing happens.
+            int writes = m.Writes.Count;
+            Assert.False(game.MakePublic(new ClubKey(14, 1), 1, 1));
+            Assert.False(game.MakePublic(new ClubKey(14, 10), 1, 1));
+            Assert.False(game.MakePublic(new ClubKey(14, 50), 1, 1));
+            Assert.Equal(writes, m.Writes.Count);
+        }
+
+        [Fact]
+        public void MakePublic_WithAListedStock_OnlyMarksTheClub_AndStopsAtAFullMarket()
+        {
+            FakeGameMemory m = WithMarket();
+            m.Put(Stock(0) + A3Addresses.StockClub, BitConverter.GetBytes((short)1));    // the market already lists München
+            var game = new A3Game(m);
+            Assert.True(game.MakePublic(new ClubKey(14, 1), 1000, 10));
+            Assert.Equal(1u, m.ReadUInt32(A3Addresses.StockMarket + A3Addresses.StockCount));
+            Assert.Equal(3u, m.ReadUInt32(Munich + A3Addresses.ClubPublic));
+
+            m = WithMarket();
+            m.PutUInt32(A3Addresses.StockMarket + A3Addresses.StockCount, A3Addresses.StockLimit);
+            Assert.False(new A3Game(m).MakePublic(new ClubKey(14, 1), 1000, 10));
+            Assert.Equal(2u, m.ReadUInt32(Munich + A3Addresses.ClubPublic));
+        }
+
+        [Fact]
+        public void FinancesView_MakesTheClubAnAG() => StaThread.Run(() =>
+        {
+            FakeGameMemory m = WithMarket();
+            using (var view = new FinancesView(Attached(), new A3Game(m)) { Club = new ClubKey(14, 1) })
+            {
+                view.RefreshValues();
+                Assert.Equal("Verein", Field<Label>(view, "legalForm").Text);
+                Assert.True(Field<Button>(view, "flotation").Enabled);
+                Field<NumericUpDown>(view, "shares").Value = 500000;
+                Field<NumericUpDown>(view, "price").Value = 80;
+                TestHelpers.Click(Field<Button>(view, "flotation"));
+
+                Assert.Equal("Der Verein ist jetzt eine AG", Field<Label>(view, "status").Text);
+                Assert.Equal("Aktiengesellschaft", Field<Label>(view, "legalForm").Text);
+                Assert.False(Field<Button>(view, "flotation").Enabled);
+                Assert.Equal(500000u, m.ReadUInt32(Stock(1) + A3Addresses.StockShares));
+            }
+
+            m = WithMarket();
+            m.PutUInt32(A3Addresses.StockMarket + A3Addresses.StockCount, A3Addresses.StockLimit);
+            using (var view = new FinancesView(Attached(), new A3Game(m)) { Club = new ClubKey(14, 1) })
+            {
+                view.RefreshValues();
+                TestHelpers.Click(Field<Button>(view, "flotation"));
+                Assert.Equal("Kein Platz mehr im Aktienmarkt", Field<Label>(view, "status").Text);
+
+                TestHelpers.Set(view, "game", new A3Game(new ReadOnlyGameMemory(WithMarket())));
+                TestHelpers.Click(Field<Button>(view, "flotation"));
+                Assert.Equal("Fehler beim Börsengang", Field<Label>(view, "status").Text);
+            }
+            using (var view = new FinancesView(new ProcessMemory(), new A3Game(m)) { Club = new ClubKey(14, 1) })
+                TestHelpers.Invoke(view, "Float");
+        });
     }
 }

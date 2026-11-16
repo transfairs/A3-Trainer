@@ -856,6 +856,7 @@ namespace A3_Trainer.Controller
             {
                 Key = key,
                 Overdraft = this.ReadUInt16(finances + A3Addresses.ClubOverdraft) * A3Addresses.OverdraftUnit,
+                IsPublic = (this.ReadUInt32(blocks[blocks.Count - 1] + A3Addresses.ClubPublic) & 1) != 0,
             };
             foreach (long loan in this.RunningLoans(finances))
             {
@@ -1109,6 +1110,45 @@ namespace A3_Trainer.Controller
                 });
             }
             return stocks;
+        }
+
+        /// <summary>
+        /// Makes a club an AG, as the game's flotation on the balance page does: its stock joins the market with the given
+        /// shares and price (the game moves the price every week from then on) and the club's record is marked. The
+        /// flotation's proceeds aren't booked. Returns false if the club is no club, already an AG or the market is full.
+        /// </summary>
+        internal bool MakePublic(ClubKey key, int shares, float price)
+        {
+            uint? club = this.ClubAddress(key);
+            if (!club.HasValue)
+                return false;
+            uint flags = this.ReadUInt32(club.Value + A3Addresses.ClubPublic);
+            if ((flags & 1) != 0)
+                return false;
+            List<StockQuote> stocks = this.ReadStocks();
+            if (!stocks.Any(s => s.Club.Equals(key)))
+            {
+                int count = (int)this.ReadUInt32(A3Addresses.StockMarket + A3Addresses.StockCount);
+                if (count <= 0 || count >= A3Addresses.StockLimit)
+                    return false;
+                var entry = new byte[A3Addresses.StockSize];
+                byte[] name = Text.GetBytes(this.ClubName(key));
+                Array.Copy(name, entry, Math.Min(name.Length, A3Addresses.StockNameSize - 1));
+                BitConverter.GetBytes((short)key.Country).CopyTo(entry, A3Addresses.StockCountry);
+                BitConverter.GetBytes((short)key.Number).CopyTo(entry, A3Addresses.StockClub);
+                BitConverter.GetBytes(shares).CopyTo(entry, A3Addresses.StockShares);
+                BitConverter.GetBytes((short)A3Addresses.StockNewWeek).CopyTo(entry, A3Addresses.StockWeek);
+                BitConverter.GetBytes(Math.Min(shares, A3Addresses.StockNewOnOffer)).CopyTo(entry, A3Addresses.StockOnOffer);
+                BitConverter.GetBytes(price).CopyTo(entry, A3Addresses.StockMax);
+                BitConverter.GetBytes(price).CopyTo(entry, A3Addresses.StockMin);
+                // A flat history: the market's chart and trend start from the flotation price.
+                for (int week = 0; week < A3Addresses.StockWeeks; week++)
+                    BitConverter.GetBytes(price).CopyTo(entry, A3Addresses.StockHistory + week * 4);
+                this.memory.Write(A3Addresses.StockMarket + A3Addresses.StockEntries + (uint)(count * A3Addresses.StockSize), entry);
+                this.memory.Write(A3Addresses.StockMarket + A3Addresses.StockCount, BitConverter.GetBytes(count + 1));
+            }
+            this.memory.Write(club.Value + A3Addresses.ClubPublic, BitConverter.GetBytes(flags | 1));
+            return true;
         }
 
         /// <summary>Sets the current week's price of a stock.</summary>

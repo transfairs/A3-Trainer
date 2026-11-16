@@ -176,6 +176,15 @@ namespace A3_Trainer.Controller
         internal const int StockWeek = 0x24;
         internal const int StockHistory = 0x38;
         internal const int StockWeeks = 52;
+        internal const int StockOnOffer = 0x28;
+        internal const int StockMax = 0x30;
+        internal const int StockMin = 0x34;
+        // A new club stock as the game's flotation (balance page, FUN_00406201 -> FUN_00404DCD): week index 0x33 minus the
+        // first weekly step, shares on offer like the game's weekly step gives a club. Room after the 197 stocks of a
+        // new career is zero up to the depots; the trainer stops well before.
+        internal const int StockNewWeek = 0x32;
+        internal const int StockNewOnOffer = 2100;
+        internal const int StockLimit = 250;
         internal const int ClubAmateurs = 0x873;   // record: number in the country of the club's amateur team, 255 = none
         internal const int ClubPublic = 0x924;     // record: bit 0 = the club is an AG, bit 1 = south (database import FUN_0068D411)
 
