@@ -16,6 +16,7 @@ Trainer for **Anstoss 3**. Edits players, club and manager.
 - **Anstoss 3 version 1.40**. The exes on the CD (1.0 and the official patch 1.10) are separate
   builds with a different memory layout; the trainer reports them as unsupported.
 - A loaded save game (career). In the game's main menu the trainer waits.
+- Windows, or Linux with Wine/Proton (start the trainer in the same Wine prefix as the game).
 
 To get the game running on Windows 10/11 at all:
 
@@ -64,7 +65,7 @@ makes the move at the next daily processing with its own transfer function (squa
 at the new club, news); loans aren't supported yet.
 
 **Club** (`Verein → Eigener Verein` for the selected manager's club, `Verein → Anderer Verein` or the country and club
-choice in the tab row for any other club; all tabs follow the club picked): name, short name and city, wealth at the start of the season (determines the bank balance), season income from the advertising boards and the outfitter, club image,
+choice above the tabs for any other club; all tabs follow the club picked): name, short name and city, wealth at the start of the season (determines the bank balance), season income from the advertising boards and the outfitter, club image,
 trouble with the association (standing from "ausgezeichnet" to "verzockt").
 **Stadium** (`Verein → Eigener Verein`, tab `Stadion`): name and city, VIP places, seats and standing places, heaters, roof, running track
 and condition per tribune, scoreboard and comfort (undersoil heating, heated seats, retractable pitch, seat cushions,
@@ -108,6 +109,8 @@ whose turn it is; with two or more, the `Trainer` menu lists them to look at ano
 **Game mechanics** (`Spielmechaniken`, only while trainer and game run; nothing of it goes into a save game):
 `Interviews: Wirkung der Antworten zeigen` appends each interview answer's effects to its text in the game, e.g.
 " [Fans -5, Vorstand -2]" (public, media, fans, board, reporter, team, a player).
+
+**Navigation**: the arrows at the left of the menu (or Alt+← / Alt+→) go back and forward through the pages shown.
 
 **Help** (`? → Hilfe`): the online help, built into the trainer from the same page, so both say the same;
 `? → Über` shows version, links and the log folder.

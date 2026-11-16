@@ -76,7 +76,7 @@
 
           <div class="callout tip">
             <strong class="label">Automatische Verbindung</strong>
-            Der Trainer verbindet sich von selbst mit dem Spiel, egal ob er vor oder nach <em>Anstoss 3</em> gestartet wird. Startet das Spiel neu oder laden Sie einen anderen Spielstand, aktualisiert er sich automatisch. Im Hauptmenü des Spiels wartet er, bis eine Karriere geladen ist.
+            Der Trainer verbindet sich von selbst mit dem Spiel, egal ob er vor oder nach <em>Anstoss 3</em> gestartet wird. Startet das Spiel neu oder laden Sie einen anderen Spielstand, aktualisiert er sich automatisch. Im Hauptmenü des Spiels wartet er, bis eine Karriere geladen ist. Unter Linux funktioniert das auch mit Wine oder Proton, wenn Trainer und Spiel im selben Wine-Präfix laufen.
           </div>
 
           <fieldset class="groupbox">
@@ -87,8 +87,8 @@
                 <figcaption>Eigener Kader: Spielerliste links, Details mit Registerkarten rechts</figcaption>
               </figure>
               <figure>
-                <img class="screenshot" src="img/club.png" alt="Verein und Manager">
-                <figcaption>Verein und Manager: Vermögen des Vereins und des Managers</figcaption>
+                <img class="screenshot" src="img/club.png" alt="Verein: Vereinsauswahl über den Reitern Verein, Identität, Stadion, Finanzen, Anlagen und Präsidium">
+                <figcaption>Verein: Auswahl des Vereins über den Reitern, darunter seine Daten</figcaption>
               </figure>
             </div>
             <p>Die beiden Pfeile ganz links im Menü (oder <kbd>Alt</kbd>+<kbd>←</kbd> / <kbd>Alt</kbd>+<kbd>→</kbd>) springen zu den zuletzt gezeigten Seiten zurück und wieder vor. Diese Hilfe steckt auch im Trainer: <span class="menu-path">? → Hilfe</span>.</p>
@@ -199,8 +199,8 @@
           <fieldset class="groupbox">
             <legend>Registerkarte „Eig. 2“</legend>
             <dl class="field-list">
-              <dt>Publikum</dt><dd>normal, Liebling oder Haßfigur, so wie die Spielerinfo es zeigt. Das Spiel bewertet das nach jedem Spiel neu: Spielt ein Liebling dauerhaft schlecht, kann er es wieder verlieren.</dd>
               <dt>Gesundheitszustand</dt><dd>normal, robust (seltener verletzt), anfällig (häufiger verletzt), Knieprobleme, schnell wieder fit, dauert bis wieder fit oder wehleidig (will nach Fouls ausgewechselt werden).</dd>
+              <dt>Publikum</dt><dd>normal, Liebling oder Haßfigur, so wie die Spielerinfo es zeigt. Das Spiel bewertet das nach jedem Spiel neu: Spielt ein Liebling dauerhaft schlecht, kann er es wieder verlieren.</dd>
             </dl>
           </fieldset>
         </div>
@@ -241,8 +241,8 @@
               <dt>Beziehung</dt><dd>keine, Freundin, verlobt oder verheiratet. Davon hängen Ereignisse wie Heirat oder Kinder ab.</dd>
               <dt>Stand</dt><dd>zusammen, getrennt, geschieden, auseinander oder Scheidung; die Spielerinfo zeigt ihn neben der Partnerin.</dd>
               <dt>Partnerin</dt><dd>Der Vorname aus der Namensliste, aus der das Spiel Partnerin und Kinder dieses Spielers benennt.</dd>
-              <dt>Kinder</dt><dd>Anzahl 0 bis 5, darunter je Kind Name (aus derselben Liste) und Geburtstag. Ein neu hinzugefügtes Kind bekommt einen freien Namen und das heutige Datum. Wie im Spiel tragen Geschwister verschiedene Namen; ein Geburtstag, den es nicht gibt, wird nicht gespeichert.</dd>
               <dt>Hobby</dt><dd>Eines der 39 Hobbys des Spiels oder keins. Manche Hobbys lösen eigene Ereignisse aus.</dd>
+              <dt>Kinder</dt><dd>Anzahl 0 bis 5, darunter je Kind Name (aus derselben Liste) und Geburtstag. Ein neu hinzugefügtes Kind bekommt einen freien Namen und das heutige Datum. Wie im Spiel tragen Geschwister verschiedene Namen; ein Geburtstag, den es nicht gibt, wird nicht gespeichert.</dd>
             </dl>
           </fieldset>
         </div>
@@ -324,7 +324,7 @@
               <dt>Liste</dt><dd>Die laufenden Geldanlagen des Vereins mit eingezahltem Betrag, aktuellem Wert und Gewinn. Solange eine Anlage läuft, zählt ihr Wert nicht zum Bankguthaben; erst wenn Sie sie im Spiel auflösen (Bilanz → Anlagen), kommt der Wert samt Gewinn aufs Konto.</dd>
               <dt>Wert setzen</dt><dd>Eine Anlage in der Liste wählen, den neuen Wert als Betrag eintragen und „Wert setzen“ drücken. Beim Auflösen im Spiel gibt es diesen Wert.</dd>
               <dt>Neu anlegen</dt><dd>Ohne gewählte Anlage: Anlagepartner und Betrag wählen und „Neu anlegen“ drücken, wie im Anlagendialog des Spiels. Ein Verein hat höchstens sechs Anlagen.</dd>
-              <dt>Kursindex (für alle Vereine)</dt><dd>Der aktuelle Kurs jedes Anlagepartners, am Anfang 1000. Der Wert einer Anlage wächst und fällt im gleichen Verhältnis wie der Index seit dem Kauf. Ein höherer Index macht also alle Anlagen bei diesem Partner mehr wert, auch die anderer Vereine.</dd>
+              <dt>Kursindex (für alle Vereine)</dt><dd>Der aktuelle Kurs jedes Anlagepartners, am Anfang 1000. Der Wert einer Anlage wächst und fällt im gleichen Verhältnis wie der Index seit dem Kauf. Ein höherer Index macht also alle Anlagen bei diesem Partner mehr wert, auch die anderer Vereine. Neue Werte eintragen und „Indizes setzen“ drücken.</dd>
             </dl>
           </fieldset>
           <fieldset class="groupbox">
@@ -345,9 +345,9 @@
             </dl>
           </fieldset>
           <fieldset class="groupbox">
-            <legend>Vertrag des Managers</legend>
+            <legend>Vertrag (<span class="menu-path">Trainer → Manager</span>, Reiter „Manager“)</legend>
             <dl class="field-list">
-              <dt>Festgehalt (DM pro Jahr)</dt><dd>Das Gehalt des Managers. Das Spiel ändert es selbst nur bei Vertragsverhandlungen.</dd>
+              <dt>Festgehalt (DM/Jahr)</dt><dd>Das Gehalt des Managers. Das Spiel ändert es selbst nur bei Vertragsverhandlungen.</dd>
               <dt>Punktprämie, je Pokalrunde, je Titel / Aufstieg</dt><dd>Die Prämien in DM, wie sie die Karriere-Übersicht des Spiels zeigt.</dd>
               <dt>Bonus bei Erreichen (DM)</dt><dd>Den Bonus zahlt das Spiel am Saisonende aufs Privatvermögen, wenn der Verein sein Saisonziel erreicht. Das Saisonziel selbst ist noch nicht bearbeitbar.</dd>
               <dt>Laufzeit (Jahre)</dt><dd>Restliche Spielzeiten. Das Spiel zählt sie zum Saisonwechsel herunter; bei weniger als zwei Jahren verhandelt der Vorstand neu.</dd>
@@ -368,7 +368,7 @@
           <fieldset class="groupbox">
             <legend>Karriere (<span class="menu-path">Trainer → Manager</span>, Reiter „Karriere“)</legend>
             <dl class="field-list">
-              <dt>Titel und Ehrungen</dt><dd>Meisterschaften, Pokalsiege, Finalteilnahmen, Liga-/Supercupsiege, Europapokale mit ihren Finalteilnahmen, Europa- und Weltmeisterschaften, Trainer des Monats und Manager des Jahres, wie unter „Persönliche Erfolge → Trainererfolge“.</dd>
+              <dt>Titel und Ehrungen</dt><dd>Meisterschaften, Pokalsiege, Finalteilnahmen, Liga-/Supercupsiege, Meisterpokal- und Europapokalsiege mit ihren Finalteilnahmen, Europäische Supercups, Weltpokale, Europa- und Weltmeisterschaften, Trainer des Monats und Manager des Jahres, wie unter „Persönliche Erfolge → Trainererfolge“.</dd>
               <dt>Laufbahn</dt><dd>Managerjahre, wie oft der Manager entlassen wurde und wie oft er selbst gegangen ist; die Zahl der Stationen wird nur angezeigt.</dd>
               <dt>Spiele als Trainer</dt><dd>Spiele und Siege in Liga, Pokal, Europapokal und Länderspielen. Daraus rechnet das Spiel „Spiele gewonnen“. Mehr Siege als Spiele werden nicht gespeichert.</dd>
             </dl>
@@ -389,7 +389,7 @@
         <div class="subpanel active" data-sub="only">
           <fieldset class="groupbox">
             <legend>Interviews: Wirkung der Antworten zeigen</legend>
-            <p>Bei jedem Interview steht hinter jeder Antwort, was sie bewirkt, zum Beispiel „[Fans -5, Vorstand -2]“. Gemeint sind Ihre Beliebtheit in der Öffentlichkeit, bei den Medien und den Fans, das Vertrauen des Vorstands, die Laune des Reporters, die Stimmung in der Mannschaft und die Meinung eines Spielers über Sie. Antworten ohne Angabe ändern nichts davon.</p>
+            <p>Einschalten über <span class="menu-path">Spielmechaniken → Interviews: Wirkung der Antworten zeigen</span>. Dann steht bei jedem Interview hinter jeder Antwort, was sie bewirkt, zum Beispiel „[Fans -5, Vorstand -2]“. Gemeint sind Ihre Beliebtheit in der Öffentlichkeit, bei den Medien und den Fans, das Vertrauen des Vorstands, die Laune des Reporters, die Stimmung in der Mannschaft und die Meinung eines Spielers über Sie. Antworten ohne Angabe ändern nichts davon.</p>
           </fieldset>
         </div>
       </section>
