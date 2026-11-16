@@ -40,9 +40,9 @@ namespace A3_Trainer
 
         private enum Page { Squad, Opponent, Amateurs, Other, Club, OtherClub, Manager }
         private Page page = Page.Squad;
-        // The club choice in the tab row of the club page.
-        private readonly ComboBox clubCountryBox = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 110 };
-        private readonly ComboBox clubClubBox = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 140 };
+        // The club choice above the tabs of the club page.
+        private readonly ComboBox clubCountryBox = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList };
+        private readonly ComboBox clubClubBox = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList };
         private readonly ClubPicker clubPicker;
         // The club last picked in the club selection of the player or the club page.
         private ClubKey? otherClub;
@@ -104,7 +104,7 @@ namespace A3_Trainer
             this.clubPicker = new ClubPicker(this.clubCountryBox, this.clubClubBox);
             this.clubPicker.Picked += this.OnClubPagePicked;
             this.clubPages = new PagesView().Add("Verein", this.clubView).Add("Identität", this.identityView).Add("Stadion", this.stadiumView).Add("Finanzen", this.financesView).Add("Anlagen", this.investmentsView).Add("Präsidium", this.boardView)
-                .AddHeader(368, this.clubCountryBox, this.clubClubBox);
+                .AddClubChoice(this.clubPicker);
             this.managerView = new ManagerView(this.memory, this.game);
             this.personView = new PersonView(this.memory, this.game);
             this.stocksView = new StocksView(this.memory, this.game);

@@ -66,7 +66,7 @@ namespace A3_Trainer.View
                 y += 30;
             }
 
-            var account = new GroupBox { Text = "Konto", Bounds = new Rectangle(8, 6, 598, 152) };
+            var account = new GroupBox { Text = "Konto", Bounds = new Rectangle(8, 6, 598, 142) };
             Row(account, "Dispokredit (Mio DM)", this.overdraft, "auf der Bilanz in Klammern");
             account.Controls.Add(new Label { Text = "Kredite", Bounds = new Rectangle(12, y + 3, 190, 18) });
             this.loans.SetBounds(210, y + 3, 230, 18);
@@ -84,7 +84,7 @@ namespace A3_Trainer.View
             account.Controls.AddRange(new Control[] { this.loans, this.forgive, this.legalForm, this.shares, this.price, this.flotation });
             this.Controls.Add(account);
 
-            var interestRates = new GroupBox { Text = "Zinsen (für alle Vereine, in %)", Bounds = new Rectangle(8, 164, 598, 176) };
+            var interestRates = new GroupBox { Text = "Zinsen (für alle Vereine, in %)", Bounds = new Rectangle(8, 154, 598, 172) };
             y = 22;
             Row(interestRates, "Zinssatz", this.interest, "über den Dispokredit hinaus");
             Row(interestRates, "Dispozins", this.overdraftRate, "innerhalb des Dispokredits (Bilanz: Dispokredit)");
@@ -93,11 +93,11 @@ namespace A3_Trainer.View
             Row(interestRates, "Tagesgeldzins", this.depositRate, "für Tagesgeld bei Sorgenfrei & Sohn (Anlagen)");
             this.Controls.Add(interestRates);
 
-            this.save.SetBounds(8, 348, 110, 25);
+            this.save.SetBounds(8, 332, 110, 25);
             this.save.Click += (s, e) => this.Save();
-            this.reload.SetBounds(124, 348, 110, 25);
+            this.reload.SetBounds(124, 332, 110, 25);
             this.reload.Click += (s, e) => this.RefreshValues();
-            this.status.SetBounds(240, 352, 366, 20);
+            this.status.SetBounds(240, 336, 366, 20);
             this.Controls.AddRange(new Control[] { this.save, this.reload, this.status });
         }
 

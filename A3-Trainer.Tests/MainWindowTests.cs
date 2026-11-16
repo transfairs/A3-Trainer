@@ -4,6 +4,7 @@ using AnstossTrainer.Shared;
 using AnstossTrainer.Shared.Tests;
 using System;
 using System.Diagnostics;
+using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
 using Xunit;
@@ -307,6 +308,40 @@ namespace A3_Trainer.Tests
 
                 window.StartProcess = url => throw new InvalidOperationException("kein Browser");
                 TestHelpers.ExpectDialog("Hilfe", () => TestHelpers.Click(MenuItem(window, "?", "Onlinehilfe")));
+            }
+        });
+
+        [Fact]
+        public void Layout_ClubChoiceSitsAboveTheTabsLikeOnTheSquadPage_ViewsFitTheirTabs_SquadListNeedsNoHorizontalScrolling() => StaThread.Run(() =>
+        {
+            using (MainWindow window = Window(ClubSelectionTests.Clubs()))
+            {
+                TestHelpers.Click(MenuItem(window, "Verein", "Anderer Verein"));
+                window.CreateControl();
+                foreach (string name in new[] { "clubPages", "managerPages" })
+                {
+                    TabControl tabs = TestHelpers.Get<TabControl>(TestHelpers.Get<PagesView>(window, name), "tabs");
+                    tabs.CreateControl();
+                    foreach (TabPage page in tabs.TabPages)
+                    {
+                        // Every control of the view lies inside its tab page.
+                        Control view = page.Controls[0];
+                        Assert.All(view.Controls.Cast<Control>(), c => Assert.True(c.Bottom <= tabs.DisplayRectangle.Height && c.Right <= tabs.DisplayRectangle.Width, page.Text + ": " + c.Text));
+                    }
+                }
+
+                // Same place and size on the club and the squad page, the tabs below.
+                PlayerView squad = TestHelpers.Get<PlayerView>(window, "playerView");
+                TabControl clubTabs = TestHelpers.Get<TabControl>(TestHelpers.Get<PagesView>(window, "clubPages"), "tabs");
+                Assert.Equal(TestHelpers.Get<ComboBox>(squad, "countryBox").Bounds, TestHelpers.Get<ComboBox>(window, "clubCountryBox").Bounds);
+                Assert.Equal(TestHelpers.Get<ComboBox>(squad, "clubBox").Bounds, TestHelpers.Get<ComboBox>(window, "clubClubBox").Bounds);
+                Assert.True(TestHelpers.Get<ComboBox>(window, "clubClubBox").Bottom < clubTabs.Top);
+                Assert.Equal(TestHelpers.Get<ListView>(squad, "list").Top, clubTabs.Top);
+
+                ListView list = TestHelpers.Get<ListView>(TestHelpers.Get<PlayerView>(window, "playerView"), "list");
+                int columns = list.Columns.Cast<ColumnHeader>().Sum(c => c.Width);
+                Assert.True(columns + SystemInformation.VerticalScrollBarWidth <= list.ClientSize.Width,
+                    $"{columns} + scroll bar > {list.ClientSize.Width}");
             }
         });
     }

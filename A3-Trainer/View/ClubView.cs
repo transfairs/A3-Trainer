@@ -49,15 +49,15 @@ namespace A3_Trainer.View
             int y = 22;
             void ClubRow(string caption, Control input)
             {
-                club.Controls.Add(new Label { Text = caption, Bounds = new Rectangle(12, y + 3, 170, 18) });
-                input.SetBounds(190, y, 160, 21);
+                club.Controls.Add(new Label { Text = caption, Bounds = new Rectangle(12, y + 3, 186, 18) });
+                input.SetBounds(200, y, 160, 21);
                 club.Controls.Add(input);
                 y += 32;
             }
             // A value with the level the game shows for it next to it.
             void Rated(string caption, NumericUpDown input, Label level, Func<int, string> name)
             {
-                level.SetBounds(360, y + 3, 230, 18);
+                level.SetBounds(370, y + 3, 220, 18);
                 club.Controls.Add(level);
                 input.ValueChanged += (s, e) => level.Text = name((int)input.Value);
                 ClubRow(caption, input);

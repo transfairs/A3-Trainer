@@ -19,19 +19,11 @@ namespace A3_Trainer.View
             A3Theme.Apply(this);
         }
 
-        /// <summary>
-        /// Puts <paramref name="controls"/> (e.g. a club choice) in the tab row, right of the tabs,
-        /// from <paramref name="x"/> on.
-        /// </summary>
-        internal PagesView AddHeader(int x, params Control[] controls)
+        /// <summary>Puts the club choice of <paramref name="picker"/> in a row above the tabs.</summary>
+        internal PagesView AddClubChoice(ClubPicker picker)
         {
-            foreach (Control control in controls)
-            {
-                control.Location = new Point(x, 2);
-                x += control.Width + 4;
-                this.Controls.Add(control);
-                control.BringToFront();
-            }
+            this.tabs.SetBounds(4, 4 + ClubPicker.RowHeight, 622, 415 - ClubPicker.RowHeight);
+            picker.PlaceIn(this);
             A3Theme.Apply(this);
             return this;
         }
@@ -40,8 +32,7 @@ namespace A3_Trainer.View
         internal PagesView Add(string title, UserControl view)
         {
             var page = new TabPage(title);
-            view.Location = Point.Empty;
-            view.Size = new Size(614, 389);
+            view.Dock = DockStyle.Fill;
             page.Controls.Add(view);
             this.tabs.TabPages.Add(page);
             A3Theme.Apply(page);

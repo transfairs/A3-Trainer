@@ -158,19 +158,18 @@ namespace A3_Trainer.View
 
         private void BuildLayout()
         {
-            this.countryBox.SetBounds(4, 4, 96, 21);
-            this.clubBox.SetBounds(104, 4, 136, 21);
-            this.Controls.AddRange(new Control[] { this.countryBox, this.clubBox });
+            this.picker.PlaceIn(this);
 
-            this.list.SetBounds(4, 30, 236, 389);
+            this.list.SetBounds(4, 4 + ClubPicker.RowHeight, 236, 389);
             this.list.View = System.Windows.Forms.View.Details;
             this.list.FullRowSelect = true;
             this.list.HideSelection = false;
             this.list.MultiSelect = false;
             this.list.Columns.Add("Pos", 34);
-            this.list.Columns.Add("Spieler", 108);
-            this.list.Columns.Add("Stärke", 44);
-            this.list.Columns.Add("Alter", 38);
+            // Narrow enough for the vertical scroll bar, so no horizontal one appears.
+            this.list.Columns.Add("Spieler", 101);
+            this.list.Columns.Add("Stärke", 42);
+            this.list.Columns.Add("Alter", 36);
             this.list.SelectedIndexChanged += (s, e) => this.ShowPlayer(this.SelectedPlayer());
             this.Controls.Add(this.list);
 

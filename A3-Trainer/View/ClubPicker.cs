@@ -31,6 +31,20 @@ namespace A3_Trainer.View
             this.clubBox.SelectedIndexChanged += (s, e) => this.ClubPicked();
         }
 
+        /// <summary>Height of the row the choice takes at the top of a page, gap below included.</summary>
+        internal const int RowHeight = 26;
+
+        /// <summary>
+        /// Puts both combo boxes at the top left of <paramref name="page"/>, at the same place on
+        /// every page that offers the club choice.
+        /// </summary>
+        internal void PlaceIn(Control page)
+        {
+            this.countryBox.SetBounds(4, 4, 96, 21);
+            this.clubBox.SetBounds(104, 4, 136, 21);
+            page.Controls.AddRange(new Control[] { this.countryBox, this.clubBox });
+        }
+
         /// <summary>The clubs offered, in the game's club order.</summary>
         internal List<ClubKey> Clubs { get; private set; } = new List<ClubKey>();
 

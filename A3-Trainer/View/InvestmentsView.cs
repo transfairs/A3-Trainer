@@ -49,7 +49,7 @@ namespace A3_Trainer.View
 
         private void BuildLayout()
         {
-            this.list.SetBounds(8, 8, 598, 130);
+            this.list.SetBounds(8, 8, 598, 122);
             this.list.View = System.Windows.Forms.View.Details;
             this.list.FullRowSelect = true;
             this.list.HideSelection = false;
@@ -61,7 +61,7 @@ namespace A3_Trainer.View
             this.list.SelectedIndexChanged += (s, e) => this.ShowSelected();
             this.Controls.Add(this.list);
 
-            var investment = new GroupBox { Text = "Anlage", Bounds = new Rectangle(8, 144, 598, 86) };
+            var investment = new GroupBox { Text = "Anlage", Bounds = new Rectangle(8, 136, 598, 86) };
             investment.Controls.Add(new Label { Text = "Anlagepartner", Bounds = new Rectangle(12, 25, 110, 18) });
             this.partner.SetBounds(126, 22, 220, 21);
             investment.Controls.Add(new Label { Text = "Betrag (DM)", Bounds = new Rectangle(12, 55, 110, 18) });
@@ -73,7 +73,7 @@ namespace A3_Trainer.View
             investment.Controls.AddRange(new Control[] { this.partner, this.amount, this.setValue, this.add });
             this.Controls.Add(investment);
 
-            var indexBox = new GroupBox { Text = "Kursindex der Anlagepartner (für alle Vereine)", Bounds = new Rectangle(8, 236, 598, 98) };
+            var indexBox = new GroupBox { Text = "Kursindex der Anlagepartner (für alle Vereine)", Bounds = new Rectangle(8, 228, 598, 98) };
             for (int i = 0; i < this.indices.Length; i++)
             {
                 int x = 12 + i * 116;
@@ -85,11 +85,11 @@ namespace A3_Trainer.View
             }
             this.Controls.Add(indexBox);
 
-            this.saveIndices.SetBounds(8, 342, 110, 25);
+            this.saveIndices.SetBounds(8, 332, 110, 25);
             this.saveIndices.Click += (s, e) => this.SaveIndices();
-            this.reload.SetBounds(124, 342, 110, 25);
+            this.reload.SetBounds(124, 332, 110, 25);
             this.reload.Click += (s, e) => this.RefreshValues();
-            this.status.SetBounds(240, 346, 366, 20);
+            this.status.SetBounds(240, 336, 366, 20);
             this.Controls.AddRange(new Control[] { this.saveIndices, this.reload, this.status });
         }
 

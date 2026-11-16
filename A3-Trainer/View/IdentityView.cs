@@ -59,7 +59,7 @@ namespace A3_Trainer.View
 
         private void BuildLayout()
         {
-            var fans = new GroupBox { Text = "Fans", Bounds = new Rectangle(8, 6, 598, 160) };
+            var fans = new GroupBox { Text = "Fans", Bounds = new Rectangle(8, 6, 598, 156) };
             int y = 22;
             void Row(GroupBox group, string caption, Control input, int width)
             {
@@ -75,7 +75,7 @@ namespace A3_Trainer.View
             Row(fans, "Hooligans", this.hooligans, 160);
             this.Controls.Add(fans);
 
-            var club = new GroupBox { Text = "Verein", Bounds = new Rectangle(8, 172, 598, 160) };
+            var club = new GroupBox { Text = "Verein", Bounds = new Rectangle(8, 168, 598, 156) };
             y = 22;
             Row(club, "Vorstand", this.board, 160);
             Row(club, "Finanzkraft", this.financialPower, 160);
@@ -86,11 +86,11 @@ namespace A3_Trainer.View
             Row(club, "Region", this.region, 160);
             this.Controls.Add(club);
 
-            this.save.SetBounds(8, 340, 110, 25);
+            this.save.SetBounds(8, 332, 110, 25);
             this.save.Click += (s, e) => this.Save();
-            this.reload.SetBounds(124, 340, 110, 25);
+            this.reload.SetBounds(124, 332, 110, 25);
             this.reload.Click += (s, e) => this.RefreshValues();
-            this.status.SetBounds(240, 344, 366, 20);
+            this.status.SetBounds(240, 336, 366, 20);
             this.Controls.AddRange(new Control[] { this.save, this.reload, this.status });
         }
 
