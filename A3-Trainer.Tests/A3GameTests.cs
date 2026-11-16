@@ -393,5 +393,12 @@ namespace A3_Trainer.Tests
             Assert.Equal("", game.ReadName(0));
             Assert.Equal("", game.ReadName(A3Addresses.NameTableSlots));
         }
+
+        [Fact]
+        public void NameIndex_RefusesAPoolWhoseTextsCantBeRead()
+        {
+            var game = new A3Game(new HoleGameMemory(WithNamePool(Career()), A3Addresses.NamePool + A3Addresses.NamePoolData));
+            Assert.Equal("Namenstabelle nicht lesbar", Assert.Throws<InvalidOperationException>(() => game.NameIndex("Huhn")).Message);
+        }
     }
 }

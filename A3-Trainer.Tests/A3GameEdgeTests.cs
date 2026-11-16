@@ -250,5 +250,13 @@ namespace A3_Trainer.Tests
 
             Assert.Equal(field + 2 * (uint)A3Addresses.ManagerStride, new A3Game(m).ManagerField(3, field));
         }
+
+        [Fact]
+        public void ActiveManager_IsTheFirstOne_WhenTheLoadedClubIsNoManagersClub()
+        {
+            FakeGameMemory m = HotSeat();
+            m.Put(A3Addresses.ClubCache, 1, 14, 2);
+            Assert.Equal(1, new A3Game(m).ActiveManager());
+        }
     }
 }

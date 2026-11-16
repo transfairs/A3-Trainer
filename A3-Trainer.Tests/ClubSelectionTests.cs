@@ -293,5 +293,19 @@ namespace A3_Trainer.Tests
                 Assert.False(TestHelpers.Get<CheckBox>(view, "freezeCondition").Checked);
             }
         });
+
+        [Fact]
+        public void SetForAll_AsksForTheGame_WhenItIsGone() => StaThread.Run(() =>
+        {
+            FakeGameMemory m = Clubs();
+            using (PlayerView view = View(m))
+            {
+                view.ShowClub(new ClubKey(14, 1));
+                m.Writes.Clear();
+                TestHelpers.Get<ProcessMemory>(view, "memory").mProc.Process = null;
+                TestHelpers.ExpectDialog("Error", () => TestHelpers.Click(TestHelpers.Get<Button>(view, "teamApply")));
+                Assert.Empty(m.Writes);
+            }
+        });
     }
 }

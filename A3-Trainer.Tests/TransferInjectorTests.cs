@@ -37,6 +37,9 @@ namespace A3_Trainer.Tests
 
             internal bool Refuse { get; set; }
 
+            /// <summary>Allocations work, but writing over the game's code fails.</summary>
+            internal bool RefuseWrites { get; set; }
+
             public uint? AllocateExecutable(int size)
             {
                 if (this.Refuse)
@@ -49,7 +52,7 @@ namespace A3_Trainer.Tests
 
             public bool WriteCode(uint address, byte[] data)
             {
-                if (this.Refuse)
+                if (this.Refuse || this.RefuseWrites)
                     return false;
                 this.memory.Put(address, data);
                 return true;
@@ -297,6 +300,16 @@ namespace A3_Trainer.Tests
             byte[] stub = TransferInjector.BuildStub(0x10000000, TransferInjector.Game);
             Assert.Equal(TransferInjector.StubSize, stub.Length);
             Assert.Equal(TransferInjector.Signature, stub.Take(TransferInjector.Signature.Length));
+        }
+
+        [Fact]
+        public void EnsureInstalled_FailsWhenACallCantBeRedirected()
+        {
+            var m = new FakeGameMemory();
+            var injector = new TransferInjector(m, new FakeCode(m) { RefuseWrites = true });
+
+            Assert.Null(injector.EnsureInstalled());
+            Assert.Equal(TransferCode.Market, CallTarget(m, TransferCode.MarketCallSites[0]));
         }
     }
 }

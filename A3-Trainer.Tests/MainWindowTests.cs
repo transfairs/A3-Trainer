@@ -344,5 +344,37 @@ namespace A3_Trainer.Tests
                     $"{columns} + scroll bar > {list.ClientSize.Width}");
             }
         });
+
+        [Fact]
+        public void History_AltLeftGoesBack_OtherKeysPassOn() => StaThread.Run(() =>
+        {
+            using (MainWindow window = Window(WithOpponent()))
+            {
+                window.OnGameAttached();
+                TestHelpers.Click(MenuItem(window, "?", "Hilfe"));
+                Message msg = default(Message);
+
+                Assert.True((bool)TestHelpers.Invoke(window, "ProcessCmdKey", msg, Keys.Alt | Keys.Left));
+                Assert.Equal("A3-Trainer :: Eigener Kader: 1.FV München", window.Text);
+                Assert.False((bool)TestHelpers.Invoke(window, "ProcessCmdKey", msg, Keys.F12));
+            }
+        });
+
+        [Fact]
+        public void Mechanics_AFailedInterviewTick_IsLogged_AndTheEffectsStayOn() => StaThread.Run(() =>
+        {
+            FakeGameMemory m = InterviewEffectsTests.WithInterview(out _);
+            using (MainWindow window = Window(m))
+            {
+                var effects = new InterviewEffects(m, new TransferInjectorTests.FakeCode(m));
+                effects.SetEnabled(true);
+                TestHelpers.Set(effects, "memory", new BrokenGameMemory());
+                TestHelpers.Set(window, "interviewEffects", effects);
+
+                TestHelpers.Invoke(window, "TickMechanics");
+
+                Assert.True(effects.Enabled);
+            }
+        });
     }
 }

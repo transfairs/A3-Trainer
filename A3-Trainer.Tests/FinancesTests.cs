@@ -283,5 +283,17 @@ namespace A3_Trainer.Tests
             using (var view = new FinancesView(new ProcessMemory(), new A3Game(m)) { Club = new ClubKey(14, 1) })
                 TestHelpers.Invoke(view, "Float");
         });
+
+        [Fact]
+        public void UnreadableLoans_CountAsNone_AndOnlyTheReadableOnesEnd()
+        {
+            FakeGameMemory m = WithFinances();
+            var game = new A3Game(new HoleGameMemory(m, CopyFinances + A3Addresses.ClubLoans));
+
+            Assert.Equal(0, game.ReadFinances(new ClubKey(14, 1)).LoanCount);
+            Assert.Equal(0, game.ForgiveLoans(new ClubKey(14, 1)));
+            Assert.Null(m.WrittenAt(Loan(CopyFinances, 0)));
+            Assert.Equal(new byte[8], m.WrittenAt(Loan(Munich, 0)));
+        }
     }
 }

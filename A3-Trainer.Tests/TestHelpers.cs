@@ -108,4 +108,21 @@ namespace A3_Trainer.Tests
 
         public void Write(uint address, byte[] data) => throw new InvalidOperationException("schreibgeschützt");
     }
+
+    /// <summary>Like the wrapped memory, except that reads starting at one of the given addresses fail.</summary>
+    internal sealed class HoleGameMemory : IGameMemory
+    {
+        private readonly IGameMemory inner;
+        private readonly uint[] holes;
+
+        internal HoleGameMemory(IGameMemory inner, params uint[] holes)
+        {
+            this.inner = inner;
+            this.holes = holes;
+        }
+
+        public byte[] Read(uint address, int length) => Array.IndexOf(this.holes, address) >= 0 ? null : this.inner.Read(address, length);
+
+        public void Write(uint address, byte[] data) => this.inner.Write(address, data);
+    }
 }

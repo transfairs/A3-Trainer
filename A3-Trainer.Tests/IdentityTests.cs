@@ -228,5 +228,36 @@ namespace A3_Trainer.Tests
                 Assert.False(TestHelpers.Get<Button>(view, "save").Enabled);
             }
         });
+
+        [Fact]
+        public void SaveIdentity_AFriendWithoutIdentity_OnlyChangesTheOwnSide()
+        {
+            FakeGameMemory m = WithIdentities();
+            m.Put(Club(3) + A3Addresses.ClubFriend, 0xFF);
+            var game = new A3Game(m);
+            ClubIdentity original = game.ReadIdentity(new ClubKey(14, 3));
+            Assert.Equal(-1, original.Friend);
+            ClubIdentity edited = original.Clone();
+            edited.Friend = 5;    // no club record
+
+            game.SaveIdentity(original, edited);
+
+            Assert.Equal(5, m.Get(Club(3) + A3Addresses.ClubFriend));
+            Assert.Null(m.WrittenAt(Club(10) + A3Addresses.ClubFriend));
+        }
+
+        [Fact]
+        public void View_Save_AsksForTheGame_WhenItIsGone() => StaThread.Run(() =>
+        {
+            FakeGameMemory m = WithIdentities();
+            ProcessMemory memory = Attached();
+            using (var view = new IdentityView(memory, new A3Game(m)) { Club = new ClubKey(14, 1) })
+            {
+                view.RefreshValues();
+                memory.mProc.Process = null;
+                TestHelpers.ExpectDialog("Error", () => TestHelpers.Click(TestHelpers.Get<Button>(view, "save")));
+                Assert.Empty(m.Writes);
+            }
+        });
     }
 }

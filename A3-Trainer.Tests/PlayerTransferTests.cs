@@ -123,5 +123,25 @@ namespace A3_Trainer.Tests
                 Assert.Equal("Wechsel nicht verfügbar", Status(view));
             }
         });
+
+        [Fact]
+        public void TransferTab_TargetClubStartsAtTheFirst_AndRequestingAsksForTheGame() => StaThread.Run(() =>
+        {
+            FakeGameMemory m = ClubSelectionTests.Clubs();
+            var transfers = new TransferInjector(m, new TransferInjectorTests.FakeCode(m));
+            using (PlayerView view = View(m, transfers))
+            {
+                Select(view, 1041);
+                ComboBox club = TestHelpers.Get<ComboBox>(view, "transferClub");
+                club.SelectedIndex = -1;
+                Select(view, 1039);
+                Assert.Equal(0, club.SelectedIndex);
+
+                club.SelectedIndex = 1;
+                TestHelpers.Get<ProcessMemory>(view, "memory").mProc.Process = null;
+                TestHelpers.ExpectDialog("Error", () => TestHelpers.Click(TestHelpers.Get<Button>(view, "transferRequest")));
+                Assert.Null(transfers.PendingPlayer());
+            }
+        });
     }
 }

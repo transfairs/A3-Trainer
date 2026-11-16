@@ -181,5 +181,27 @@ namespace A3_Trainer.Tests
                 Assert.True(new A3Game(m).ReadDismissals());
             }
         });
+
+        [Fact]
+        public void View_WithoutAPerson_ChangingTheLevelDoesNothing_AndSavingAsksForTheGame() => StaThread.Run(() =>
+        {
+            FakeGameMemory m = WithPerson();
+            using (var view = new PersonView(new ProcessMemory(), new A3Game(m)))
+            {
+                view.RefreshValues();
+                NumericUpDown level = TestHelpers.Get<NumericUpDown>(view, "level");
+                level.Value = level.Value == level.Maximum ? level.Minimum : level.Maximum;
+                Assert.Empty(m.Writes);
+            }
+
+            ProcessMemory memory = Attached();
+            using (var view = new PersonView(memory, new A3Game(m)))
+            {
+                view.RefreshValues();
+                memory.mProc.Process = null;
+                TestHelpers.ExpectDialog("Error", () => TestHelpers.Click(TestHelpers.Get<Button>(view, "save")));
+                Assert.Empty(m.Writes);
+            }
+        });
     }
 }

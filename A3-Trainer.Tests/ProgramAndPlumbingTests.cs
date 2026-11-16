@@ -169,5 +169,69 @@ namespace A3_Trainer.Tests
 
         private static void Draw(string handler, object sender, EventArgs args) =>
             typeof(A3Theme).GetMethod(handler, BindingFlags.Static | BindingFlags.NonPublic).Invoke(null, new[] { sender, args });
+
+        [Fact]
+        public void Views_NameTheGame_InTheNotFoundMessage() => StaThread.Run(() =>
+        {
+            var memory = new ProcessMemory();
+            var game = new A3Game(new FakeGameMemory());
+            PropertyInfo name = typeof(TrainerView).GetProperty("GameDisplayName", BindingFlags.Instance | BindingFlags.NonPublic);
+            foreach (TrainerView view in new TrainerView[]
+            {
+                new BoardView(memory, game), new CareerView(memory, game), new FinancesView(memory, game), new IdentityView(memory, game),
+                new InvestmentsView(memory, game), new PersonView(memory, game), new StadiumView(memory, game), new StocksView(memory, game),
+            })
+            {
+                using (view)
+                    Assert.Equal("Anstoss-3", name.GetValue(view));
+            }
+        });
+
+        [Fact]
+        public void Logger_WritesInfoAndErrors_RotatesABigLog_AndDropsEntriesItCantWrite()
+        {
+            FieldInfo directoryField = typeof(Logger).GetField("LogDirectory", BindingFlags.Static | BindingFlags.NonPublic);
+            FieldInfo fileField = typeof(Logger).GetField("LogFilePath", BindingFlags.Static | BindingFlags.NonPublic);
+            object directoryBefore = directoryField.GetValue(null);
+            object fileBefore = fileField.GetValue(null);
+            string debugBefore = Environment.GetEnvironmentVariable("A3TRAINER_DEBUG");
+            string directory = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "A3-Trainer-Tests-" + Guid.NewGuid().ToString("N"));
+            string file = System.IO.Path.Combine(directory, "trainer.log");
+            try
+            {
+                directoryField.SetValue(null, directory);
+                fileField.SetValue(null, file);
+                Environment.SetEnvironmentVariable("A3TRAINER_DEBUG", "1");
+
+                Logger.Info("Info-Eintrag");
+                Logger.Error("Fehler-Eintrag");
+                string text = System.IO.File.ReadAllText(file);
+                Assert.Contains("[Info] Info-Eintrag", text);
+                Assert.Contains("[Error] Fehler-Eintrag", text);
+
+                System.IO.File.WriteAllText(file + ".old", "alt");
+                System.IO.File.WriteAllBytes(file, new byte[2 * 1024 * 1024]);
+                Logger.Warn("Nach dem Wechsel");
+                Assert.Equal(2 * 1024 * 1024, new System.IO.FileInfo(file + ".old").Length);
+                Assert.Contains("Nach dem Wechsel", System.IO.File.ReadAllText(file));
+
+                using (new System.IO.FileStream(file, System.IO.FileMode.Open, System.IO.FileAccess.Read, System.IO.FileShare.None))
+                    Logger.Error("Geht verloren");
+                Assert.DoesNotContain("Geht verloren", System.IO.File.ReadAllText(file));
+            }
+            finally
+            {
+                directoryField.SetValue(null, directoryBefore);
+                fileField.SetValue(null, fileBefore);
+                Environment.SetEnvironmentVariable("A3TRAINER_DEBUG", debugBefore);
+                try
+                {
+                    System.IO.Directory.Delete(directory, true);
+                }
+                catch (System.IO.IOException)
+                {
+                }
+            }
+        }
     }
 }

@@ -211,5 +211,12 @@ namespace A3_Trainer.Tests
                 TestHelpers.Invoke(view, "SaveIndices");
             }
         });
+
+        [Fact]
+        public void UnreadableInvestments_AreNone()
+        {
+            var game = new A3Game(new HoleGameMemory(WithInvestments(), CopyFinances + A3Addresses.ClubInvestments));
+            Assert.Empty(game.ReadInvestments(new ClubKey(14, 1)));
+        }
     }
 }

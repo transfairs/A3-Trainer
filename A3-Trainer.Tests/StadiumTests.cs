@@ -243,5 +243,34 @@ namespace A3_Trainer.Tests
                 Assert.Equal("Zentralstadion", TestHelpers.Get<TextBox>(stadium, "stadiumName").Text);
             }
         });
+
+        [Fact]
+        public void SaveStadium_WritesANewCity()
+        {
+            FakeGameMemory m = WithStadiums();
+            var game = new A3Game(m);
+            Stadium original = game.ReadStadium(new ClubKey(14, 1));
+            Stadium edited = original.Clone();
+            edited.City = "Leipzig";
+
+            game.SaveStadium(original, edited);
+
+            Assert.Equal("Leipzig", game.ReadStadium(new ClubKey(14, 1)).City);
+            Assert.Null(m.WrittenAt(Munich + StadiumOffset.Name));
+        }
+
+        [Fact]
+        public void View_Save_AsksForTheGame_WhenItIsGone() => StaThread.Run(() =>
+        {
+            FakeGameMemory m = WithStadiums();
+            ProcessMemory memory = Attached();
+            using (var view = new StadiumView(memory, new A3Game(m)) { Club = new ClubKey(14, 1) })
+            {
+                view.RefreshValues();
+                memory.mProc.Process = null;
+                TestHelpers.ExpectDialog("Error", () => TestHelpers.Click(TestHelpers.Get<Button>(view, "save")));
+                Assert.Empty(m.Writes);
+            }
+        });
     }
 }

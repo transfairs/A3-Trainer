@@ -229,6 +229,10 @@ namespace A3_Trainer.Tests
                 Assert.Equal(BitConverter.GetBytes((ushort)0x5040), m.WrittenAt(r + RecordOffset.ContractFlags));
                 Assert.Equal(BitConverter.GetBytes((ushort)0x1002), m.WrittenAt(r + RecordOffset.Health));
                 Assert.Equal(new byte[] { 20 }, m.WrittenAt(r + RecordOffset.FormBase));
+
+                Field<CheckBox>(view, "clubOption").Checked = true;
+                TestHelpers.Click(Field<Button>(view, "save"));
+                Assert.Equal(BitConverter.GetBytes((ushort)0x7040), m.WrittenAt(r + RecordOffset.ContractFlags));
             }
         });
 

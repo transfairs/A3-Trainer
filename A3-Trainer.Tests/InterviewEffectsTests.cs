@@ -161,5 +161,32 @@ namespace A3_Trainer.Tests
             Assert.Equal("", InterviewEffects.Label(effects, 0));
             Assert.Equal(" [Fans +7]", InterviewEffects.Label(effects, 1));
         }
+
+        [Fact]
+        public void Tick_LeavesTooLongTexts_AndStopsWhenItsBlockIsFull()
+        {
+            var m = new FakeGameMemory();
+            m.Map(A3Addresses.InterviewBuffer, 4);
+            m.Map(Buffer, 0x80000);
+            m.PutUInt32(A3Addresses.InterviewBuffer, Buffer);
+            var slots = new List<uint>();
+            var file = new List<byte>(BitConverter.GetBytes(1));
+            Record(file, slots, 1, new short[] { 2, -5, 0, 0, 2, -5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+                "Frage?", "", new string('a', 0x16F), "Kurz.", "Ja.", "Nein.");
+            m.Put(Buffer, file.ToArray());
+            uint longText = m.ReadUInt32(slots[0]);
+            var effects = new InterviewEffects(m, new TransferInjectorTests.FakeCode(m));
+
+            effects.SetEnabled(true);
+            Assert.Equal(longText, m.ReadUInt32(slots[0]));          // no room for the label in the game's text field
+            Assert.Equal("Kurz. [Medien -5]", TextAt(m, slots[1]));
+
+            // A new text with the trainer's block full stays as it is.
+            effects.SetEnabled(false);
+            m.Put(m.ReadUInt32(slots[1]), Latin1.GetBytes("Lang."));
+            TestHelpers.Set(effects, "blockUsed", 0x100000u);
+            effects.SetEnabled(true);
+            Assert.Equal("Lang.", TextAt(m, slots[1]));
+        }
     }
 }
