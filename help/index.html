@@ -96,7 +96,7 @@
 
           <div class="toc-grid">
             <a class="toc-card" href="#spieler" data-jump="spieler"><h3>Spieler</h3><p>Kader, nächsten Gegner und jeden anderen Verein bearbeiten: Daten, Positionen, Fähigkeiten, Eigenschaften, Vertrag, Privatleben, Wechsel.</p></a>
-            <a class="toc-card" href="#verein" data-jump="verein"><h3>Verein &amp; Manager</h3><p>Jeder Verein: Daten, Identität, Stadion, Finanzen und Präsidium; der Manager: Vertrag, Person, Karriere und Aktien.</p></a>
+            <a class="toc-card" href="#verein" data-jump="verein"><h3>Verein &amp; Manager</h3><p>Jeder Verein: Daten, Identität, Stadion, Finanzen, Anlagen und Präsidium; der Manager: Vertrag, Person, Karriere und Aktien.</p></a>
             <a class="toc-card" href="#mechaniken" data-jump="mechaniken"><h3>Spielmechaniken</h3><p>Hilfen während des Spiels, etwa die Wirkung jeder Interview-Antwort.</p></a>
             <a class="toc-card" href="#faq" data-jump="faq"><h3>Fehlerbehebung</h3><p>Häufige Fragen, bekannte Grenzen und die Logdatei.</p></a>
           </div>
@@ -315,6 +315,15 @@
               <dt>Dispokredit (Mio DM)</dt><dd>Der Rahmen, den die Bilanz des Spiels in Klammern unter dem Dispokredit zeigt, in Schritten von 0,1 Mio DM.</dd>
               <dt>Kredite / Kredite erlassen</dt><dd>Anzahl und Summe der laufenden Kredite. „Kredite erlassen“ beendet sie ohne Rückzahlung: Ihre Summe geht auf das Vermögen zu Saisonbeginn, das Bankguthaben bleibt also gleich, nur die Schuld ist weg.</dd>
               <dt>Zinsen (für alle Vereine)</dt><dd>Zinssatz über den Dispokredit hinaus, Dispozins, Guthabenzins und der Kreditzins für neue Kredite (bei längerer Laufzeit gibt das Spiel etwas weniger). Ein laufender Kredit behält seine Sätze.</dd>
+            </dl>
+          </fieldset>
+          <fieldset class="groupbox">
+            <legend>Anlagen (<span class="menu-path">Verein → Eigener Verein</span>, Reiter „Anlagen“)</legend>
+            <dl class="field-list">
+              <dt>Liste</dt><dd>Die laufenden Geldanlagen des Vereins mit eingezahltem Betrag, aktuellem Wert und Gewinn. Solange eine Anlage läuft, zählt ihr Wert nicht zum Bankguthaben; erst wenn Sie sie im Spiel auflösen (Bilanz → Anlagen), kommt der Wert samt Gewinn aufs Konto.</dd>
+              <dt>Wert setzen</dt><dd>Eine Anlage in der Liste wählen, den neuen Wert als Betrag eintragen und „Wert setzen“ drücken. Beim Auflösen im Spiel gibt es diesen Wert.</dd>
+              <dt>Neu anlegen</dt><dd>Ohne gewählte Anlage: Anlagepartner und Betrag wählen und „Neu anlegen“ drücken, wie im Anlagendialog des Spiels. Ein Verein hat höchstens sechs Anlagen.</dd>
+              <dt>Kursindex (für alle Vereine)</dt><dd>Der aktuelle Kurs jedes Anlagepartners, am Anfang 1000. Der Wert einer Anlage wächst und fällt im gleichen Verhältnis wie der Index seit dem Kauf. Ein höherer Index macht also alle Anlagen bei diesem Partner mehr wert, auch die anderer Vereine.</dd>
             </dl>
           </fieldset>
           <fieldset class="groupbox">

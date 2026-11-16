@@ -80,6 +80,7 @@
     <Compile Include="Model\ManagerCareer.cs" />
     <Compile Include="Model\ManagerPerson.cs" />
     <Compile Include="Model\Stadium.cs" />
+    <Compile Include="Model\Investments.cs" />
     <Compile Include="Model\Stocks.cs" />
     <Compile Include="Model\Tables.cs" />
     <Compile Include="Program.cs" />
@@ -116,6 +117,9 @@
       <SubType>UserControl</SubType>
     </Compile>
     <Compile Include="View\PersonView.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="View\InvestmentsView.cs">
       <SubType>UserControl</SubType>
     </Compile>
     <Compile Include="View\StocksView.cs">

@@ -74,6 +74,10 @@ changed as well, since the page writes it back when it is left.
 loans, which can be forgiven: they end and their sum moves to the wealth at the start of the season, so the bank
 balance stays and only the debt is gone. The interest rates every club pays or gets: beyond the overdraft, within it,
 on credit, and the base rate of new loans (shorter for longer terms in the game; a loan keeps the rates it was taken with).
+**Club investments** (tab `Anlagen`): the running investments with amount paid in, value and gain. A value can be
+set (the game books the gain when the investment is sold), a new investment made like in the game's investment
+dialog, and the index of every investment partner set (it moves the value of every club's investments with that
+partner).
 **Club board** (tab `Präsidium`): president and opposition leader (first and last name, birthday; the game swaps
 both when the opposition takes over), founding date and the eternal table of the first division (games, points, goals,
 goals conceded).

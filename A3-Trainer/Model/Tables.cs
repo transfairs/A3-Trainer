@@ -97,6 +97,12 @@ namespace A3_Trainer.Model
         /// <summary>A club's hooligans, as the game's club editor names them.</summary>
         internal static readonly string[] Hooligans = { "nicht vorhanden", "wenige und feige", "ein paar – aber kräftige", "viele und schlimme" };
 
+        /// <summary>The investment partners, in the order of the game's investment dialog.</summary>
+        internal static readonly string[] InvestmentPartners =
+        {
+            "Sorgenfrei & Sohn (Tagesgeld)", "Kostol & Any", "Windig & Schnellweg", "Dipl.-Kfm. Sorglos", "Mme Véronique",
+        };
+
         /// <summary>The region of a club, as the game's club editor names it.</summary>
         internal static readonly string[] Regions = { "Nord", "Süd" };
 

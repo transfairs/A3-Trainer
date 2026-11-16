@@ -924,6 +924,90 @@ namespace A3_Trainer.Controller
             return forgiven;
         }
 
+        /// <summary>The club's running investments, or an empty list if the key names no club.</summary>
+        internal List<Investment> ReadInvestments(ClubKey key)
+        {
+            var result = new List<Investment>();
+            List<uint> blocks = this.FinanceBlocks(key);
+            if (blocks.Count == 0)
+                return result;
+            byte[] slots = this.memory.Read(blocks[0] + A3Addresses.ClubInvestments, A3Addresses.ClubInvestmentSlots * A3Addresses.ClubInvestmentSize);
+            if (slots == null)
+                return result;
+            for (int slot = 0; slot < A3Addresses.ClubInvestmentSlots; slot++)
+            {
+                int at = slot * A3Addresses.ClubInvestmentSize;
+                if ((slots[at + A3Addresses.InvestmentFlags] & 1) == 0)
+                    continue;
+                result.Add(new Investment
+                {
+                    Slot = slot,
+                    Paid = BitConverter.ToInt64(slots, at),
+                    Base = BitConverter.ToInt64(slots, at + A3Addresses.InvestmentBase),
+                    IndexAtPurchase = BitConverter.ToInt16(slots, at + A3Addresses.InvestmentIndex),
+                    Partner = slots[at + A3Addresses.InvestmentPartner],
+                });
+            }
+            return result;
+        }
+
+        /// <summary>The current index of every investment partner.</summary>
+        internal int[] ReadInvestmentIndices()
+        {
+            var indices = new int[Tables.InvestmentPartners.Length];
+            for (int i = 0; i < indices.Length; i++)
+                indices[i] = (int)this.ReadUInt32(A3Addresses.InvestmentIndices + (uint)(i * 4));
+            return indices;
+        }
+
+        /// <summary>Writes the partner indices that changed; every club's investments follow them.</summary>
+        internal void SaveInvestmentIndices(int[] original, int[] edited)
+        {
+            for (int i = 0; i < edited.Length; i++)
+                if (edited[i] != original[i])
+                    this.memory.Write(A3Addresses.InvestmentIndices + (uint)(i * 4), BitConverter.GetBytes(edited[i]));
+        }
+
+        /// <summary>Sets an investment's value at the partner's current index, by changing its base.</summary>
+        internal void SetInvestmentValue(ClubKey key, Investment investment, long value)
+        {
+            int index = (int)this.ReadUInt32(A3Addresses.InvestmentIndices + (uint)(investment.Partner * 4));
+            byte[] newBase = BitConverter.GetBytes(investment.BaseFor(value, index));
+            foreach (uint finances in this.FinanceBlocks(key))
+                this.memory.Write(InvestmentSlot(finances, investment.Slot) + A3Addresses.InvestmentBase, newBase);
+        }
+
+        /// <summary>
+        /// Invests <paramref name="amount"/> DM with a partner, as the game's investment dialog does: the money leaves the
+        /// bank balance and comes back with the gain when the investment is sold. Returns the slot, or -1 if all are taken.
+        /// </summary>
+        internal int AddInvestment(ClubKey key, int partner, long amount)
+        {
+            List<uint> blocks = this.FinanceBlocks(key);
+            if (blocks.Count == 0)
+                return -1;
+            var taken = new HashSet<int>(this.ReadInvestments(key).Select(i => i.Slot));
+            int slot = Enumerable.Range(0, A3Addresses.ClubInvestmentSlots).FirstOrDefault(s => !taken.Contains(s));
+            if (taken.Contains(slot))
+                return -1;
+
+            int index = (int)this.ReadUInt32(A3Addresses.InvestmentIndices + (uint)(partner * 4));
+            int day = Math.Min(this.ReadInt16(A3Addresses.CurrentDay), 30) + this.ReadInt16(A3Addresses.CurrentMonth) % 3 * 30 - 30;
+            var entry = new byte[A3Addresses.ClubInvestmentSize];
+            BitConverter.GetBytes(amount).CopyTo(entry, 0);
+            BitConverter.GetBytes(amount).CopyTo(entry, A3Addresses.InvestmentBase);
+            BitConverter.GetBytes((short)index).CopyTo(entry, A3Addresses.InvestmentIndex);
+            entry[A3Addresses.InvestmentPartner] = (byte)partner;
+            entry[A3Addresses.InvestmentFlags] = 1;
+            BitConverter.GetBytes((short)day).CopyTo(entry, A3Addresses.InvestmentDay);
+            foreach (uint finances in blocks)
+                this.memory.Write(InvestmentSlot(finances, slot), entry);
+            return slot;
+        }
+
+        private static uint InvestmentSlot(uint finances, int slot) =>
+            finances + A3Addresses.ClubInvestments + (uint)(slot * A3Addresses.ClubInvestmentSize);
+
         /// <summary>The interest rates every club pays or gets.</summary>
         internal InterestRates ReadRates() => new InterestRates
         {

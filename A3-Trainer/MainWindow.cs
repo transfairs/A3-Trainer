@@ -25,6 +25,7 @@ namespace A3_Trainer
         private readonly StadiumView stadiumView;
         private readonly BoardView boardView;
         private readonly FinancesView financesView;
+        private readonly InvestmentsView investmentsView;
         private readonly PagesView clubPages;
         private readonly ManagerView managerView;
         private readonly PersonView personView;
@@ -99,9 +100,10 @@ namespace A3_Trainer
             this.stadiumView = new StadiumView(this.memory, this.game);
             this.boardView = new BoardView(this.memory, this.game);
             this.financesView = new FinancesView(this.memory, this.game);
+            this.investmentsView = new InvestmentsView(this.memory, this.game);
             this.clubPicker = new ClubPicker(this.clubCountryBox, this.clubClubBox);
             this.clubPicker.Picked += this.OnClubPagePicked;
-            this.clubPages = new PagesView().Add("Verein", this.clubView).Add("Identität", this.identityView).Add("Stadion", this.stadiumView).Add("Finanzen", this.financesView).Add("Präsidium", this.boardView)
+            this.clubPages = new PagesView().Add("Verein", this.clubView).Add("Identität", this.identityView).Add("Stadion", this.stadiumView).Add("Finanzen", this.financesView).Add("Anlagen", this.investmentsView).Add("Präsidium", this.boardView)
                 .AddHeader(368, this.clubCountryBox, this.clubClubBox);
             this.managerView = new ManagerView(this.memory, this.game);
             this.personView = new PersonView(this.memory, this.game);
@@ -259,6 +261,8 @@ namespace A3_Trainer
             this.stadiumView.RefreshValues();
             this.financesView.Club = club;
             this.financesView.RefreshValues();
+            this.investmentsView.Club = club;
+            this.investmentsView.RefreshValues();
             this.boardView.Club = club;
             this.boardView.RefreshValues();
         }

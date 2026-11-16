@@ -127,6 +127,17 @@ namespace A3_Trainer.Controller
         internal const int ClubLoanSlots = 8;
         internal const int ClubLoanSize = 0x18;
         internal const int ClubLoanFlags = 0x0F;
+        // Investments in that block: 6 slots of 0x18 bytes {qword DM paid in, qword base, word partner index at purchase,
+        // byte partner, byte flags (bit 0 running), word quarter day of purchase}; filled by FUN_00444359. The bank
+        // balance counts their value as money out (FUN_0061FD97 via FUN_00648947), selling books the gain.
+        internal const int ClubInvestments = 0x650;
+        internal const int ClubInvestmentSlots = 6;
+        internal const int ClubInvestmentSize = 0x18;
+        internal const int InvestmentBase = 0x08;
+        internal const int InvestmentIndex = 0x10;
+        internal const int InvestmentPartner = 0x12;
+        internal const int InvestmentFlags = 0x13;
+        internal const int InvestmentDay = 0x14;
         // Overdraft (Dispokredit) as a word in steps of OverdraftUnit DM (shown on the balance page in brackets).
         internal const int ClubOverdraft = 0x768;
         internal const int OverdraftUnit = 100000;
@@ -138,6 +149,11 @@ namespace A3_Trainer.Controller
         internal const uint SavingsRate = 0x00B5CC82;
         internal const uint OverdraftRate = 0x00B5CC84;
         internal const uint LoanRate = 0x00B5CC86;
+        // The current index of every investment partner (dwords, 1000 at the start), shared by all clubs.
+        internal const uint InvestmentIndices = 0x00B5CC8C;
+        // Day and month of the current date (words); an investment keeps the day of its quarter (FUN_00676A74).
+        internal const uint CurrentDay = 0x00B5CBDA;
+        internal const uint CurrentMonth = 0x00B5CBDC;
         // Byte, the new game's option "mit Entlassungen" (FUN_00787D4C); with 0 the board never dismisses a manager
         // (below 81 % trust, FUN_0075133E) and the game says so.
         internal const uint Dismissals = 0x00B5D158;
