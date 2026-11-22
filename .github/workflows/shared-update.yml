@@ -72,6 +72,9 @@ jobs:
         run: |
           msbuild ${{ env.TESTS }} /t:Restore,Build /p:Configuration=Release
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          # Shared code must also compile against .NET 2.0 for the Windows 2000 build.
+          msbuild A3-Trainer/A3-Trainer.csproj /restore /t:Build /p:Configuration=Release /p:Platform=x86 /p:Win2000=true
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           dotnet test ${{ env.TESTS }} --configuration Release --no-build --no-restore
 
       - name: Commit to main

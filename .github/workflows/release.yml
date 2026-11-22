@@ -59,6 +59,11 @@ jobs:
       - name: Build Trainer
         run: msbuild A3-Trainer/A3-Trainer.csproj /restore /t:Rebuild /p:Configuration=Release /p:Platform=x86
 
+      # Same sources against .NET Framework 2.0 for Windows 2000 (Win2000 switch in the csproj,
+      # replacements for newer framework parts in Shared/Compat/). Own obj/bin folders.
+      - name: Build Trainer for Windows 2000
+        run: msbuild A3-Trainer/A3-Trainer.csproj /restore /t:Rebuild /p:Configuration=Release /p:Platform=x86 /p:Win2000=true
+
       # Changelog scripts come from the Shared submodule (the same ones the A2G trainer uses).
       - name: Generate changelog
         shell: pwsh
@@ -74,11 +79,13 @@ jobs:
           $tag = "${{ github.ref_name }}"
           New-Item -ItemType Directory -Force -Path dist | Out-Null
           Copy-Item "A3-Trainer\bin\x86\Release\A3-Trainer.exe" "dist\A3-Trainer-$tag.exe"
+          Copy-Item "A3-Trainer\bin\Win2000\Release\A3-Trainer.exe" "dist\A3-Trainer-$tag-Win2000.exe"
           Copy-Item "A3-Trainer.ct" "dist\A3-Trainer-$tag.ct"
 
           $bundleDir = "dist/bundle"
           New-Item -ItemType Directory -Force -Path $bundleDir | Out-Null
           Copy-Item "dist\A3-Trainer-$tag.exe" "$bundleDir\A3-Trainer.exe"
+          Copy-Item "dist\A3-Trainer-$tag-Win2000.exe" "$bundleDir\A3-Trainer-Win2000.exe"
           Copy-Item "dist\A3-Trainer-$tag.ct" "$bundleDir\A3-Trainer.ct"
           Copy-Item "dist\Changelog.html" "$bundleDir\Changelog.html"
 

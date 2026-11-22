@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <!-- Windows 2000 build (msbuild /p:Win2000=true): same sources, built against .NET Framework 2.0,
+       the last framework Windows 2000 runs. Own obj folder, because the NuGet restore result depends on
+       the target framework and would otherwise flip back and forth between both builds. -->
+  <PropertyGroup Condition="'$(Win2000)' == 'true'">
+    <BaseIntermediateOutputPath>obj\Win2000\</BaseIntermediateOutputPath>
+  </PropertyGroup>
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -55,9 +61,22 @@
   </ItemGroup>
   <ItemGroup>
     <Reference Include="System" />
-    <Reference Include="System.Core" />
     <Reference Include="System.Drawing" />
     <Reference Include="System.Windows.Forms" />
+  </ItemGroup>
+  <!-- Only exists from .NET 3.5 on. -->
+  <ItemGroup Condition="'$(Win2000)' != 'true'">
+    <Reference Include="System.Core" />
+  </ItemGroup>
+  <!-- Windows 2000 build: .NET 2.0 target plus replacements for what 2.0 lacks (Shared\Compat\). -->
+  <PropertyGroup Condition="'$(Win2000)' == 'true'">
+    <TargetFrameworkVersion>v2.0</TargetFrameworkVersion>
+    <DefineConstants>$(DefineConstants);WIN2000</DefineConstants>
+    <OutputPath>bin\Win2000\$(Configuration)\</OutputPath>
+  </PropertyGroup>
+  <ItemGroup Condition="'$(Win2000)' == 'true'">
+    <Reference Include="System.Web" />
+    <Compile Include="..\Shared\Compat\*.cs" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Controller\A3Addresses.cs" />

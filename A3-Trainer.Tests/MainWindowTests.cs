@@ -16,6 +16,16 @@ namespace A3_Trainer.Tests
     {
         // The window with its game (and the views' games) reading from the fake memory instead of
         // a real process; attached means the test process stands in for the game.
+        // Whether any pixel inside the item's bounds has exactly the given colour.
+        private static bool Shows(Bitmap strip, ToolStripItem item, Color colour)
+        {
+            for (int x = item.Bounds.Left; x < item.Bounds.Right; x++)
+                for (int y = item.Bounds.Top; y < item.Bounds.Bottom; y++)
+                    if (strip.GetPixel(x, y).ToArgb() == colour.ToArgb())
+                        return true;
+            return false;
+        }
+
         private static MainWindow Window(FakeGameMemory m, bool attached = true)
         {
             var window = new MainWindow();
@@ -103,6 +113,18 @@ namespace A3_Trainer.Tests
                 TestHelpers.Click(MenuItem(window, "?", "Hilfe"));
                 Assert.True(back.Enabled);
                 Assert.False(forward.Enabled);
+
+                // The arrows are drawn (fonts on old Windows lack the characters): in the menu's text
+                // colour, grey while there is nowhere to go.
+                MenuStrip menu = window.MainMenuStrip;
+                menu.CreateControl();
+                menu.PerformLayout();
+                using (Bitmap strip = new Bitmap(menu.Width, menu.Height))
+                {
+                    menu.DrawToBitmap(strip, new Rectangle(Point.Empty, strip.Size));
+                    Assert.True(Shows(strip, back, menu.ForeColor));
+                    Assert.True(Shows(strip, forward, SystemColors.GrayText));
+                }
 
                 TestHelpers.Click(back);
                 Assert.Equal("A3-Trainer :: Verein: 1.FV München", window.Text);

@@ -86,7 +86,7 @@ namespace A3_Trainer.Controller
                 if (text != null)
                     parts.Add(text);
             }
-            return parts.Count == 0 ? "" : " [" + string.Join(", ", parts) + "]";
+            return parts.Count == 0 ? "" : " [" + string.Join(", ", parts.ToArray()) + "]";
         }
 
         /// <summary>Switches the labels on or off; off puts the original texts back.</summary>

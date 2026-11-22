@@ -17,6 +17,10 @@ Trainer for **Anstoss 3**. Edits players, club and manager.
   builds with a different memory layout; the trainer reports them as unsupported.
 - A loaded save game (career). In the game's main menu the trainer waits.
 - Windows, or Linux with Wine/Proton (start the trainer in the same Wine prefix as the game).
+  `A3-Trainer.exe` needs .NET Framework 4.0 (Windows XP SP3 and later). On **Windows 2000**
+  (Service Pack 4), **98 SE** and **ME** use `A3-Trainer-Win2000.exe` (in every release and in
+  `A3-Trainer-Latest.zip`) with .NET Framework 2.0, on 98 SE and ME without a service pack; it has the
+  same features.
 
 To get the game running on Windows 10/11 at all:
 
@@ -178,14 +182,22 @@ msbuild A3-Trainer.Tests/A3-Trainer.Tests.csproj /t:Restore,Build /p:Configurati
 dotnet test A3-Trainer.Tests/A3-Trainer.Tests.csproj --no-build --no-restore
 ```
 
+Windows 2000 build: the same sources against .NET Framework 2.0, into `A3-Trainer/bin/Win2000/Release/`.
+`Shared/Compat/` supplies what .NET 2.0 lacks (LINQ, `Func`/`Action`, `HashSet`, `Tuple` and a few
+.NET 4.0 methods) and is only compiled into this build. Code that uses further .NET 3.5/4.0 APIs breaks
+it; the Shared CI, the Shared update workflow and the release workflow build it too.
+```bash
+msbuild A3-Trainer/A3-Trainer.csproj /restore /t:Rebuild /p:Configuration=Release /p:Platform=x86 /p:Win2000=true
+```
+
 ## Help, release
 
 - Online help: [help/](help/index.html), published at
   <https://transfairs.github.io/A3-Trainer/> (in the trainer: `? → Onlinehilfe`).
   On deploy, `pages.yml` copies `style.css` and `script.js` from `Shared/help/` next to it.
 - Release: push a `vX.Y.Z` tag; `.github/workflows/release.yml` builds, tests and publishes
-  `A3-Trainer-<tag>.exe`, `A3-Trainer-<tag>.ct` and `A3-Trainer-Latest.zip` (trainer, table,
-  changelog). Run the pre-release check first.
+  `A3-Trainer-<tag>.exe`, `A3-Trainer-<tag>-Win2000.exe`, `A3-Trainer-<tag>.ct` and
+  `A3-Trainer-Latest.zip` (both trainers, table, changelog). Run the pre-release check first.
 - `A3-Trainer.Tests/CheatTableTests.cs` checks the addresses in `A3-Trainer.ct` (Lua tables `A`,
   `R`, `C`, name lists, fixed entries) against `A3Addresses.cs` and `Tables.cs`. Save the file
   without a BOM, otherwise Cheat Engine won't load it.

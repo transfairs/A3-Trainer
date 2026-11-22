@@ -34,6 +34,7 @@ namespace A3_Trainer.Tests
             var memory = new ProcessMemory();
             Assert.False(memory.OpenProcess(0));
             Assert.False(memory.OpenProcess(int.MaxValue));   // no such process
+            Assert.False(memory.OpenProcess(-1));             // negative IDs exist only on Windows 9x
 
             Process self = Process.GetCurrentProcess();
             Assert.True(memory.OpenProcess(self.Id));
@@ -105,6 +106,29 @@ namespace A3_Trainer.Tests
             Assert.False(memory.WriteCode(0x100, new byte[] { 0x90 }));
             Assert.False(new ProcessMemory().WriteCode(code, new byte[] { 0x90 }));   // no process handle
             Assert.Equal(new byte[] { 0xC3 }, live.Read(code, 1));
+        }
+
+        [Fact]
+        public void ProcessMemory_SharedArena_AllocatesThroughAMappingHandedToTheGame()
+        {
+            // Windows 9x path; the test process stands in for the game, where the view is ordinary memory.
+            bool before = ProcessMemory.UseSharedArena;
+            ProcessMemory.UseSharedArena = true;
+            try
+            {
+                var memory = new ProcessMemory();
+                Assert.True(memory.OpenProcess(Process.GetCurrentProcess().Id));
+                uint block = memory.AllocateExecutable(0x100).Value;
+                memory.WriteBytesAtAddress(block, new byte[] { 0xC3, 0x90 });
+                Assert.Equal(new byte[] { 0xC3, 0x90 }, memory.ReadBytesAtAddress(block, 2));
+
+                Assert.Null(memory.AllocateExecutable(0));                       // empty mapping refused
+                Assert.Null(new ProcessMemory().AllocateExecutable(0x100));      // no game to hand the handle to
+            }
+            finally
+            {
+                ProcessMemory.UseSharedArena = before;
+            }
         }
 
         private sealed class TestView : TrainerView
