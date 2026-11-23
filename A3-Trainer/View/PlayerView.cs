@@ -372,7 +372,7 @@ namespace A3_Trainer.View
         {
             var group = new GroupBox { Text = title, Bounds = new Rectangle(x, 6, 177, 344) };
             group.Controls.Add(Caption("+", 10, 17, 14));
-            group.Controls.Add(Caption("−", 30, 17, 14));
+            group.Controls.Add(Caption("–", 30, 17, 14));
             for (int i = 0; i < names.Length; i++)
             {
                 int y = 34 + i * 18;
