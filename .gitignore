@@ -10,6 +10,7 @@
 *.userosscache
 *.sln.docstates
 docs/*.md
+docs/forenpost.txt
 
 
 # User-specific files (MonoDevelop/Xamarin Studio)

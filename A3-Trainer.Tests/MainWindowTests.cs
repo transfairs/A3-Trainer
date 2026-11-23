@@ -398,5 +398,52 @@ namespace A3_Trainer.Tests
                 Assert.True(effects.Enabled);
             }
         });
+
+        [Fact]
+        public void Views_ZoomWithTheWindow_FromTheDesignedSizeUpwards() => StaThread.Run(() =>
+        {
+            using (MainWindow window = Window(WithOpponent()))
+            {
+                window.CreateControl();
+                TestHelpers.Click(MenuItem(window, "Verein", "Eigener Verein"));
+                var club = (PagesView)Shown(window);
+                float designed = club.Font.Size;
+
+                // Until the window has loaded, views keep their designed size.
+                window.ClientSize = new Size(window.ClientSize.Width * 5 / 4, window.ClientSize.Height * 5 / 4);
+                Assert.Equal(designed, club.Font.Size);
+
+                // Once loaded, the size it has then is the minimum, and the shown view fills it.
+                TestHelpers.Invoke(window, "EnableScaling");
+                Assert.Equal(window.Size, window.MinimumSize);
+                float loaded = club.Font.Size;
+                Assert.True(loaded > designed);
+
+                // A view shown afterwards comes in at the window's size, and grows with it.
+                var manager = TestHelpers.Get<PagesView>(window, "managerPages");
+                float managerDesigned = manager.Font.Size;
+                TestHelpers.Click(MenuItem(window, "Trainer", "Manager"));
+                Assert.True(manager.Font.Size > managerDesigned);
+                window.ClientSize = new Size(window.ClientSize.Width * 5 / 4, window.ClientSize.Height * 5 / 4);
+                TestHelpers.Click(MenuItem(window, "Verein", "Eigener Verein"));
+                Assert.True(club.Font.Size > loaded);
+            }
+        });
+
+        [Fact]
+        public void DesignScale_IsOne_ForViewsThatScaleThemselves() => StaThread.Run(() =>
+        {
+            using (MainWindow window = Window(A3GameTests.Career()))
+            using (var byFont = new UserControl { AutoScaleMode = AutoScaleMode.Font })
+            using (var byDpi = new UserControl { AutoScaleMode = AutoScaleMode.Dpi })
+            using (var fixedLayout = new UserControl { AutoScaleMode = AutoScaleMode.None })
+            {
+                SizeF screen = window.DesignScale(fixedLayout);   // the screen's DPI scaling, 1 at 96 dpi
+                window.Scale(new SizeF(1.5f, 1.25f));
+                Assert.Equal(new SizeF(1f, 1f), window.DesignScale(byFont));
+                Assert.Equal(new SizeF(1f, 1f), window.DesignScale(byDpi));
+                Assert.Equal(new SizeF(screen.Width * 1.5f, screen.Height * 1.25f), window.DesignScale(fixedLayout));
+            }
+        });
     }
 }

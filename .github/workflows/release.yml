@@ -79,13 +79,13 @@ jobs:
           $tag = "${{ github.ref_name }}"
           New-Item -ItemType Directory -Force -Path dist | Out-Null
           Copy-Item "A3-Trainer\bin\x86\Release\A3-Trainer.exe" "dist\A3-Trainer-$tag.exe"
-          Copy-Item "A3-Trainer\bin\Win2000\Release\A3-Trainer.exe" "dist\A3-Trainer-$tag-Win2000.exe"
+          Copy-Item "A3-Trainer\bin\Win2000\Release\A3-Trainer.exe" "dist\A3-Trainer-$tag-Win98-2000.exe"
           Copy-Item "A3-Trainer.ct" "dist\A3-Trainer-$tag.ct"
 
           $bundleDir = "dist/bundle"
           New-Item -ItemType Directory -Force -Path $bundleDir | Out-Null
           Copy-Item "dist\A3-Trainer-$tag.exe" "$bundleDir\A3-Trainer.exe"
-          Copy-Item "dist\A3-Trainer-$tag-Win2000.exe" "$bundleDir\A3-Trainer-Win2000.exe"
+          Copy-Item "dist\A3-Trainer-$tag-Win98-2000.exe" "$bundleDir\A3-Trainer-Win98-2000.exe"
           Copy-Item "dist\A3-Trainer-$tag.ct" "$bundleDir\A3-Trainer.ct"
           Copy-Item "dist\Changelog.html" "$bundleDir\Changelog.html"
 

@@ -18,7 +18,7 @@ Trainer for **Anstoss 3**. Edits players, club and manager.
 - A loaded save game (career). In the game's main menu the trainer waits.
 - Windows, or Linux with Wine/Proton (start the trainer in the same Wine prefix as the game).
   `A3-Trainer.exe` needs .NET Framework 4.0 (Windows XP SP3 and later). On **Windows 2000**
-  (Service Pack 4), **98 SE** and **ME** use `A3-Trainer-Win2000.exe` (in every release and in
+  (Service Pack 4), **98 SE** and **ME** use `A3-Trainer-Win98-2000.exe` (in every release and in
   `A3-Trainer-Latest.zip`) with .NET Framework 2.0, on 98 SE and ME without a service pack; it has the
   same features.
 
@@ -196,7 +196,7 @@ msbuild A3-Trainer/A3-Trainer.csproj /restore /t:Rebuild /p:Configuration=Releas
   <https://transfairs.github.io/A3-Trainer/> (in the trainer: `? → Onlinehilfe`).
   On deploy, `pages.yml` copies `style.css` and `script.js` from `Shared/help/` next to it.
 - Release: push a `vX.Y.Z` tag; `.github/workflows/release.yml` builds, tests and publishes
-  `A3-Trainer-<tag>.exe`, `A3-Trainer-<tag>-Win2000.exe`, `A3-Trainer-<tag>.ct` and
+  `A3-Trainer-<tag>.exe`, `A3-Trainer-<tag>-Win98-2000.exe`, `A3-Trainer-<tag>.ct` and
   `A3-Trainer-Latest.zip` (both trainers, table, changelog). Run the pre-release check first.
 - `A3-Trainer.Tests/CheatTableTests.cs` checks the addresses in `A3-Trainer.ct` (Lua tables `A`,
   `R`, `C`, name lists, fixed entries) against `A3Addresses.cs` and `Tables.cs`. Save the file

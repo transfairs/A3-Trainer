@@ -44,6 +44,41 @@ namespace A3_Trainer.Tests
         }
 
         [Fact]
+        public void ProcessMemory_LeavesAProcessAlone_WhoseWindowHangs()
+        {
+            // A transparent window off screen whose thread sleeps instead of pumping messages:
+            // Windows reports the process as not responding.
+            const string script = "Add-Type -AssemblyName System.Windows.Forms; $f = New-Object Windows.Forms.Form; "
+                + "$f.StartPosition = 'Manual'; $f.Location = New-Object Drawing.Point(-3000, -3000); "
+                + "$f.FormBorderStyle = 'FixedToolWindow'; $f.Opacity = 0; $f.Show(); Start-Sleep 60";
+            var start = new ProcessStartInfo("powershell.exe", "-MTA -NoProfile -NonInteractive -Command \"" + script + "\"")
+            {
+                UseShellExecute = false,
+                CreateNoWindow = true,
+            };
+            using (Process hung = Process.Start(start))
+            {
+                try
+                {
+                    var waited = Stopwatch.StartNew();
+                    while (hung.MainWindowHandle == IntPtr.Zero && !hung.HasExited && waited.Elapsed < TimeSpan.FromSeconds(30))
+                    {
+                        System.Threading.Thread.Sleep(100);
+                        hung.Refresh();
+                    }
+                    Assert.NotEqual(IntPtr.Zero, hung.MainWindowHandle);
+
+                    Assert.False(new ProcessMemory().OpenProcess(hung.Id));
+                }
+                finally
+                {
+                    if (!hung.HasExited)
+                        hung.Kill();
+                }
+            }
+        }
+
+        [Fact]
         public void ProcessMemory_ReadsAndWritesThroughPointerChains_AndYieldsDefaultsWhereNothingIsReadable()
         {
             var memory = new ProcessMemory();
@@ -198,6 +233,19 @@ namespace A3_Trainer.Tests
                 view.ClickLink("https://example.org/");
                 Assert.Equal("https://example.org/", view.Started);
             }
+        });
+
+        private sealed class PlainView : TrainerView
+        {
+        }
+
+        [Fact]
+        public void TrainerView_HandsTheLinkToWindows() => StaThread.Run(() =>
+        {
+            // A file that doesn't exist: Windows refuses it, so nothing opens, and the error reaches the caller.
+            string missing = System.IO.Path.Combine(System.IO.Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".html");
+            using (var view = new PlainView())
+                Assert.Throws<System.ComponentModel.Win32Exception>(() => view.StartProcess(missing));
         });
 
         private sealed class TestObserver : GameObserver
